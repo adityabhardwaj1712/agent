@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentCloud | The Universal OS for AI Agents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">AGENTCLOUD</div>
+        <nav>
+            <a href="#" class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i data-lucide="users"></i> My Agents</a>
+            <a href="#" class="nav-item"><i data-lucide="database"></i> Shared Memory</a>
+            <a href="#" class="nav-item"><i data-lucide="activity"></i> Audit Logs</a>
+            <a href="#" class="nav-item"><i data-lucide="credit-card"></i> Billing</a>
+            <a href="#" class="nav-item"><i data-lucide="settings"></i> Settings</a>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <header class="header animate-fade-in">
+            <div>
+                <h1>Infrastructure Overview</h1>
+                <p style="color: var(--text-secondary);">Welcome back, Developer. Your agent fleet is operating at 99.9% efficiency.</p>
+            </div>
+            <button class="btn-primary" onclick="openRegisterModal()"><i data-lucide="plus"></i> Register New Agent</button>
+        </header>
+
+        <div class="stats-grid animate-fade-in">
+            <div class="stat-card">
+                <h3>Total Agents</h3>
+                <div class="value">12</div>
+                <div class="trend up">+2 this week</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Tasks</h3>
+                <div class="value">45,201</div>
+                <div class="trend up">+12.5%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg. Latency</h3>
+                <div class="value">42ms</div>
+                <div class="trend down">-4ms</div>
+            </div>
+            <div class="stat-card">
+                <h3>Est. Cost</h3>
+                <div class="value">₹ 4,320</div>
+                <div class="trend up">+₹ 210</div>
+            </div>
+        </div>
+
+        <section class="animate-fade-in">
+            <h2 class="section-title"><i data-lucide="zap"></i> Active Agents</h2>
+            <div class="agent-list" id="agent-list">
+                <!-- Agent rows will be injected here -->
+                <div class="agent-row">
+                    <div class="agent-info">
+                        <div class="agent-icon"><i data-lucide="bot"></i></div>
+                        <div>
+                            <strong>LegalAnalyst_01</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ag-7f32-8821</div>
+                        </div>
+                    </div>
+                    <div><span class="status-pill status-active">ACTIVE</span></div>
+                    <div style="color: var(--text-secondary);">GPT-4o</div>
+                    <div>8,420 Tasks</div>
+                    <div style="text-align: right;"><button class="btn-glass">Manage</button></div>
+                </div>
+
+                <div class="agent-row">
+                    <div class="agent-info">
+                        <div class="agent-icon"><i data-lucide="cpu"></i></div>
+                        <div>
+                            <strong>ResearchAssistant_v2</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ag-4421-9901</div>
+                        </div>
+                    </div>
+                    <div><span class="status-pill status-idle">IDLE</span></div>
+                    <div style="color: var(--text-secondary);">Claude 3.5 Sonnet</div>
+                    <div>2,105 Tasks</div>
+                    <div style="text-align: right;"><button class="btn-glass">Manage</button></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Placeholder for fetching data from backend
+        async function fetchAgents() {
+            try {
+                // const response = await fetch('http://localhost:8000/v1/agents');
+                // const agents = await response.json();
+                // updateAgentList(agents);
+                console.log("Fetching agents from backend...");
+            } catch (err) {
+                console.error("Failed to fetch agents:", err);
+            }
+        }
+
+        function openRegisterModal() {
+            alert("Registration Modal - Coming Soon!");
+        }
+
+        // fetchAgents();
+    </script>
+</body>
+</html>

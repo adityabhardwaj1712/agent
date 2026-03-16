@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+redis
+celery
+pyjwt
+pydantic
+pydantic-settings
+python-dotenv
+openai
+pgvector
+alembic
+prometheus-client
+pytest
+httpx

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentCloud | Precision Multi-Agent Orchestration</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">AC</div>
+                <div class="logo-text">AgentCloud</div>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="#" class="nav-item active"><i data-lucide="layout-dashboard"></i> Fleet Overview</a>
+                <a href="#" class="nav-item"><i data-lucide="users"></i> Agent Registry</a>
+                <a href="#" class="nav-item"><i data-lucide="git-branch"></i> Workflow Builder</a>
+                <a href="#" class="nav-item"><i data-lucide="shopping-cart"></i> Marketplace</a>
+                <a href="#" class="nav-item"><i data-lucide="bar-chart-3"></i> Analytics</a>
+                <a href="#" class="nav-item" style="margin-top: auto;"><i data-lucide="settings"></i> Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <span style="color: var(--ac-text-muted)">AgentCloud Dashboard</span> / <strong>Fleet Overview</strong>
+                </div>
+                <div class="user-actions" style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn-glass" id="theme-toggle"><i data-lucide="moon"></i></button>
+                    <button class="btn-glass"><i data-lucide="bell"></i></button>
+                    <div class="user-profile" style="width: 40px; height: 40px; background: #27272a; border-radius: 50%; border: 1px solid var(--ac-border);"></div>
+                </div>
+            </header>
+
+            <!-- Fleet Pulse Metrics -->
+            <section class="fleet-pulse">
+                <h2 style="font-size: 0.75rem; color: var(--ac-text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2rem;">Fleet Pulse</h2>
+                <div class="dashboard-grid">
+                    <div class="fleet-card">
+                        <div class="label">Active Agents</div>
+                        <div class="value">142</div>
+                        <img src="https://img.icons8.com/nolan/64/blue-line.png" class="sparkline" style="opacity: 0.5; filter: hue-rotate(180deg);">
+                    </div>
+                    <div class="fleet-card">
+                        <div class="label">Token Velocity</div>
+                        <div class="value">4.1k/s</div>
+                        <img src="https://img.icons8.com/nolan/64/cyan-line.png" class="sparkline" style="opacity: 0.5;">
+                    </div>
+                    <div class="fleet-card">
+                        <div class="label">Success Rate</div>
+                        <div class="value">99.8%</div>
+                        <div class="progress-bar" style="height: 6px; background: rgba(16, 185, 129, 0.1); border-radius: 3px; margin-top: 1rem;">
+                            <div style="width: 99.8%; height: 100%; background: var(--ac-success); border-radius: 3px; box-shadow: 0 0 10px var(--ac-success);"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ACP Live Feed -->
+            <section class="acp-live-feed">
+                <div class="acp-header">
+                    <h2 style="font-size: 1.25rem; font-weight: 700;">Active Fleet Pulse</h2>
+                    <div class="tag" style="background: rgba(59, 130, 246, 0.1); color: var(--ac-accent); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">#80A5FF</div>
+                </div>
+                
+                <div class="acp-feed-container">
+                    <div style="font-size: 0.875rem; color: var(--ac-text-muted); margin-bottom: 2rem;">AGENT COMMUNICATION PROTOCOL (ACP) LIVE FEED <span style="float: right; color: var(--ac-accent);"><i data-lucide="wifi" style="width: 14px; vertical-align: middle;"></i> Real-time</span></div>
+                    
+                    <div class="acp-diagram">
+                        <div class="agent-bubble">
+                            <div class="icon" style="color: #f97316;">AI</div>
+                            <div style="font-size: 0.75rem; font-weight: 600;">[Agent: Claude-3.5]</div>
+                            <div style="width: 100%; height: 2px; background: var(--ac-border); margin: 0.5rem 0;"></div>
+                            <div style="width: 80%; height: 8px; background: var(--ac-border); border-radius: 4px;"></div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                            <div style="font-size: 0.75rem; color: var(--ac-text-muted);">[Task: Analyze Document]</div>
+                            <svg width="100" height="20" viewBox="0 0 100 20">
+                                <path d="M0 10 L100 10" stroke="var(--ac-accent)" stroke-width="2" stroke-dasharray="4 4"/>
+                                <polygon points="100,10 90,5 90,15" fill="var(--ac-accent)"/>
+                            </svg>
+                        </div>
+
+                        <div class="agent-bubble">
+                            <div class="icon" style="color: var(--ac-success);">AC</div>
+                            <div style="font-size: 0.75rem; font-weight: 600;">[Agent: GPT-4o]</div>
+                            <div style="width: 100%; height: 2px; background: var(--ac-border); margin: 0.5rem 0;"></div>
+                            <div style="width: 80%; height: 8px; background: var(--ac-border); border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agent Incident Management -->
+            <section class="incident-management">
+                <div class="incident-table-container">
+                    <div class="table-header">
+                        <h2 style="font-size: 1rem; font-weight: 700;">Agent Incident Management</h2>
+                        <button class="circuit-breaker-btn">CIRCUIT BREAKER</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Anomalous Agents</th>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Agent: Claude-3.5</td>
+                                <td>Analyze Document</td>
+                                <td>1 days ago</td>
+                                <td><span class="status-tag removed">Removed</span></td>
+                            </tr>
+                            <tr>
+                                <td>Agent: GPT-4o</td>
+                                <td>Analyze Document</td>
+                                <td>1 days ago</td>
+                                <td><span class="status-tag removed">Removed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <footer style="margin-top: 4rem; display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--ac-text-muted);">
+                <div>Version 2.0 — Final Master Edition | 2026</div>
+                <div>Confidential & Proprietary</div>
+            </footer>
+        </main>
+    </div>
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            themeToggle.innerHTML = isLight ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            lucide.createIcons();
+        });
+
+        // Real-time Metrics Fetching
+        async function fetchMetrics() {
+            try {
+                const response = await fetch('http://localhost:8000/v1/analytics/metrics');
+                const data = await response.json();
+                
+                // Update UI elements
+                document.querySelector('.fleet-card:nth-child(1) .value').textContent = data.active_agents;
+                document.querySelector('.fleet-card:nth-child(2) .value').textContent = (data.tasks_last_24h / 3600).toFixed(1) + 'k/s';
+                document.querySelector('.fleet-card:nth-child(3) .value').textContent = data.success_rate;
+                
+                const progressFill = document.querySelector('.progress-bar div');
+                progressFill.style.width = data.success_rate;
+            } catch (err) {
+                console.error("Failed to fetch metrics:", err);
+            }
+        }
+
+        // Poll every 5 seconds
+        setInterval(fetchMetrics, 5000);
+        fetchMetrics();
+</body>
+</html>

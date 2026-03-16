@@ -1,0 +1,295 @@
+:root {
+    /* Premium Palette (Dark) */
+    --ac-bg: #09090b;
+    --ac-bg-secondary: #111114;
+    --ac-card: #18181b;
+    --ac-card-hover: #212126;
+    --ac-accent: #3b82f6;
+    --ac-accent-glow: rgba(59, 130, 246, 0.5);
+    --ac-text: #f8fafc;
+    --ac-text-muted: #94a3b8;
+    --ac-border: #27272a;
+    --ac-glass: rgba(24, 24, 27, 0.7);
+    --ac-danger: #ef4444;
+    --ac-success: #10b981;
+    --ac-warning: #f59e0b;
+    --ac-sidebar-width: 260px;
+
+    /* Spacing & Borders */
+    --ac-radius: 12px;
+    --ac-radius-lg: 20px;
+    --ac-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.light-mode {
+    --ac-bg: #f8fafc;
+    --ac-bg-secondary: #f1f5f9;
+    --ac-card: #ffffff;
+    --ac-card-hover: #f1f5f9;
+    --ac-accent: #3b82f6;
+    --ac-accent-glow: rgba(59, 130, 246, 0.2);
+    --ac-text: #0f172a;
+    --ac-text-muted: #64748b;
+    --ac-border: #e2e8f0;
+    --ac-glass: rgba(255, 255, 255, 0.7);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Main Layout */
+body {
+    background-color: var(--ac-bg);
+    color: var(--ac-text);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+.layout-wrapper {
+    display: flex;
+}
+
+/* Glassmorphism Sidebar */
+.sidebar {
+    width: var(--ac-sidebar-width);
+    height: 100vh;
+    background: var(--ac-glass);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid var(--ac-border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 3rem;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--ac-accent), #60a5fa);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+}
+
+.logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--ac-text);
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-item {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    color: var(--ac-text-muted);
+    text-decoration: none;
+    transition: var(--ac-transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ac-text);
+}
+
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--ac-accent);
+}
+
+/* Main Area */
+.main-content {
+    margin-left: var(--ac-sidebar-width);
+    flex: 1;
+    padding: 2rem 3rem;
+    max-width: 1400px;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+/* Dashboard Components */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.fleet-card {
+    background: var(--ac-card);
+    border: 1px solid var(--ac-border);
+    padding: 1.5rem;
+    border-radius: var(--ac-radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    transition: var(--ac-transition);
+}
+
+.fleet-card:hover {
+    border-color: var(--ac-accent);
+    transform: translateY(-2px);
+}
+
+.fleet-card .label {
+    font-size: 0.875rem;
+    color: var(--ac-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fleet-card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ac-text);
+}
+
+.fleet-card .sparkline {
+    height: 40px;
+    width: 100%;
+}
+
+/* ACP Feed Section */
+.acp-feed-container {
+    background: var(--ac-card);
+    border: 1px solid var(--ac-border);
+    border-radius: var(--ac-radius-lg);
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+
+.acp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.acp-diagram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4rem;
+    padding: 4rem 0;
+    position: relative;
+}
+
+.agent-bubble {
+    padding: 1.5rem;
+    background: var(--ac-bg-secondary);
+    border: 1px solid var(--ac-border);
+    border-radius: var(--ac-radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 160px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: var(--ac-transition);
+    animation: bubbleGlow 4s infinite ease-in-out;
+}
+
+@keyframes bubbleGlow {
+    0%, 100% { border-color: var(--ac-border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    50% { border-color: var(--ac-accent-glow); box-shadow: 0 4px 30px var(--ac-accent-glow); }
+}
+
+.agent-bubble .icon {
+    width: 48px;
+    height: 48px;
+    background: var(--ac-accent-glow);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Incident Table */
+.incident-table-container {
+    background: var(--ac-card);
+    border: 1px solid var(--ac-border);
+    border-radius: var(--ac-radius-lg);
+    overflow: hidden;
+}
+
+.table-header {
+    padding: 1.25rem 2rem;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--ac-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 1rem 2rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--ac-text-muted);
+    border-bottom: 1px solid var(--ac-border);
+}
+
+td {
+    padding: 1.25rem 2rem;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--ac-border);
+}
+
+.status-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-tag.removed { background: rgba(239, 68, 68, 0.1); color: var(--ac-danger); }
+
+.circuit-breaker-btn {
+    background: var(--ac-danger);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+}
