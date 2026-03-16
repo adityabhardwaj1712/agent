@@ -5,9 +5,8 @@ export default async function Home() {
     fetch(`${base}/v1/analytics/metrics`, { cache: "no-store" }),
   ]);
   const healthText = await healthRes.text();
-  const metricsText = await metricsRes.text();
   const health = { ok: healthRes.ok, status: healthRes.status, body: healthText };
-  const metrics = { ok: metricsRes.ok, status: metricsRes.status, body: metricsText };
+  const metricsJson = metricsRes.ok ? await metricsRes.json() : null;
 
   return (
     <main>
@@ -19,18 +18,28 @@ export default async function Home() {
       <section className="ac-kpi-row">
         <div className="ac-card">
           <div className="ac-card-subtitle">Active agents</div>
-          <div className="ac-card-metric">142</div>
-          <div className="ac-card-foot">Simulated for UI; backend not yet counting.</div>
+          <div className="ac-card-metric">
+            {metricsJson?.active_agents ?? "—"}
+          </div>
+          <div className="ac-card-foot">From `/v1/analytics/metrics`.</div>
         </div>
         <div className="ac-card">
           <div className="ac-card-subtitle">Token velocity</div>
-          <div className="ac-card-metric">4.1k/s</div>
-          <div className="ac-card-foot">Illustrative only – hook into billing later.</div>
+          <div className="ac-card-metric">
+            {metricsJson?.tasks_last_24h
+              ? `${metricsJson.tasks_last_24h} / 24h`
+              : "—"}
+          </div>
+          <div className="ac-card-foot">Tasks processed in the last 24h.</div>
         </div>
         <div className="ac-card">
           <div className="ac-card-subtitle">Success rate</div>
-          <div className="ac-card-metric">99.8%</div>
-          <div className="ac-card-foot">Based on task status responses.</div>
+          <div className="ac-card-metric">
+            {metricsJson?.success_rate ?? "—"}
+          </div>
+          <div className="ac-card-foot">
+            Auto‑healing events: {metricsJson?.auto_healing_events ?? "—"}
+          </div>
         </div>
       </section>
 
@@ -136,7 +145,7 @@ export default async function Home() {
       <section style={{ marginTop: 18 }}>
         <div className="ac-card">
           <div className="ac-card-subtitle">Analytics snapshot</div>
-          <div className="ac-card-foot">Backend `/v1/analytics/metrics` payload.</div>
+          <div className="ac-card-foot">Raw `/v1/analytics/metrics` response.</div>
           <pre
             style={{
               marginTop: 12,
@@ -148,7 +157,7 @@ export default async function Home() {
               lineHeight: 1.4,
             }}
           >
-            {JSON.stringify(metrics, null, 2)}
+            {JSON.stringify(metricsJson, null, 2)}
           </pre>
         </div>
       </section>
