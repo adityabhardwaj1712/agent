@@ -1,21 +1,28 @@
-import time
-import random
+from app.services.model_router import select_model, call_provider
 
 class AxonService:
     @staticmethod
-    def advanced_reasoning(task_payload: str):
+    async def advanced_reasoning(task_payload: str, context: str = ""):
         """
-        AXON: Optimizes execution path based on payload analysis.
+        AXON: Optimizes execution path and executes real LLM reasoning.
         """
+        # 1. Intent Analysis (Heuristic/Lightweight)
         intent = "UNKNOWN"
         if any(w in task_payload.lower() for w in ["analyze", "review", "audit"]):
             intent = "ANALYTICAL"
         elif any(w in task_payload.lower() for w in ["create", "build", "generate"]):
             intent = "GENERATIVE"
         
-        print(f"AXON Engine: Detected {intent} intent. Synthesizing chain-of-thought...")
+        print(f"AXON Engine: Detected {intent} intent. Selecting optimal model...")
         
-        return f"AXON_REASONING_RESULT: Applied {intent} optimization strategy. Complexity score: {len(task_payload) % 10}/10."
+        # 2. Select the right model for the job
+        model_choice = select_model(task_payload)
+        
+        # 3. Execute Real LLM Completion
+        print(f"AXON Engine: Executing {model_choice.name} with context length {len(context)}...")
+        result = await call_provider(model_choice, task_payload, context)
+        
+        return result
 
     @staticmethod
     def auto_heal(error_context: str):

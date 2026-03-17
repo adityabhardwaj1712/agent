@@ -51,3 +51,35 @@ def select_model(payload: str) -> ModelChoice:
         
     return ModelChoice(name="gpt-4o-mini", reason="standard task fallback", provider="OpenAI")
 
+async def call_provider(choice: ModelChoice, prompt: str, context: str = "") -> str:
+    """Execute the actual LLM call based on the selected provider."""
+    system_prompt = f"You are an autonomous agent within the AgentCloud ecosystem. Use the provided context to fulfill the user request concisely.\n\nCONTEXT:\n{context}"
+    
+    try:
+        if choice.provider == "OpenAI":
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            response = client.chat.completions.create(
+                model=choice.name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content or ""
+            
+        elif choice.provider == "Anthropic":
+            # Stub for Claude (Phase 7 expansion)
+            logger.info(f"Anthropic provider selected but currently stubbed: {choice.name}")
+            return f"[Anthropic-Stub] Completed: {prompt[:30]}..."
+            
+        elif choice.provider == "Google":
+            # Stub for Gemini (Phase 7 expansion)
+            logger.info(f"Google provider selected but currently stubbed: {choice.name}")
+            return f"[Google-Stub] Completed: {prompt[:30]}..."
+            
+        else:
+            return f"[Unknown-Provider] Simulated response for: {prompt[:30]}..."
+            
+    except Exception as e:
+        logger.error(f"LLM Call failed for {choice.provider}: {e}")
+        return f"Error: Failed to generate response via {choice.provider}."

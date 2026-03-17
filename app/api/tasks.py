@@ -17,7 +17,7 @@ async def run(
     db: AsyncSession = Depends(get_db),
     current: CurrentAgent = Depends(require_scopes([Scope.RUN_TASKS])),
 ):
-    result = send_task(data)
+    result = await send_task(db, data)
     TASKS_SUBMITTED_TOTAL.inc()
     await log_audit(db, request=request, agent_id=current.agent_id, action="tasks.run", status_code=200)
     return result
@@ -30,7 +30,7 @@ async def status(
     db: AsyncSession = Depends(get_db),
     current: CurrentAgent = Depends(require_scopes([Scope.RUN_TASKS])),
 ):
-    result = get_task_status(task_id)
+    result = await get_task_status(db, task_id)
     TASK_STATUS_TOTAL.labels(status=result.get("status", "unknown")).inc()
     await log_audit(db, request=request, agent_id=current.agent_id, action="tasks.status", status_code=200)
     return result

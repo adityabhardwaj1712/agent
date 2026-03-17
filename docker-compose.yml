@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: celery -A app.workers.celery_worker worker --loglevel=info
+    command: python -m app.workers.agent_worker
     env_file:
       - .env
     environment:

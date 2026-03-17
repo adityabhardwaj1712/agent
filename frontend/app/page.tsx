@@ -1,12 +1,16 @@
+import ProtocolGraph from "./components/ProtocolGraph";
+
 export default async function Home() {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-  const [healthRes, metricsRes] = await Promise.all([
+  const [healthRes, metricsRes, tracesRes] = await Promise.all([
     fetch(`${base}/`, { cache: "no-store" }),
     fetch(`${base}/v1/analytics/metrics`, { cache: "no-store" }),
+    fetch(`${base}/v1/traces`, { cache: "no-store" }),
   ]);
   const healthText = await healthRes.text();
   const health = { ok: healthRes.ok, status: healthRes.status, body: healthText };
   const metricsJson = metricsRes.ok ? await metricsRes.json() : null;
+  const tracesJson = tracesRes.ok ? await tracesRes.json() : [];
 
   return (
     <main>
@@ -16,30 +20,21 @@ export default async function Home() {
       </p>
 
       <section className="ac-kpi-row">
+        {/* ... existing KPIs ... */}
         <div className="ac-card">
           <div className="ac-card-subtitle">Active agents</div>
-          <div className="ac-card-metric">
-            {metricsJson?.active_agents ?? "—"}
-          </div>
+          <div className="ac-card-metric">{metricsJson?.active_agents ?? "—"}</div>
           <div className="ac-card-foot">From `/v1/analytics/metrics`.</div>
         </div>
         <div className="ac-card">
           <div className="ac-card-subtitle">Token velocity</div>
-          <div className="ac-card-metric">
-            {metricsJson?.tasks_last_24h
-              ? `${metricsJson.tasks_last_24h} / 24h`
-              : "—"}
-          </div>
+          <div className="ac-card-metric">{metricsJson?.tasks_last_24h ? `${metricsJson.tasks_last_24h} / 24h` : "—"}</div>
           <div className="ac-card-foot">Tasks processed in the last 24h.</div>
         </div>
         <div className="ac-card">
           <div className="ac-card-subtitle">Success rate</div>
-          <div className="ac-card-metric">
-            {metricsJson?.success_rate ?? "—"}
-          </div>
-          <div className="ac-card-foot">
-            Auto‑healing events: {metricsJson?.auto_healing_events ?? "—"}
-          </div>
+          <div className="ac-card-metric">{metricsJson?.success_rate ?? "—"}</div>
+          <div className="ac-card-foot">Auto‑healing events: {metricsJson?.auto_healing_events ?? "—"}</div>
         </div>
       </section>
 
@@ -54,26 +49,11 @@ export default async function Home() {
                 </div>
                 <div className="ac-pill">Real-time</div>
               </div>
-              <div className="ac-graph-row">
-                <div className="ac-node">
-                  <div className="ac-node-badge">A</div>
-                  <div className="ac-node-label">Source agent</div>
-                  <div className="ac-node-title">Agent: Claude-3.5</div>
-                </div>
-                <div className="ac-connector" />
-                <div className="ac-node">
-                  <div className="ac-node-badge">T</div>
-                  <div className="ac-node-label">Task</div>
-                  <div className="ac-node-title">Task: Analyse document</div>
-                </div>
-                <div className="ac-connector" />
-                <div className="ac-node">
-                  <div className="ac-node-badge">G</div>
-                  <div className="ac-node-label">Target agent</div>
-                  <div className="ac-node-title">Agent: GPT-4o</div>
-                </div>
+              <div className="mt-6">
+                <ProtocolGraph events={tracesJson} />
               </div>
             </div>
+            {/* ... rest of the cards ... */}
 
             <div className="ac-fleet-card">
               <div className="ac-incidents-header">
