@@ -1,123 +1,75 @@
+'use client';
+
+import React, { useState, useEffect } from "react";
 import ProtocolGraph from "./components/ProtocolGraph";
+import KPIGrid from "./components/KPIGrid";
+import IncidentTimeline from "./components/IncidentTimeline";
+import TaskTable from "./components/TaskTable";
+import DraggableWidget from "./components/DraggableWidget";
 
-export default async function Home() {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+export default function Home() {
+  const [widgets, setWidgets] = useState<string[]>(['kpi', 'graph', 'tasks']);
+  const [traces, setTraces] = useState<any[]>([]);
 
-  let pulse = { active_agents: 142, token_velocity: "4.1k/s", success_rate: "99.8%", success_rate_numeric: 99.8 };
-  let incidents: any[] = [];
-  let traces: any[] = [];
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    fetch(`${base}/v1/traces`, { cache: "no-store" })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setTraces(data))
+      .catch(() => {});
+  }, []);
 
-  try {
-    const [pulseRes, incidentsRes, tracesRes] = await Promise.all([
-      fetch(`${base}/v1/analytics/fleet-pulse`, { cache: "no-store" }).catch(() => null),
-      fetch(`${base}/v1/analytics/incidents`, { cache: "no-store" }).catch(() => null),
-      fetch(`${base}/v1/traces`, { cache: "no-store" }).catch(() => null),
-    ]);
-
-    if (pulseRes?.ok) pulse = await pulseRes.json();
-    if (incidentsRes?.ok) incidents = await incidentsRes.json();
-    if (tracesRes?.ok) traces = await tracesRes.json();
-  } catch (e) {
-    // Use fallback data
-  }
-
-  // Fallback incidents
-  if (incidents.length === 0) {
-    incidents = [
-      { agent: "Agent: Claude-3.5", task: "Analyze Document", seen: "1 days ago", status: "Removed" },
-      { agent: "Agent: GPT-4o", task: "Analyze Document", seen: "1 days ago", status: "Removed" },
-    ];
-  }
+  const handleReorder = (draggedId: string, targetId: string) => {
+    setWidgets((prev: string[]) => {
+      const newWidgets = [...prev];
+      const draggedIndex = newWidgets.indexOf(draggedId);
+      const targetIndex = newWidgets.indexOf(targetId);
+      if (draggedIndex === -1 || targetIndex === -1) return prev;
+      newWidgets.splice(draggedIndex, 1);
+      newWidgets.splice(targetIndex, 0, draggedId);
+      return newWidgets;
+    });
+  };
 
   return (
-    <main>
-      {/* ═══════════ FLEET PULSE ═══════════ */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h2 className="ac-section-title">Fleet Pulse</h2>
-        <div className="ac-section-badge">
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
-          #10A5FF
-        </div>
-      </div>
-
-      <section className="ac-kpi-row">
-        {/* Active Agents */}
-        <div className="ac-kpi-card">
-          <div className="ac-kpi-label">Active Agents</div>
-          <div className="ac-kpi-value">
-            {pulse.active_agents}
-            <span className="ac-kpi-dot" />
-          </div>
-        </div>
-
-        {/* Token Velocity */}
-        <div className="ac-kpi-card">
-          <div className="ac-kpi-label">Token Velocity</div>
-          <div className="ac-kpi-value">{pulse.token_velocity}</div>
-        </div>
-
-        {/* Success Rate */}
-        <div className="ac-kpi-card">
-          <div className="ac-kpi-label">Success Rate</div>
-          <div className="ac-kpi-value">
-            {pulse.success_rate}
-            <span className="ac-kpi-dot" />
-          </div>
-          <div className="ac-kpi-bar">
-            <div className="ac-kpi-bar-fill" style={{ width: `${pulse.success_rate_numeric}%` }} />
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ ACTIVE FLEET PULSE (ACP) ═══════════ */}
-      <div className="ac-fleet-card">
-        <div className="ac-fleet-card-header">
-          <div>
-            <div className="ac-card-subtitle">Active Fleet Pulse</div>
-            <div className="ac-card-foot">Agent Communication Protocol (ACP) Live Feed</div>
-          </div>
-          <div className="ac-pill">Real-time</div>
-        </div>
-        <div className="ac-graph-area">
-          <ProtocolGraph events={traces} />
-        </div>
-      </div>
-
-      {/* ═══════════ INCIDENT MANAGEMENT ═══════════ */}
-      <div className="ac-fleet-card" style={{ marginTop: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div>
-            <div className="ac-card-subtitle">Agent Incident Management</div>
-            <div className="ac-card-foot">Recent anomalies and mitigations.</div>
-          </div>
-          <div className="ac-badge-danger">Circuit Breaker</div>
-        </div>
-
-        <table className="ac-table">
-          <thead>
-            <tr>
-              <th>Anomalous Agents</th>
-              <th>Task</th>
-              <th>Status</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {incidents.map((inc: any, idx: number) => (
-              <tr key={idx}>
-                <td>{inc.agent}</td>
-                <td>{inc.task}</td>
-                <td>{inc.seen}</td>
-                <td>
-                  <span className={inc.status === "Removed" ? "ac-pill-danger" : "ac-pill-warning"}>
-                    {inc.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </main>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {widgets.map((widgetId: string) => {
+        if (widgetId === 'kpi') {
+          return (
+            <DraggableWidget key="kpi" id="kpi" onReorder={handleReorder}>
+              <KPIGrid />
+            </DraggableWidget>
+          );
+        }
+        if (widgetId === 'graph') {
+          return (
+            <DraggableWidget key="graph" id="graph" onReorder={handleReorder}>
+              <div className="ac-dashboard-row">
+                <div className="ac-widget" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div className="ac-widget-title" style={{ padding: '24px 24px 0 24px' }}>
+                     <span>Live Agent Collaboration</span>
+                     <div className="ac-pill">ACP Protocol</div>
+                  </div>
+                  <div style={{ height: '320px' }}>
+                    <ProtocolGraph events={traces} />
+                  </div>
+                </div>
+                <IncidentTimeline />
+              </div>
+            </DraggableWidget>
+          );
+        }
+        if (widgetId === 'tasks') {
+          return (
+            <DraggableWidget key="tasks" id="tasks" onReorder={handleReorder}>
+              <div style={{ marginBottom: '20px' }}>
+                <TaskTable />
+              </div>
+            </DraggableWidget>
+          );
+        }
+        return null;
+      })}
+    </div>
   );
 }

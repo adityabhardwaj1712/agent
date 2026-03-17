@@ -1,32 +1,27 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from 'react';
+import { Sun, Moon } from 'lucide-react';
 
-type Theme = "dark" | "light";
-
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+export default function ThemeToggle() {
+  const [isLight, setIsLight] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = (window.localStorage.getItem("agentcloud-theme") as Theme | null) || "dark";
-    document.documentElement.setAttribute("data-theme", saved);
-    setTheme(saved);
-  }, []);
-
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("agentcloud-theme", next);
-      document.documentElement.setAttribute("data-theme", next);
+    const root = window.document.documentElement;
+    if (isLight) {
+      root.classList.add('light-mode');
+    } else {
+      root.classList.remove('light-mode');
     }
-  }
+  }, [isLight]);
 
   return (
-    <button type="button" className="ac-theme-toggle" onClick={toggle}>
-      <span>{theme === "dark" ? "🌙" : "☀️"}</span> {theme === "dark" ? "Dark" : "Light"} mode
+    <button 
+      onClick={() => setIsLight(!isLight)}
+      className="ac-header-btn"
+      title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+    >
+      {isLight ? <Moon size={18} /> : <Sun size={18} />}
     </button>
   );
 }
-

@@ -7,12 +7,13 @@ interface ProtocolGraphProps {
 
 export default function ProtocolGraph({ events }: ProtocolGraphProps) {
   // Build node data from events or use fallback
-  const agents: { id: string; label: string }[] = [];
-  const tasks: { id: string; label: string }[] = [];
+  interface Node { id: string; label: string; }
+  const agents: Node[] = [];
+  const tasks: Node[] = [];
   const seenAgents = new Set<string>();
   const seenTasks = new Set<string>();
 
-  const eventsSlice = events.slice(0, 6);
+  const eventsSlice = (events || []).slice(0, 6);
 
   if (eventsSlice.length > 0) {
     eventsSlice.forEach((event) => {
