@@ -15,5 +15,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Run migrations, then uvicorn by default
-CMD ["sh", "-c", "PYTHONPATH=/app alembic upgrade head && PYTHONPATH=/app uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Set up entrypoint
+RUN chmod +x /app/docker/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker/docker-entrypoint.sh"]
+
+# Default command
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

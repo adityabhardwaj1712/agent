@@ -1,11 +1,12 @@
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from ..models.agent import Agent
 from ..core.auth import create_token
 from ..core.scopes import parse_scopes
 from ..schemas.agent_schema import AgentCreate
 
-def register_agent(db: Session, data: AgentCreate):
+async def register_agent(db: AsyncSession, data: AgentCreate):
     agent_id = str(uuid.uuid4())
     db_agent = Agent(
         agent_id=agent_id,
@@ -13,8 +14,8 @@ def register_agent(db: Session, data: AgentCreate):
         owner_id=data.owner_id
     )
     db.add(db_agent)
-    db.commit()
-    db.refresh(db_agent)
+    await db.commit()
+    await db.refresh(db_agent)
     
     scopes = sorted(list(parse_scopes(getattr(db_agent, "scopes", None))))
     token = create_token(agent_id, scopes=scopes)
@@ -27,5 +28,21 @@ def register_agent(db: Session, data: AgentCreate):
         "token": token,
     }
 
-def get_agent(db: Session, agent_id: str):
-    return db.query(Agent).filter(Agent.agent_id == agent_id).first()
+async def get_agent(db: AsyncSession, agent_id: str):
+    result = await db.execute(select(Agent).filter(Agent.agent_id == agent_id))
+    return result.scalars().first()
+
+async def list_agents(db: AsyncSession, owner_id: str = None):
+    query = select(Agent)
+    if owner_id:
+        query = query.filter(Agent.owner_id == owner_id)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+async def delete_agent(db: AsyncSession, agent_id: str):
+    agent = await get_agent(db, agent_id)
+    if agent:
+        await db.delete(agent)
+        await db.commit()
+        return True
+    return False

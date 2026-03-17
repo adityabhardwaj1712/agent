@@ -1,11 +1,12 @@
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy import text
 from ..models.memory import Memory
 from ..utils.embeddings import embed
 from ..schemas.memory_schema import MemoryCreate
 
-def write_memory(db: Session, data: MemoryCreate):
+async def write_memory(db: AsyncSession, data: MemoryCreate):
     memory_id = str(uuid.uuid4())
     vector = embed(data.content)
     
@@ -16,17 +17,21 @@ def write_memory(db: Session, data: MemoryCreate):
         embedding=vector,
     )
     db.add(db_memory)
-    db.commit()
-    db.refresh(db_memory)
+    await db.commit()
+    await db.refresh(db_memory)
     
     return {"status": "stored", "memory_id": memory_id}
 
-def search_memory(db: Session, agent_id: str, query: str):
-    q = db.query(Memory).filter(Memory.agent_id == agent_id)
+async def search_memory(db: AsyncSession, agent_id: str, query: str):
+    qvec = embed(query)
+    # Using execute(select(...)) for async compatibility
+    stmt = select(Memory).filter(Memory.agent_id == agent_id)
     try:
-        qvec = embed(query)
         # Order by vector distance (pgvector)
-        q = q.order_by(Memory.embedding.l2_distance(qvec))
-        return q.limit(5).all()
+        stmt = stmt.order_by(Memory.embedding.l2_distance(qvec))
     except Exception:
-        return q.filter(Memory.content.contains(query)).limit(5).all()
+        # Fallback to content containment
+        stmt = stmt.filter(Memory.content.contains(query))
+    
+    result = await db.execute(stmt.limit(5))
+    return result.scalars().all()

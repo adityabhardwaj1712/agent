@@ -1,5 +1,7 @@
+import React from "react";
 import "./globals.css";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { SidebarNav } from "./components/SidebarNav";
 
 export default function RootLayout({
   children,
@@ -15,26 +17,7 @@ export default function RootLayout({
               <div className="ac-sidebar-logo-mark">AC</div>
               <div className="ac-sidebar-logo-text">AgentCloud</div>
             </div>
-            <nav className="ac-nav-vertical">
-              <a href="/" className="ac-nav-item ac-nav-item-active">
-                Fleet Overview
-              </a>
-              <a href="/agents" className="ac-nav-item">
-                Agent Registry
-              </a>
-              <a href="/tasks" className="ac-nav-item">
-                Workflow Builder
-              </a>
-              <a href="/protocol" className="ac-nav-item">
-                ACP
-              </a>
-              <a href="/analytics" className="ac-nav-item">
-                Analytics
-              </a>
-              <a href="/settings" className="ac-nav-item">
-                Settings
-              </a>
-            </nav>
+            <SidebarNav />
             <div className="ac-sidebar-footer">v1.0 · Internal preview</div>
           </aside>
           <div className="ac-main">

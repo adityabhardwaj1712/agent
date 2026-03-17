@@ -1,35 +1,47 @@
-from __future__ import annotations
-
-"""
-Simple model routing layer.
-
-For now this is heuristic and logging-only, but the public API is designed so
-that a real implementation (OpenAI, Claude, Gemini, local models, etc.) can
-drop in later without changing callers.
-"""
-
+import os
+import logging
 from dataclasses import dataclass
+from typing import Optional
+from openai import OpenAI
+from ..config import settings
 
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ModelChoice:
     name: str
     reason: str
 
-
 def select_model(payload: str) -> ModelChoice:
-    """Pick a model name based on the task payload."""
+    """Pick a model name based on the task payload, with LLM fallback."""
     text = (payload or "").lower()
-
-    if any(k in text for k in ("code", "bug", "refactor", "function", "class")):
-        return ModelChoice(name="gpt-4o", reason="coding-related task")
-
-    if any(k in text for k in ("summarize", "article", "blog", "email", "write")):
-        return ModelChoice(name="claude-3.5", reason="writing / summarization task")
-
+    
+    # 1. Heuristic Override (Fast & Cheap)
     if any(k in text for k in ("cheap", "bulk", "batch")):
-        return ModelChoice(name="llama-3.1-8b", reason="cost-optimised batch task")
+        return ModelChoice(name="gpt-4o-mini", reason="cost-optimised batch task")
 
-    # Default smart choice
-    return ModelChoice(name="gpt-4o-mini", reason="generic task")
+    # 2. LLM-based Routing (Precise)
+    client = OpenAI(api_key=settings.OPENAI_API_KEY) if getattr(settings, "OPENAI_API_KEY", None) else None
+    
+    if client:
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "Route the following task to either 'gpt-4o' (expert) or 'gpt-4o-mini' (standard). Return ONLY the model name."},
+                    {"role": "user", "content": payload}
+                ],
+                max_tokens=10
+            )
+            model_name = response.choices[0].message.content.strip().lower()
+            if model_name in ["gpt-4o", "gpt-4o-mini"]:
+                return ModelChoice(name=model_name, reason="LLM-based smart routing")
+        except Exception as e:
+            logger.error(f"LLM Routing failed: {e}")
+
+    # 3. Static Fallback Logic
+    if any(k in text for k in ("code", "bug", "refactor", "complex", "reason")):
+        return ModelChoice(name="gpt-4o", reason="coding or complex reasoning task")
+        
+    return ModelChoice(name="gpt-4o-mini", reason="standard task fallback")
 

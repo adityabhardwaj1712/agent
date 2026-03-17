@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from ..core.deps import require_scopes
 from ..core.scopes import Scope, CurrentAgent
@@ -12,26 +12,26 @@ from ..core.metrics import MEMORY_WRITES_TOTAL, MEMORY_SEARCHES_TOTAL
 router = APIRouter(prefix="/memory")
 
 @router.post("/write")
-def write(
+async def write(
     request: Request,
     data: MemoryCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current: CurrentAgent = Depends(require_scopes([Scope.WRITE_MEMORY])),
 ):
-    result = write_memory(db, data)
+    result = await write_memory(db, data)
     MEMORY_WRITES_TOTAL.inc()
-    log_audit(db, request=request, agent_id=current.agent_id, action="memory.write", status_code=200)
+    await log_audit(db, request=request, agent_id=current.agent_id, action="memory.write", status_code=200)
     return result
 
 @router.get("/search", response_model=List[MemoryResponse])
-def search(
+async def search(
     request: Request,
     q: str,
-    agent_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current: CurrentAgent = Depends(require_scopes([Scope.READ_MEMORY])),
 ):
-    result = search_memory(db, agent_id, q)
+    # Enforce isolation: search only current agent's memories
+    result = await search_memory(db, current.agent_id, q)
     MEMORY_SEARCHES_TOTAL.inc()
-    log_audit(db, request=request, agent_id=current.agent_id, action="memory.search", status_code=200)
+    await log_audit(db, request=request, agent_id=current.agent_id, action="memory.search", status_code=200)
     return result

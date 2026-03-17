@@ -1,13 +1,13 @@
 import json
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Request
 
 from ..models.audit_log import AuditLog
 
 
-def log_audit(
-    db: Session,
+async def log_audit(
+    db: AsyncSession,
     *,
     request: Request,
     agent_id: str | None,
@@ -26,5 +26,5 @@ def log_audit(
             detail=json.dumps(detail) if detail is not None else None,
         )
     )
-    db.commit()
+    await db.commit()
 

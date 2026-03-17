@@ -2,6 +2,8 @@ fastapi
 uvicorn
 sqlalchemy
 psycopg2-binary
+asyncpg
+cryptography
 redis
 celery
 pyjwt
@@ -14,3 +16,4 @@ alembic
 prometheus-client
 pytest
 httpx
+slowapi
