@@ -1,72 +1,200 @@
 "use client";
-import React, { useMemo } from 'react';
-import ReactFlow, { Background, Controls, Edge, Node, MarkerType } from 'reactflow';
-import 'reactflow/dist/style.css';
+import React from "react";
 
 interface ProtocolGraphProps {
   events: any[];
 }
 
 export default function ProtocolGraph({ events }: ProtocolGraphProps) {
-  // Extract unique agents and tasks from events to build a simple graph
-  const nodes: Node[] = useMemo(() => {
-    const agentNodes: Node[] = [];
-    const taskNodes: Node[] = [];
-    const seenAgents = new Set<string>();
-    const seenTasks = new Set<string>();
+  // Build node data from events or use fallback
+  const agents: { id: string; label: string }[] = [];
+  const tasks: { id: string; label: string }[] = [];
+  const seenAgents = new Set<string>();
+  const seenTasks = new Set<string>();
 
-    events.slice(0, 5).forEach((event, index) => {
+  const eventsSlice = events.slice(0, 6);
+
+  if (eventsSlice.length > 0) {
+    eventsSlice.forEach((event) => {
       const agentId = event.agent_id || "System";
       const taskId = event.task_id || "Global";
-
       if (!seenAgents.has(agentId)) {
-        agentNodes.push({
-          id: `agent-${agentId}`,
-          data: { label: `Agent: ${agentId.slice(0, 8)}` },
-          position: { x: 50, y: index * 100 + 50 },
-          style: { background: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '8px' }
-        });
+        agents.push({ id: agentId, label: `Agent: ${agentId.slice(0, 10)}` });
         seenAgents.add(agentId);
       }
-
       if (!seenTasks.has(taskId)) {
-        taskNodes.push({
-          id: `task-${taskId}`,
-          data: { label: `Task: ${event.event_type}` },
-          position: { x: 300, y: index * 100 + 50 },
-          style: { background: '#0f172a', color: '#38bdf8', border: '1px solid #0ea5e9', borderRadius: '8px' }
-        });
+        tasks.push({ id: taskId, label: event.step || event.event_type || "Process" });
         seenTasks.add(taskId);
       }
     });
-
-    return [...agentNodes, ...taskNodes];
-  }, [events]);
-
-  const edges: Edge[] = useMemo(() => {
-    const graphEdges: Edge[] = [];
-    events.slice(0, 5).forEach((event) => {
-      const agentId = event.agent_id || "System";
-      const taskId = event.task_id || "Global";
-      
-      graphEdges.push({
-        id: `e-${agentId}-${taskId}`,
-        source: `agent-${agentId}`,
-        target: `task-${taskId}`,
-        animated: true,
-        style: { stroke: '#38bdf8' },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#38bdf8' }
-      });
-    });
-    return graphEdges;
-  }, [events]);
+  } else {
+    agents.push({ id: "claude", label: "Agent: Claude-3.5" });
+    agents.push({ id: "gpt4o", label: "Agent: GPT-4o" });
+    tasks.push({ id: "t1", label: "Task: Analyze Document" });
+  }
 
   return (
-    <div style={{ height: '300px', width: '100%', background: 'rgba(15,23,42,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-      <ReactFlow nodes={nodes} edges={edges} fitView>
-        <Background color="#334155" gap={20} />
-        <Controls />
-      </ReactFlow>
+    <div style={{
+      height: "100%",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 24,
+      padding: "24px 32px",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Background grid */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: "radial-gradient(circle, rgba(30,41,59,0.4) 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+      }} />
+
+      {/* Agent Nodes */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, zIndex: 1 }}>
+        {agents.map((agent) => (
+          <div key={agent.id} style={{
+            background: "#171A21",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 10,
+            padding: "12px 20px",
+            color: "#F0F2F5",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 160,
+          }}>
+            <span style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: 700,
+            }}>AI</span>
+            [{agent.label}]
+          </div>
+        ))}
+      </div>
+
+      {/* Connection Lines */}
+      <svg width="80" height="120" style={{ zIndex: 1, overflow: "visible" }}>
+        <defs>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#38BDF8" />
+          </linearGradient>
+        </defs>
+        {agents.map((_, i) => (
+          <g key={i}>
+            <line
+              x1="0"
+              y1={30 + i * 52}
+              x2="80"
+              y2={60}
+              stroke="url(#lineGrad)"
+              strokeWidth="2"
+              strokeDasharray="6 4"
+              opacity="0.6"
+            />
+            <circle cx="80" cy="60" r="3" fill="#38BDF8" opacity="0.8">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+        ))}
+      </svg>
+
+      {/* Task Nodes */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, zIndex: 1 }}>
+        {tasks.map((task) => (
+          <div key={task.id} style={{
+            background: "#0F172A",
+            border: "1px solid rgba(56,189,248,0.25)",
+            borderRadius: 10,
+            padding: "12px 20px",
+            color: "#38BDF8",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 180,
+          }}>
+            <span style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: "rgba(56,189,248,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+            }}>📋</span>
+            [{task.label}]
+          </div>
+        ))}
+      </div>
+
+      {/* Right connection */}
+      <svg width="80" height="120" style={{ zIndex: 1, overflow: "visible" }}>
+        {tasks.map((_, i) => (
+          <g key={i}>
+            <line
+              x1="0"
+              y1={30 + i * 52}
+              x2="80"
+              y2={60}
+              stroke="url(#lineGrad)"
+              strokeWidth="2"
+              strokeDasharray="6 4"
+              opacity="0.6"
+            />
+            <circle cx="80" cy="60" r="3" fill="#38BDF8" opacity="0.8">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" begin="0.5s" />
+            </circle>
+          </g>
+        ))}
+      </svg>
+
+      {/* Output Agents */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, zIndex: 1 }}>
+        {agents.slice(0, 2).map((agent, i) => (
+          <div key={`out-${agent.id}`} style={{
+            background: "#171A21",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 10,
+            padding: "12px 20px",
+            color: "#F0F2F5",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 160,
+          }}>
+            <span style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: i === 0 ? "linear-gradient(135deg, #10B981, #22C55E)" : "linear-gradient(135deg, #F59E0B, #EF4444)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: 700,
+            }}>AI</span>
+            [{agent.label}]
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

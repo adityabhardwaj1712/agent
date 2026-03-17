@@ -1,16 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { name: "Overview", href: "/", icon: "○" },
-  { name: "Agents", href: "/agents", icon: "□" },
-  { name: "Leaderboard", href: "/leaderboard", icon: "⬡" },
-  { name: "Execution Monitor", href: "/monitor", icon: "△" },
-  { name: "Trace Explorer", href: "/traces", icon: "⬢" },
-  { name: "Memory", href: "/memory", icon: "⊡" },
-  { name: "Analytics", href: "/analytics", icon: "📈" },
+  { name: "Fleet Overview", href: "/", icon: "⚡" },
+  { name: "Agent Registry", href: "/agents", icon: "🤖" },
+  { name: "Workflow Builder", href: "/monitor", icon: "🔧" },
+  { name: "Marketplace", href: "/leaderboard", icon: "🏪" },
+  { name: "Analytics", href: "/analytics", icon: "📊" },
+  { name: "Settings", href: "/traces", icon: "⚙️" },
 ];
 
 export function SidebarNav() {
@@ -18,7 +17,6 @@ export function SidebarNav() {
 
   return (
     <nav className="ac-nav-vertical">
-      <div className="text-[10px] font-bold text-tertiary uppercase tracking-widest mb-4 ml-4">Command</div>
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -27,7 +25,7 @@ export function SidebarNav() {
             href={item.href}
             className={`ac-nav-item ${isActive ? "ac-nav-item-active" : ""}`}
           >
-            <span className="text-lg opacity-80">{item.icon}</span>
+            <span className="ac-nav-icon">{item.icon}</span>
             {item.name}
           </Link>
         );

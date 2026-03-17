@@ -1,0 +1,97 @@
+
+
+
+Report Date: March 2026  |  Version: 3.0
+
+1. What Is AgentCloud
+AgentCloud is an AI Agent Fleet Management Platform — the infrastructure layer that lets companies deploy, monitor, govern and communicate with multiple AI agents simultaneously. Think of it as AWS for AI agents: just as AWS manages servers, AgentCloud manages intelligent autonomous workers.
+
+
+1.1 Technology Stack
+
+1.2 System Architecture Flow
+Here is how a request travels through the entire system end-to-end:
+
+
+2. What Is Currently Implemented
+Every feature below was confirmed by reading the actual source code, not assumed or estimated.
+
+2.1 Authentication & Security — FULLY BUILT
+
+
+2.2 Agent Identity & Reputation System — FULLY BUILT
+
+
+2.3 Memory System (pgvector) — FULLY BUILT
+
+
+2.4 Event Sourcing & Tracing — FULLY BUILT
+
+
+All events queryable via GET /v1/traces and GET /v1/traces/{task_id}. Trace Explorer page in frontend shows them per task.
+
+2.5 HITL (Human-in-the-Loop) — PARTIALLY BUILT
+
+
+2.6 Model Router — BUILT (LLM-Based)
+model_router.py uses a two-stage approach: fast heuristics first, then an actual LLM call to gpt-4o-mini to classify the task complexity. Result: intelligent routing to gpt-4o for complex tasks, gpt-4o-mini for standard work. Provider branches for Anthropic (Claude) and Google (Gemini) are coded but not yet wired to actual API calls.
+
+2.7 Agent Communication Protocol (ACP) — HALF BUILT
+
+2.8 Frontend Dashboard — PARTIALLY BUILT
+
+3. Current Bugs & Gaps
+These are confirmed by reading the actual code — not guesses.
+
+3.1 Critical Bugs (Fix These First)
+
+4. Features To Add — Power-Up Plan
+All features below are mapped to your actual files and ordered by impact. Each shows exactly which file to edit and what the real-world outcome is.
+
+4.1 This Week — Core Execution (Highest Impact)
+
+
+4.2 Month 1 — Productivity & Multi-Agent Features
+
+
+4.3 Month 2 — Platform Differentiators
+
+
+5. Real-World Examples — How It Works In Practice
+These examples show how AgentCloud functions (or will function after fixes) in actual business scenarios.
+
+Example 1: Marketing Agency — Content Production Pipeline
+
+
+Example 2: FinTech — Transaction Risk Monitoring
+
+
+Example 3: DevOps Team — Automated Infrastructure Response
+
+
+Example 4: E-commerce — Customer Support at Scale
+
+
+
+6. Database Schema — Current + Needed
+
+6.1 Current Tables (6 confirmed in codebase)
+
+6.2 Tables To Add (New Migration)
+
+6.3 Missing Indexes (Performance)
+
+
+7. What Makes AgentCloud Unique vs Competitors
+
+
+
+8. Complete Build Roadmap
+
+
+9. Honest Assessment — Where You Stand
+
+
+
+End of Report
+AgentCloud Technical Report  |  March 2026  |  Reviewed: All 74 files

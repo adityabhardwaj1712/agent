@@ -10,6 +10,7 @@ from app.services.axon_service import AxonService
 from app.services.event_store import log_event
 from app.services.quality import score_output
 from app.services.reputation import update_reputation
+from app.services.trace_service import log_trace as axon_trace
 from app.models.approval import ApprovalRequest
 from app.models.task import Task
 
@@ -61,19 +62,87 @@ async def run_worker():
                     await log_event(db, "HITL_Intercepted", agent_id=agent_id_str, task_id=task_id, payload={"reason": "dangerous_keyword", "content": payload})
                     await update_reputation(db, agent_id_str, success=False, task_id=task_id)
                     continue
-
                 # 2. Load context from memory
                 await log_event(db, "MemorySearchStarted", agent_id=agent_id_str, task_id=task_id)
+                await axon_trace(db, task_id, agent_id_str, step="memory_search", input_data={"query": payload})
                 context = ""
                 if agent_id:
                     memories = await search_memory(db, str(agent_id), payload)
                     context = "\n".join([m.content for m in memories])
                 
                 await log_event(db, "MemorySearchCompleted", agent_id=agent_id_str, task_id=task_id, payload={"context_len": len(context)})
+                await axon_trace(db, task_id, agent_id_str, step="memory_complete", output_data={"context_len": len(context)})
 
-                # 3. Select model & Execute Real LLM Call using Axon engine (Phase 10)
+                # 3. Select model & Execute Real LLM Call using Axon engine (Phase 10 & 13)
                 await log_event(db, "ThinkingStarted", agent_id=agent_id_str, task_id=task_id)
-                result_str = await AxonService.advanced_reasoning(payload, context)
+                await axon_trace(db, task_id, agent_id_str, step="axon_reasoning_start")
+                
+                from app.models.tool import Tool
+                from app.services.tool_executor import ToolExecutor
+                from sqlalchemy.future import select
+                
+                tools_result = await db.execute(select(Tool).where(Tool.is_enabled == True))
+                available_tools = tools_result.scalars().all()
+                openai_tools = [t.to_openai_tool() for t in available_tools] if available_tools else None
+                
+                system_prompt = f"You are an autonomous agent within the AgentCloud ecosystem. Use the provided context to fulfill the user request concisely.\n\nCONTEXT:\n{context}"
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": payload}
+                ]
+                
+                max_iterations = 5
+                final_result = ""
+                iteration = 0
+                
+                while iteration < max_iterations:
+                    iteration += 1
+                    raw_result, tool_calls, reasoning_meta = await AxonService.advanced_reasoning(
+                        task_payload=payload, 
+                        context=context, 
+                        tools=openai_tools, 
+                        messages=messages
+                    )
+                    
+                    if not tool_calls:
+                        final_result = (raw_result or "") + reasoning_meta
+                        await axon_trace(db, task_id, agent_id_str, step="axon_reasoning_complete", output_data={"result_preview": final_result[:100]})
+                        break
+                        
+                    # Handle tool calls
+                    # Workaround for Pydantic v2 serialization of OpenAI types
+                    import json
+                    try:
+                        serialized_tool_calls = [json.loads(tc.model_dump_json()) for tc in tool_calls]
+                    except Exception:
+                        serialized_tool_calls = tool_calls
+                        
+                    messages.append({
+                        "role": "assistant",
+                        "content": raw_result or "",
+                        "tool_calls": serialized_tool_calls
+                    })
+                    
+                    for tc in tool_calls:
+                        tool_name = tc.function.name
+                        tool_args = tc.function.arguments
+                        await axon_trace(db, task_id, agent_id_str, step=f"tool_execution_{tool_name}", input_data={"args": tool_args})
+                        
+                        tool_result_str = await ToolExecutor.execute(tool_name, tool_args)
+                        
+                        await axon_trace(db, task_id, agent_id_str, step=f"tool_result_{tool_name}", output_data={"result": tool_result_str[:200]})
+                        
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "name": tool_name,
+                            "content": tool_result_str
+                        })
+                else:
+                    final_result = "AXON Guard: Terminated due to excessive tool iterations (Max 5)."
+                    await axon_trace(db, task_id, agent_id_str, step="axon_max_iterations_reached")
+                    
+                result_str = final_result
                 
                 # 4. Quality Scoring & Reputation
                 quality_score = await score_output(db, agent_id_str, task_id, result_str)

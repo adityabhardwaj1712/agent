@@ -7,6 +7,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from .api.router import router as api_router
+from .api.ws import router as ws_router
+from .api.traces import router as traces_router
 from .config import settings
 from .core.middleware import MetricsMiddleware
 
@@ -40,6 +42,8 @@ app.add_middleware(
 app.add_middleware(MetricsMiddleware)
 
 app.include_router(api_router)
+app.include_router(ws_router, tags=["websocket"])
+app.include_router(traces_router, tags=["observability"])
 
 @app.get("/")
 @limiter.limit("5/minute")

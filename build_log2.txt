@@ -1,0 +1,322 @@
+﻿docker : #0 building 
+with "desktop-linux" 
+instance using docker 
+driver
+At line:1 char:1
++ docker build -t 
+ac-frontend-test 
+--progress=plain . 
+2>&1 | Out-File - ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (#0 buildin   
+ g wit...g docker     
+driver:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+
+#1 [internal] load 
+build definition from 
+Dockerfile
+#1 transferring 
+dockerfile: 610B 0.0s 
+done
+#1 DONE 0.1s
+
+#2 [internal] load 
+metadata for docker.io
+/library/node:20-alpin
+e
+#2 DONE 1.0s
+
+#3 [internal] load 
+.dockerignore
+#3 transferring 
+context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load 
+build context
+#4 DONE 0.0s
+
+#5 [deps 1/4] FROM doc
+ker.io/library/node:20
+-alpine@sha256:b88333c
+42c23fbd91596ebd7fd10d
+e239cedab9617de04142dd
+e7315e3bc0afa
+#5 resolve docker.io/l
+ibrary/node:20-alpine@
+sha256:b88333c42c23fbd
+91596ebd7fd10de239ceda
+b9617de04142dde7315e3b
+c0afa 0.1s done
+#5 DONE 0.1s
+
+#4 [internal] load 
+build context
+#4 transferring 
+context: 7.70kB 0.0s 
+done
+#4 DONE 0.0s
+
+#6 [deps 4/4] RUN npm 
+install
+#6 CACHED
+
+#7 [deps 2/4] WORKDIR 
+/app
+#7 CACHED
+
+#8 [deps 3/4] COPY 
+package.json 
+package-lock.json* ./
+#8 CACHED
+
+#9 [builder 3/5] COPY 
+--from=deps 
+/app/node_modules 
+./node_modules
+#9 CACHED
+
+#10 [builder 4/5] 
+COPY . .
+#10 DONE 0.1s
+
+#11 [builder 5/5] RUN 
+npm run build
+#11 0.796 
+#11 0.796 > 
+agentcloud-app@1.0.0 
+build
+#11 0.796 > next build
+#11 0.796 
+#11 1.515 Attention: 
+Next.js now collects 
+completely anonymous 
+telemetry regarding 
+usage.
+#11 1.516 This 
+information is used 
+to shape Next.js' 
+roadmap and 
+prioritize features.
+#11 1.516 You can 
+learn more, including 
+how to opt-out if 
+you'd not like to 
+participate in this 
+anonymous program, by 
+visiting the 
+following URL:
+#11 1.516 https://next
+js.org/telemetry
+#11 1.516 
+#11 1.635    Γû▓ 
+Next.js 15.5.12
+#11 1.635 
+#11 1.756    Creating 
+an optimized 
+production build ...
+#11 13.93  Γ£ô 
+Compiled successfully 
+in 9.1s
+#11 13.93    Linting 
+and checking validity 
+of types ...
+#11 18.03    
+Collecting page data 
+...
+#11 20.07    
+Generating static 
+pages (0/15) ...
+#11 20.87    
+Generating static 
+pages (3/15) 
+#11 20.87    
+Generating static 
+pages (7/15) 
+#11 21.05    
+Generating static 
+pages (11/15) 
+#11 21.05  Γ£ô 
+Generating static 
+pages (15/15)
+#11 22.15    
+Finalizing page 
+optimization ...
+#11 22.15    
+Collecting build 
+traces ...
+#11 45.49 
+#11 45.49 Route (app) 
+                      
+          Size  First 
+Load JS
+#11 45.49 Γöî ╞Æ /    
+                      
+          1.32 kB     
+    103 kB
+#11 45.49 Γö£ Γùï 
+/_not-found           
+                 991 
+B         103 kB
+#11 45.49 Γö£ Γùï 
+/agents               
+               1.24 
+kB         103 kB
+#11 45.49 Γö£ Γùï 
+/analytics            
+               1.18 
+kB         103 kB
+#11 45.49 Γö£ ╞Æ 
+/api/chat             
+                 123 
+B         102 kB
+#11 45.49 Γö£ Γùï 
+/audit-logs           
+               1.08 
+kB         103 kB
+#11 45.49 Γö£ Γùï 
+/leaderboard          
+                 782 
+B         103 kB
+#11 45.49 Γö£ Γùï 
+/memory               
+               1.36 
+kB         103 kB
+#11 45.49 Γö£ Γùï 
+/monitor              
+               1.06 
+kB         103 kB
+#11 45.49 Γö£ Γùï 
+/protocol             
+               1.37 
+kB         104 kB
+#11 45.49 Γö£ Γùï 
+/tasks                
+               1.63 
+kB         104 kB
+#11 45.49 Γö£ Γùï 
+/token                
+                 774 
+B         103 kB
+#11 45.49 Γöö Γùï 
+/traces               
+                 815 
+B         103 kB
+#11 45.49 + First 
+Load JS shared by all 
+            102 kB
+#11 45.49   Γö£ chunks
+/255-ebd51be49873d76c.
+js         46 kB
+#11 45.49   Γö£ chunks
+/4bd1b696-c023c6e3521b
+1417.js  54.2 kB
+#11 45.49   Γöö other 
+shared chunks (total) 
+         1.92 kB
+#11 45.49 
+#11 45.49 
+#11 45.49 Γùï  
+(Static)   
+prerendered as static 
+content
+#11 45.49 ╞Æ  
+(Dynamic)  
+server-rendered on 
+demand
+#11 45.49 
+#11 45.54 npm notice
+#11 45.54 npm notice 
+New major version of 
+npm available! 10.8.2 
+-> 11.11.1
+#11 45.54 npm notice 
+Changelog: https://git
+hub.com/npm/cli/releas
+es/tag/v11.11.1
+#11 45.54 npm notice 
+To update run: npm 
+install -g npm@11.11.1
+#11 45.54 npm notice
+#11 DONE 45.8s
+
+#12 [runner 4/7] COPY 
+--from=builder 
+/app/next.config.js 
+./next.config.js
+#12 CACHED
+
+#13 [runner 3/7] COPY 
+--from=builder 
+/app/package.json 
+./package.json
+#13 CACHED
+
+#14 [runner 5/7] COPY 
+--from=builder 
+/app/public ./public
+#14 CACHED
+
+#15 [runner 6/7] COPY 
+--from=builder 
+/app/.next ./.next
+#15 DONE 2.2s
+
+#16 [runner 7/7] COPY 
+--from=builder 
+/app/node_modules 
+./node_modules
+#16 DONE 6.6s
+
+#17 exporting to image
+#17 exporting layers
+#17 exporting layers 
+14.7s done
+#17 exporting 
+manifest sha256:37c233
+b13e0a4750f459448d098e
+61aa9487be712c3e572d05
+8e4286ef5abedd 0.1s 
+done
+#17 exporting config s
+ha256:602b756432e87ba2
+8673ce6203a98576359353
+440a018d80c1535caa84b5
+65d4 0.1s done
+#17 exporting 
+attestation manifest s
+ha256:f543bf2cd0bcc84f
+fba369af6d75d75b32945b
+10311d86e3df38c45dc020
+b4a4 0.1s done
+#17 exporting 
+manifest list sha256:3
+d02764b19ed2c4b0bf30c7
+7119bfde314a8e8493bb4a
+ff50b1cf175ec330a60
+#17 exporting 
+manifest list sha256:3
+d02764b19ed2c4b0bf30c7
+7119bfde314a8e8493bb4a
+ff50b1cf175ec330a60 
+0.1s done
+#17 naming to docker.i
+o/library/ac-frontend-
+test:latest 0.0s done
+#17 unpacking to docke
+r.io/library/ac-fronte
+nd-test:latest
+#17 unpacking to docke
+r.io/library/ac-fronte
+nd-test:latest 4.0s 
+done
+#17 DONE 19.3s

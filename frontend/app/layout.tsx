@@ -1,8 +1,12 @@
 import React from "react";
 import "./globals.css";
-import { ThemeToggle } from "./components/ThemeToggle";
 import { SidebarNav } from "./components/SidebarNav";
 import { CommandPalette } from "./components/CommandPalette";
+
+export const metadata = {
+  title: "AgentCloud Dashboard",
+  description: "AI Agent Fleet Management Platform",
+};
 
 export default function RootLayout({
   children,
@@ -14,41 +18,34 @@ export default function RootLayout({
       <body>
         <CommandPalette />
         <div className="ac-shell">
-          <aside className="ac-sidebar glass-panel">
+          <aside className="ac-sidebar">
             <div className="ac-sidebar-logo">
-              <div className="ac-logo-mark" />
+              <div className="ac-logo-mark">AC</div>
               <div className="ac-sidebar-logo-text">AgentCloud</div>
             </div>
             <SidebarNav />
-            <div className="mt-auto pt-8 border-t border-muted opacity-40 text-[10px] uppercase tracking-widest font-bold">
-              Autonomous Systems Unit
-            </div>
           </aside>
-          
+
           <main className="ac-main">
-            <header className="flex items-center justify-between mb-12">
+            <header className="ac-header">
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-primary">Strategic Overview</h1>
-                <p className="text-sm text-secondary mt-1">Real-time intelligence from your autonomous agents.</p>
+                <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>AgentCloud Dashboard</h1>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="px-3 py-1 bg-tertiary border border-muted rounded-md text-[10px] font-bold uppercase tracking-wider">
-                  <span className="text-accent-success mr-2">●</span> System Nominal
-                </div>
-                <ThemeToggle />
+              <div className="ac-header-actions">
+                <button className="ac-header-btn" title="Search">🔍</button>
+                <button className="ac-header-btn" title="Notifications">🔔</button>
+                <button className="ac-header-btn" title="Settings">⚙️</button>
               </div>
             </header>
-            
+
             {children}
-            
-            <footer className="mt-24 pt-8 border-t border-muted flex justify-between text-xs text-tertiary">
-              <div>&copy; 2026 AgentCloud. Calm Intelligence Foundation.</div>
-              <div>API: {process.env.NEXT_PUBLIC_API_BASE_URL || "8000"}</div>
-            </footer>
+
+            <div className="ac-footer">
+              Version 2.0 — Final Master Edition | 2026 &nbsp;|&nbsp; Confidential & Proprietary
+            </div>
           </main>
         </div>
       </body>
     </html>
   );
 }
-

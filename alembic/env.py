@@ -17,6 +17,9 @@ from app.models.task import Task  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.protocol_message import ProtocolMessage  # noqa: F401
 from app.models.approval import ApprovalRequest  # noqa: F401
+from app.models.event import Event  # noqa: F401
+from app.models.trace import Trace  # noqa: F401
+from app.models.tool import Tool  # noqa: F401
 
 config = context.config
 

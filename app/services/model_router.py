@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from dataclasses import dataclass
 from typing import Optional
 from openai import OpenAI
@@ -51,35 +52,48 @@ def select_model(payload: str) -> ModelChoice:
         
     return ModelChoice(name="gpt-4o-mini", reason="standard task fallback", provider="OpenAI")
 
-async def call_provider(choice: ModelChoice, prompt: str, context: str = "") -> str:
-    """Execute the actual LLM call based on the selected provider."""
+from openai import AsyncOpenAI
+
+async def call_provider(choice: ModelChoice, prompt: str = None, context: str = "", tools: list = None, messages: list = None) -> tuple[str, list]:
+    """
+    AXON Resiliency: Executes LLM call with built-in retry and expert-to-standard fallback.
+    Returns (content, tool_calls)
+    """
     system_prompt = f"You are an autonomous agent within the AgentCloud ecosystem. Use the provided context to fulfill the user request concisely.\n\nCONTEXT:\n{context}"
     
-    try:
-        if choice.provider == "OpenAI":
-            client = OpenAI(api_key=settings.OPENAI_API_KEY)
-            response = client.chat.completions.create(
-                model=choice.name,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return response.choices[0].message.content or ""
+    if messages is None:
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    
+    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    
+    # Implementation of self-healing retry logic
+    max_retries = 2
+    for attempt in range(max_retries + 1):
+        try:
+            current_model = choice.name
+            if attempt > 0:
+                # If first attempt failed, try falling back to a more stable/standard model
+                current_model = "gpt-4o-mini"
+                logger.warning(f"AXON Self-Healing: Retrying with fallback model {current_model} (Attempt {attempt+1})")
+
+            create_kwargs = {
+                "model": current_model,
+                "messages": messages,
+                "timeout": 30.0
+            }
+            if tools:
+                create_kwargs["tools"] = tools
+                create_kwargs["tool_choice"] = "auto"
+
+            response = await client.chat.completions.create(**create_kwargs)
+            message = response.choices[0].message
+            return message.content or "", getattr(message, "tool_calls", []) or []
             
-        elif choice.provider == "Anthropic":
-            # Stub for Claude (Phase 7 expansion)
-            logger.info(f"Anthropic provider selected but currently stubbed: {choice.name}")
-            return f"[Anthropic-Stub] Completed: {prompt[:30]}..."
-            
-        elif choice.provider == "Google":
-            # Stub for Gemini (Phase 7 expansion)
-            logger.info(f"Google provider selected but currently stubbed: {choice.name}")
-            return f"[Google-Stub] Completed: {prompt[:30]}..."
-            
-        else:
-            return f"[Unknown-Provider] Simulated response for: {prompt[:30]}..."
-            
-    except Exception as e:
-        logger.error(f"LLM Call failed for {choice.provider}: {e}")
-        return f"Error: Failed to generate response via {choice.provider}."
+        except Exception as e:
+            logger.error(f"LLM Call failed for {choice.name} (Attempt {attempt+1}): {e}")
+            if attempt == max_retries:
+                return f"AXON Critical Failure: All retry attempts and fallbacks failed. Error details: {str(e)[:100]}", []
+            await asyncio.sleep(1) # Graceful backoff

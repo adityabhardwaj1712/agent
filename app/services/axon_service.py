@@ -2,27 +2,36 @@ from app.services.model_router import select_model, call_provider
 
 class AxonService:
     @staticmethod
-    async def advanced_reasoning(task_payload: str, context: str = ""):
+    async def advanced_reasoning(task_payload: str, context: str = "", tools: list = None, messages: list = None):
         """
         AXON: Optimizes execution path and executes real LLM reasoning.
         """
-        # 1. Intent Analysis (Heuristic/Lightweight)
+        # 1. Intent Analysis
         intent = "UNKNOWN"
         if any(w in task_payload.lower() for w in ["analyze", "review", "audit"]):
             intent = "ANALYTICAL"
         elif any(w in task_payload.lower() for w in ["create", "build", "generate"]):
             intent = "GENERATIVE"
         
-        print(f"AXON Engine: Detected {intent} intent. Selecting optimal model...")
+        # 2. Confidence Scoring (Heuristic based on context length and payload clarity)
+        confidence = 0.95
+        if len(context) < 100:
+            confidence -= 0.15 # Low context penality
+        if "?" in task_payload:
+            confidence -= 0.05 # Ambiguity penalty
+            
+        print(f"AXON Engine: Detected {intent} intent (Confidence: {confidence:.2f}). Selecting optimal model...")
         
-        # 2. Select the right model for the job
+        # 3. Select the right model
         model_choice = select_model(task_payload)
         
-        # 3. Execute Real LLM Completion
-        print(f"AXON Engine: Executing {model_choice.name} with context length {len(context)}...")
-        result = await call_provider(model_choice, task_payload, context)
+        # 4. Execute Real LLM Completion
+        print(f"AXON Engine: Executing {model_choice.name}...")
+        raw_result, tool_calls = await call_provider(model_choice, prompt=task_payload, context=context, tools=tools, messages=messages)
         
-        return result
+        # 5. Augment with AXON metadata
+        reasoning_meta = f"\n\n---\n📊 AXON Reasoning: Analyzed as {intent} task. Model: {model_choice.name}. Confidence: {confidence*100:.1f}%."
+        return raw_result, tool_calls, reasoning_meta
 
     @staticmethod
     def auto_heal(error_context: str):
