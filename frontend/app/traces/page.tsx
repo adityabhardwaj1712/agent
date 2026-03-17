@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Trace {
   task_id: string;
@@ -46,7 +47,12 @@ export default function TraceExplorer() {
                 </td>
                 <td className="text-xs">{new Date(trace.latest).toLocaleString()}</td>
                 <td>
-                  <button className="text-accent-primary text-xs font-semibold hover:underline">View Timeline</button>
+                  <Link 
+                    href={`/traces/${trace.task_id}`}
+                    className="text-accent-primary text-xs font-semibold hover:underline bg-accent-primary/5 px-3 py-1.5 rounded-lg hover:bg-accent-primary/10 transition-colors"
+                  >
+                    View Timeline
+                  </Link>
                 </td>
               </tr>
             ))}

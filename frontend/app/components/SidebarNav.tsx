@@ -10,11 +10,13 @@ import {
   Brain, 
   Activity, 
   CheckCircle2, 
-  FileText 
-} from "lucide-react"; // Lucide icons
+  FileText,
+  MessageCircle
+} from "lucide-react";
 
 const navItems = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
+  { name: "Chat", href: "/chat", icon: MessageCircle },
   { name: "Agents", href: "/agents", icon: Users },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Memory", href: "/memory", icon: Brain },

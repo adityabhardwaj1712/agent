@@ -53,7 +53,24 @@ async def github_create_issue(repo: str, title: str, body: str):
 
 @ToolExecutor.register("python_interpreter")
 async def python_interpreter(code: str):
-    """Safe-ish evaluation of Python code (Simulated for Phase 13)"""
-    # In a real system, this would run in a Firecracker/gVisor sandbox.
-    # Here we just acknowledge the intent to protect the host.
-    return {"status": "success", "output": f"Simulated execution of: {code[:30]}..."}
+    """Execution of Python code in a simulated sandbox."""
+    return {"status": "success", "output": f"Simulated output of: {code[:50]}..."}
+
+@ToolExecutor.register("shell_execute")
+async def shell_execute(command: str):
+    """Simulated execution of local shell commands."""
+    return {
+        "status": "success", 
+        "command": command, 
+        "output": f"Simulated execution of '{command}'. In production, this runs in a restricted pod."
+    }
+
+@ToolExecutor.register("external_api_call")
+async def external_api_call(url: str, method: str = "GET", payload: Optional[dict] = None):
+    """Simulated call to arbitrary external APIs."""
+    return {
+        "status": "success",
+        "url": url,
+        "method": method,
+        "response": {"data": f"Simulated response from {url}"}
+    }

@@ -5,8 +5,10 @@ from typing import List
 import datetime
 
 from ..db.database import get_db
+from ..db.redis_client import get_redis_client
 from ..models.approval import ApprovalRequest
 from ..schemas.approval_schema import ApprovalRequestResponse, ApprovalAction
+import json
 
 router = APIRouter(prefix="/approvals")
 
@@ -43,5 +45,17 @@ async def process_approval(
     
     await db.commit()
     await db.refresh(approval)
+
+    if approval.status == "approved":
+        # Re-enqueue the task
+        r = get_redis_client()
+        task_payload = {
+            "task_id": approval.task_id,
+            "agent_id": approval.agent_id,
+            "goal_id": approval.goal_id,
+            "payload": approval.payload
+        }
+        r.lpush("agent_tasks", json.dumps(task_payload))
+        print(f"HITL: Task {approval.task_id} approved and re-enqueued.")
     
     return {"request_id": request_id, "status": approval.status}

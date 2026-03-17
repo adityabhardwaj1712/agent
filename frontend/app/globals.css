@@ -453,3 +453,70 @@ h1, h2, h3, h4 {
   grid-template-columns: 1fr;
   gap: 16px;
 }
+
+/* AgentCloud Chat Terminals */
+.ac-chat-container {
+  @apply flex flex-col h-full bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl;
+}
+
+.ac-chat-header {
+  @apply p-4 border-b border-white/10 flex items-center justify-between bg-white/5;
+}
+
+.ac-chat-messages {
+  @apply flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth;
+}
+
+.ac-message-wrapper {
+  @apply flex gap-4 max-w-[85%];
+}
+
+.ac-message-bot {
+  @apply self-start;
+}
+
+.ac-message-user {
+  @apply self-end flex-row-reverse;
+}
+
+.ac-message-icon {
+  @apply w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0 shadow-lg shadow-blue-500/10;
+}
+
+.ac-message-user .ac-message-icon {
+  @apply bg-purple-500/20 border border-purple-500/40 text-purple-400;
+}
+
+.ac-message-bubble {
+  @apply p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-200 leading-relaxed shadow-sm;
+}
+
+.ac-message-user .ac-message-bubble {
+  @apply bg-blue-600/20 border-blue-300/20 text-white;
+}
+
+.ac-thought-block {
+  @apply mt-3 p-3 rounded-lg bg-black/40 border border-white/5 text-[13px] text-slate-400 font-mono italic;
+}
+
+.ac-chat-input-area {
+  @apply p-4 bg-white/5 border-t border-white/10 flex gap-4 items-end;
+}
+
+.ac-chat-input {
+  @apply flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none transition-all;
+}
+
+.ac-chat-send {
+  @apply w-12 h-12 rounded-xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition-all shadow-lg shadow-blue-600/20 active:scale-95;
+}
+
+.ac-typing-dot {
+  @apply w-2 h-2 bg-slate-500 rounded-full animate-bounce;
+}
+.ac-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.ac-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.ac-spinner-xs {
+  @apply w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin;
+}

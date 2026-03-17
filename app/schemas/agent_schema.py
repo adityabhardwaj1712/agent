@@ -3,6 +3,8 @@ from typing import Optional, List
 
 class AgentBase(BaseModel):
     name: str
+    role: Optional[str] = None
+    description: Optional[str] = None
     owner_id: str
 
 class AgentCreate(AgentBase):

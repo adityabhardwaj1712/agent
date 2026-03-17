@@ -11,6 +11,8 @@ async def register_agent(db: AsyncSession, data: AgentCreate):
     db_agent = Agent(
         agent_id=agent_id,
         name=data.name,
+        role=data.role,
+        description=data.description,
         owner_id=data.owner_id
     )
     db.add(db_agent)
