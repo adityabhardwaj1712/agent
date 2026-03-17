@@ -5,6 +5,7 @@ from sqlalchemy import func
 from ..db.database import get_db
 from ..db.redis_client import get_redis_client
 from ..models.agent import Agent
+from ..models.event import Event
 
 router = APIRouter(prefix="/analytics")
 
@@ -21,6 +22,12 @@ async def get_metrics(db: AsyncSession = Depends(get_db)):
     tasks_failed = int(r.get("metrics:tasks_failed_total") or 0)
     healing_events = int(r.get("metrics:auto_healing_total") or 0)
     
+    # 3. Events Table: Latency & Reliability
+    # Calculate avg latency for completed tasks (TaskReceived to TaskCompleted)
+    # Using a slightly simplified query for now
+    event_counts = await db.execute(select(Event.event_type, func.count()).group_by(Event.event_type))
+    counts = dict(event_counts.all())
+    
     success_rate = 100.0
     if tasks_submitted > 0:
         success_rate = ((tasks_submitted - tasks_failed) / tasks_submitted) * 100
@@ -31,4 +38,6 @@ async def get_metrics(db: AsyncSession = Depends(get_db)):
         "success_rate": f"{success_rate:.1f}%",
         "auto_healing_events": healing_events,
         "avg_reasoning_time": r.get("metrics:avg_reasoning_ms") or "450ms",
+        "events_summary": counts,
+        "hitl_interceptions": counts.get("HITL_Intercepted", 0)
     }

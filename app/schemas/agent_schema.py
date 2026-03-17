@@ -11,6 +11,10 @@ class AgentCreate(AgentBase):
 class AgentResponse(AgentBase):
     agent_id: str
     scopes: List[str] = []
+    reputation_score: float = 50.0
+    total_tasks: int = 0
+    successful_tasks: int = 0
+    failed_tasks: int = 0
     token: Optional[str] = None
 
     class Config:

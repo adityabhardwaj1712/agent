@@ -24,6 +24,14 @@ async def create_agent(request: Request, data: AgentCreate, db: AsyncSession = D
 async def list_all(owner_id: str | None = None, db: AsyncSession = Depends(get_db)):
     return await list_agents(db, owner_id)
 
+@router.get("/leaderboard", response_model=List[AgentResponse])
+async def get_leaderboard(db: AsyncSession = Depends(get_db)):
+    from ..models.agent import Agent
+    from sqlalchemy.future import select
+    stmt = select(Agent).order_by(Agent.reputation_score.desc()).limit(10)
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get(agent_id: str, db: AsyncSession = Depends(get_db)):
     agent = await get_agent(db, agent_id)

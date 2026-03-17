@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 class ModelChoice:
     name: str
     reason: str
+    provider: str
 
 def select_model(payload: str) -> ModelChoice:
     """Pick a model name based on the task payload, with LLM fallback."""
@@ -18,7 +19,7 @@ def select_model(payload: str) -> ModelChoice:
     
     # 1. Heuristic Override (Fast & Cheap)
     if any(k in text for k in ("cheap", "bulk", "batch")):
-        return ModelChoice(name="gpt-4o-mini", reason="cost-optimised batch task")
+        return ModelChoice(name="gpt-4o-mini", reason="cost-optimised batch task", provider="OpenAI")
 
     # 2. LLM-based Routing (Precise)
     client = OpenAI(api_key=settings.OPENAI_API_KEY) if getattr(settings, "OPENAI_API_KEY", None) else None
@@ -35,13 +36,18 @@ def select_model(payload: str) -> ModelChoice:
             )
             model_name = response.choices[0].message.content.strip().lower()
             if model_name in ["gpt-4o", "gpt-4o-mini"]:
-                return ModelChoice(name=model_name, reason="LLM-based smart routing")
+                return ModelChoice(name=model_name, reason="LLM-based smart routing", provider="OpenAI")
         except Exception as e:
             logger.error(f"LLM Routing failed: {e}")
 
-    # 3. Static Fallback Logic
-    if any(k in text for k in ("code", "bug", "refactor", "complex", "reason")):
-        return ModelChoice(name="gpt-4o", reason="coding or complex reasoning task")
+    # 3. Static Fallback Logic (Neutrality Law)
+    if "claude" in text:
+        return ModelChoice(name="claude-3-sonnet", reason="explicit provider request", provider="Anthropic")
+    if "gemini" in text:
+        return ModelChoice(name="gemini-1.5-pro", reason="explicit provider request", provider="Google")
         
-    return ModelChoice(name="gpt-4o-mini", reason="standard task fallback")
+    if any(k in text for k in ("code", "bug", "refactor", "complex", "reason")):
+        return ModelChoice(name="gpt-4o", reason="coding or complex reasoning task", provider="OpenAI")
+        
+    return ModelChoice(name="gpt-4o-mini", reason="standard task fallback", provider="OpenAI")
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.audit import log_audit
 from ..core.deps import require_scopes
@@ -14,18 +14,18 @@ router = APIRouter(prefix="/protocol")
 
 
 @router.post("/send", response_model=ProtocolSendResponse)
-def send(
+async def send(
     request: Request,
     data: ProtocolSendRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current: CurrentAgent = Depends(require_scopes([Scope.SEND_PROTOCOL])),
 ):
     if data.from_agent_id != current.agent_id:
         raise HTTPException(status_code=403, detail="from_agent_id must match token agent")
 
-    message_id = send_protocol_message(db, data)
+    message_id = await send_protocol_message(db, data)
     PROTOCOL_SEND_TOTAL.inc()
-    log_audit(
+    await log_audit(
         db,
         request=request,
         agent_id=current.agent_id,

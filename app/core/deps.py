@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from ..core.auth import verify_token
 from ..core.scopes import CurrentAgent, has_scopes, parse_scopes
@@ -11,9 +12,9 @@ from ..models.agent import Agent
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_current_agent(
+async def get_current_agent(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> CurrentAgent:
     if not credentials or not credentials.credentials:
         raise HTTPException(status_code=401, detail="Missing bearer token")
@@ -26,7 +27,8 @@ def get_current_agent(
     if not agent_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
 
-    agent = db.query(Agent).filter(Agent.agent_id == agent_id).first()
+    result = await db.execute(select(Agent).filter(Agent.agent_id == agent_id))
+    agent = result.scalars().first()
     if not agent:
         raise HTTPException(status_code=401, detail="Unknown agent")
 

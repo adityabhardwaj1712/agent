@@ -1,11 +1,11 @@
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.protocol_message import ProtocolMessage
 from ..schemas.protocol_schema import ProtocolSendRequest
 
 
-def send_protocol_message(db: Session, data: ProtocolSendRequest) -> str:
+async def send_protocol_message(db: AsyncSession, data: ProtocolSendRequest) -> str:
     message_id = str(uuid.uuid4())
     db.add(
         ProtocolMessage(
@@ -17,6 +17,6 @@ def send_protocol_message(db: Session, data: ProtocolSendRequest) -> str:
             correlation_id=data.correlation_id,
         )
     )
-    db.commit()
+    await db.commit()
     return message_id
 

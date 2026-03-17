@@ -16,6 +16,15 @@ class Settings(BaseSettings):
     # CORS Configuration
     CORS_ORIGINS: str = "http://localhost:3000,http://frontend:3000"
 
+    # AI Provider Keys
+    OPENAI_API_KEY: str = "sk-placeholder"
+    ANTHROPIC_API_KEY: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = None
+    
+    # Infrastructure (Phase 9)
+    DEPLOYMENT_MODE: str = "cloud" # cloud, byoc, onprem
+    DEPLOYMENT_REGION: str = "us-east-1"
+
     # Environment-based loading
     model_config = SettingsConfigDict(
         env_file=".env",
