@@ -1,0 +1,50 @@
+﻿worker-1  | Starting AgentCloud Initialization...
+worker-1  | Checking for JWT RSA keys...
+worker-1  | RSA keys already exist. Skipping generation.
+worker-1  | Initialization complete. Executing: python -m app.workers.agent_worker
+worker-1  | 2026-03-19 09:30:11.515 | INFO     | __main__:run_worker:54 - AgentCloud Worker started ΓÇö priority queue + circuit breaker + event bus active
+worker-1  | 2026-03-19 09:30:11.517 | INFO     | __main__:run_worker:62 - Event bus consumer started
+worker-1  | 2026-03-19 09:30:11.524 | INFO     | app.services.orchestrator:run_reputation_decay_scheduler:110 - Running reputation decay cycle...
+worker-1  | 2026-03-19 09:30:11.531 | INFO     | app.services.event_bus:start_consuming:143 - Event bus consumer 'worker_e9171a4e' started
+worker-1  | 2026-03-19 09:30:11,563 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+worker-1  | 2026-03-19 09:30:11,564 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:30:11,566 INFO sqlalchemy.engine.Engine select current_schema()
+worker-1  | 2026-03-19 09:30:11,566 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:30:11,568 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+worker-1  | 2026-03-19 09:30:11,568 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:30:11,572 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:30:11,612 INFO sqlalchemy.engine.Engine SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+worker-1  | FROM agents
+worker-1  | 2026-03-19 09:30:11,612 INFO sqlalchemy.engine.Engine [generated in 0.00033s] ()
+worker-1  | 2026-03-19 09:30:11,614 INFO sqlalchemy.engine.Engine ROLLBACK
+worker-1  | 2026-03-19 09:30:11.614 | ERROR    | app.services.orchestrator:run_reputation_decay_scheduler:116 - Reputation decay error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation "agents" does not exist
+worker-1  | [SQL: SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+worker-1  | FROM agents]
+worker-1  | (Background on this error at: https://sqlalche.me/e/20/f405)
+worker-1  | 2026-03-19 09:30:31,101 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:30:31,104 INFO sqlalchemy.engine.Engine SELECT tasks.task_id AS tasks_task_id, tasks.user_id AS tasks_user_id, tasks.agent_id AS tasks_agent_id, tasks.goal_id AS tasks_goal_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.payload AS tasks_payload, tasks.status AS tasks_status, tasks.result AS tasks_result, tasks.thought_process AS tasks_thought_process, tasks.input_data AS tasks_input_data, tasks.output_data AS tasks_output_data, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at 
+worker-1  | FROM tasks 
+worker-1  | WHERE tasks.task_id = $1::VARCHAR
+worker-1  | 2026-03-19 09:30:31,104 INFO sqlalchemy.engine.Engine [generated in 0.00033s] ('2d4893b6-8b61-499a-9723-afcfe23a362a',)
+worker-1  | 2026-03-19 09:30:31,111 INFO sqlalchemy.engine.Engine UPDATE tasks SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE tasks.task_id = $3::VARCHAR
+worker-1  | 2026-03-19 09:30:31,111 INFO sqlalchemy.engine.Engine [generated in 0.00026s] ('processing', datetime.datetime(2026, 3, 19, 9, 30, 31, 111236), '2d4893b6-8b61-499a-9723-afcfe23a362a')
+worker-1  | 2026-03-19 09:30:31,113 INFO sqlalchemy.engine.Engine COMMIT
+worker-1  | 2026-03-19 09:30:31.117 | INFO     | __main__:process_one_task:149 - Processing task 2d4893b6-8b61-499a-9723-afcfe23a362a | agent=0b2dac0c-a5ff-4a47-809c-62e9bb2562e4 | priority=5
+worker-1  | 2026-03-19 09:30:31,119 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:30:31,121 INFO sqlalchemy.engine.Engine INSERT INTO events (event_id, event_type, user_id, agent_id, task_id, payload, timestamp) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+worker-1  | 2026-03-19 09:30:31,121 INFO sqlalchemy.engine.Engine [generated in 0.00036s] ('891ba32d-1767-4b6b-b139-c4f07a75ac4f', 'TaskReceived', '2a940b6e-db37-49c7-8448-459bfba512d1', '0b2dac0c-a5ff-4a47-809c-62e9bb2562e4', '2d4893b6-8b61-499a-9723-afcfe23a362a', '{"task_id": "2d4893b6-8b61-499a-9723-afcfe23a362a", "user_id": "2a940b6e-db37-49c7-8448-459bfba512d1", "payload": "do a simple task", "agent_id": "0b2dac0c-a5ff-4a47-809c-62e9bb2562e4", "priority": 5, "goal_id": null, "parent_task_id": null, "created_at": 1773912630.9907458}', datetime.datetime(2026, 3, 19, 9, 30, 31, 121102))
+worker-1  | 2026-03-19 09:30:31,124 INFO sqlalchemy.engine.Engine COMMIT
+worker-1  | 2026-03-19 09:30:31.131 | DEBUG    | app.services.event_bus:_dispatch:176 - No subscribers for event type 'task.started' ΓÇö DLQ
+worker-1  | 2026-03-19 09:30:31.131 | DEBUG    | app.services.event_bus:publish:111 - Published task.started from 0b2dac0c-a5ff-4a47-809c-62e9bb2562e4 ΓåÆ 1773912631129-0
+worker-1  | 2026-03-19 09:30:31.132 | ERROR    | __main__:process_one_task:322 - Task 2d4893b6-8b61-499a-9723-afcfe23a362a error: 'ComplianceService' object has no attribute 'TOXIC_KEYWORDS'
+worker-1  | 2026-03-19 09:30:31.133 | ERROR    | __main__:run_worker:89 - Task 2d4893b6-8b61-499a-9723-afcfe23a362a failed: 'ComplianceService' object has no attribute 'TOXIC_KEYWORDS'
+worker-1  | 2026-03-19 09:30:31.135 | WARNING  | app.services.circuit_breaker:record_failure:122 - Circuit for agent 0b2dac0c-a5ff-4a47-809c-62e9bb2562e4: OPEN ΓÇö avg quality 0.00 < 0.3
+worker-1  | Slack Webhook URL not configured. Skipping notification.
+worker-1  | 2026-03-19 09:30:36.147 | WARNING  | __main__:run_worker:77 - Circuit OPEN for agent 0b2dac0c-a5ff-4a47-809c-62e9bb2562e4 ΓÇö task 2d4893b6-8b61-499a-9723-afcfe23a362a ΓåÆ DLQ
+worker-1  | 2026-03-19 09:30:36.148 | WARNING  | app.services.circuit_breaker:send_to_dlq:189 - Task 2d4893b6-8b61-499a-9723-afcfe23a362a ΓåÆ DLQ (reason: circuit_open)
+worker-1  | 2026-03-19 09:31:11.612 | INFO     | app.services.orchestrator:run_reputation_decay_scheduler:110 - Running reputation decay cycle...
+worker-1  | 2026-03-19 09:31:11,613 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:31:11,614 INFO sqlalchemy.engine.Engine SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+worker-1  | FROM agents
+worker-1  | 2026-03-19 09:31:11,614 INFO sqlalchemy.engine.Engine [cached since 60.01s ago] ()
+worker-1  | 2026-03-19 09:31:11,616 INFO sqlalchemy.engine.Engine COMMIT

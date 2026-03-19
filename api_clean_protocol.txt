@@ -1,0 +1,100 @@
+﻿api-1  | 2026-03-19 09:39:22,059 INFO sqlalchemy.engine.Engine [generated in 0.00033s] ('0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c', '3658984b-caad-4f98-8523-12e7a2362f66')
+api-1  | 2026-03-19 09:39:22,064 INFO sqlalchemy.engine.Engine INSERT INTO audit_logs (log_id, user_id, agent_id, action, method, path, status_code, detail, created_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::TIMESTAMP WITHOUT TIME ZONE)
+api-1  | 2026-03-19 09:39:22,065 INFO sqlalchemy.engine.Engine [cached since 3.56s ago] ('30292ede-6c74-4e22-94be-5007d8fd3885', None, 'ffb370dc-f937-45c6-acb9-99293b25239a', 'tasks.status', 'GET', '/v1/tasks/0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c', '200', None, datetime.datetime(2026, 3, 19, 9, 39, 22, 64910))
+api-1  | 2026-03-19 09:39:22,066 INFO sqlalchemy.engine.Engine COMMIT
+api-1  | INFO:     172.20.0.1:47962 - "GET /v1/tasks/0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c HTTP/1.1" 200 OK
+api-1  | 2026-03-19 09:39:24,036 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+api-1  | 2026-03-19 09:39:24,037 INFO sqlalchemy.engine.Engine SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+api-1  | FROM agents 
+api-1  | WHERE agents.agent_id = $1::VARCHAR
+api-1  | 2026-03-19 09:39:24,037 INFO sqlalchemy.engine.Engine [cached since 5.068s ago] ('ffb370dc-f937-45c6-acb9-99293b25239a',)
+api-1  | 2026-03-19 09:39:24,039 INFO sqlalchemy.engine.Engine SELECT tasks.task_id, tasks.user_id, tasks.agent_id, tasks.goal_id, tasks.parent_task_id, tasks.payload, tasks.status, tasks.result, tasks.thought_process, tasks.input_data, tasks.output_data, tasks.created_at, tasks.updated_at 
+api-1  | FROM tasks 
+api-1  | WHERE tasks.task_id = $1::VARCHAR AND tasks.user_id = $2::VARCHAR
+api-1  | 2026-03-19 09:39:24,039 INFO sqlalchemy.engine.Engine [cached since 1.98s ago] ('0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c', '3658984b-caad-4f98-8523-12e7a2362f66')
+api-1  | 2026-03-19 09:39:24,040 INFO sqlalchemy.engine.Engine INSERT INTO audit_logs (log_id, user_id, agent_id, action, method, path, status_code, detail, created_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::TIMESTAMP WITHOUT TIME ZONE)
+api-1  | 2026-03-19 09:39:24,040 INFO sqlalchemy.engine.Engine [cached since 5.535s ago] ('26b25df8-26ff-4c9e-a038-d5bf662cff81', None, 'ffb370dc-f937-45c6-acb9-99293b25239a', 'tasks.status', 'GET', '/v1/tasks/0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c', '200', None, datetime.datetime(2026, 3, 19, 9, 39, 24, 40451))
+api-1  | 2026-03-19 09:39:24,041 INFO sqlalchemy.engine.Engine COMMIT
+api-1  | INFO:     172.20.0.1:35564 - "GET /v1/tasks/0d4e74ab-9c38-4f21-82d0-eb4895cd9f6c HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:55852 - "GET / HTTP/1.1" 200 OK
+api-1  | 2026-03-19 09:39:24,559 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+api-1  | 2026-03-19 09:39:24,561 INFO sqlalchemy.engine.Engine SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+api-1  | FROM agents 
+api-1  | WHERE agents.agent_id = $1::VARCHAR
+api-1  | 2026-03-19 09:39:24,561 INFO sqlalchemy.engine.Engine [cached since 5.592s ago] ('ffb370dc-f937-45c6-acb9-99293b25239a',)
+api-1  | 2026-03-19 09:39:24,564 INFO sqlalchemy.engine.Engine INSERT INTO protocol_messages (message_id, from_agent_id, to_agent_id, message_type, payload, correlation_id, created_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+api-1  | 2026-03-19 09:39:24,564 INFO sqlalchemy.engine.Engine [generated in 0.00024s] ('84bb3450-e6d4-4c3f-842b-40a706f0fe26', 'ffb370dc-f937-45c6-acb9-99293b25239a', 'ffb370dc-f937-45c6-acb9-99293b25239a', 'smoke', 'hello', '27346ebf-19e0-45a2-b526-837f5d00866a', datetime.datetime(2026, 3, 19, 9, 39, 24, 564463))
+api-1  | 2026-03-19 09:39:24,566 INFO sqlalchemy.engine.Engine COMMIT
+api-1  | [32m2026-03-19 09:39:24[0m | [31m[1mERROR   [0m | [36mapp.main[0m:[36mglobal_exception_handler[0m:[36m31[0m | [31m[1mUnhandled exception: object int can't be used in 'await' expression[0m
+api-1  | INFO:     172.20.0.1:35572 - "POST /v1/protocol/send HTTP/1.1" 500 Internal Server Error
+api-1  | ERROR:    Exception in ASGI application
+api-1  | Traceback (most recent call last):
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+api-1  |     result = await app(  # type: ignore[func-returns-value]
+api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+api-1  |     return await self.app(scope, receive, send)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1160, in __call__
+api-1  |     await super().__call__(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 107, in __call__
+api-1  |     await self.middleware_stack(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+api-1  |     await self.app(scope, receive, _send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+api-1  |     with recv_stream, send_stream, collapse_excgroups():
+api-1  |   File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+api-1  |     self.gen.throw(typ, value, traceback)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 193, in __call__
+api-1  |     response = await self.dispatch_func(request, call_next)
+api-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/core/middleware.py", line 16, in dispatch
+api-1  |     response: Response = await call_next(request)
+api-1  |                          ^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 168, in call_next
+api-1  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 144, in coro
+api-1  |     await self.app(scope, receive_or_disconnect, send_no_error)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 87, in __call__
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+api-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+api-1  |     await app(scope, receive, sender)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 716, in __call__
+api-1  |     await self.middleware_stack(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 736, in app
+api-1  |     await route.handle(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 290, in handle
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 130, in app
+api-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+api-1  |     await app(scope, receive, sender)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 116, in app
+api-1  |     response = await f(request)
+api-1  |                ^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 670, in app
+api-1  |     raw_response = await run_endpoint_function(
+api-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+api-1  |     return await dependant.call(**values)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/api/protocol.py", line 28, in send
+api-1  |     message_id = await send_protocol_message(db, data)
+api-1  |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/services/protocol_service.py", line 34, in send_protocol_message
+api-1  |     await r.publish(f"agent:{data.to_agent_id}", json.dumps(event_payload))
+api-1  | TypeError: object int can't be used in 'await' expression
+api-1  | INFO:     127.0.0.1:42034 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:57214 - "GET / HTTP/1.1" 200 OK

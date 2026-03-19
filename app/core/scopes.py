@@ -20,6 +20,7 @@ def parse_scopes(raw: str | None) -> set[str]:
 @dataclass(frozen=True)
 class CurrentAgent:
     agent_id: str
+    user_id: str
     scopes: set[str]
 
 

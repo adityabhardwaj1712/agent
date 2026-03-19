@@ -9,7 +9,7 @@ class AgentBase(BaseModel):
     owner_id: str
 
 class AgentCreate(AgentBase):
-    pass
+    scopes: Optional[List[str]] = None
 
 class AgentResponse(AgentBase):
     agent_id: str

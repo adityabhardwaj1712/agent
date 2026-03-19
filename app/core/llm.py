@@ -1,63 +1,256 @@
+from __future__ import annotations
+
 import os
-from typing import List, Optional, Tuple, Any
-from openai import AsyncOpenAI
+from typing import Any, List, Optional, Tuple
 from loguru import logger
 from ..config import settings
 
+
 class LLMService:
     """
-    Unified LLM Service for AgentCloud.
-    Supports OpenAI, Groq, and others via OpenAI-compatible API.
+    Unified LLM Service.  One interface, three providers.
+    Provider is selected by model name prefix:
+      gpt-*         → OpenAI
+      claude-*      → Anthropic
+      gemini-*      → Google Gemini
     """
-    
+
     def __init__(self):
-        # Prefer environment variables, fall back to settings object
-        self.api_key = settings.OPENAI_API_KEY
-        self.base_url = os.getenv("OPENAI_BASE_URL") # Optional for Groq/Local LLMs
-        
-        if not self.api_key:
-            logger.warning("No LLM API Key found. System will operate in degraded mode.")
-            
-        self.client = AsyncOpenAI(
-            api_key=self.api_key or "mock-key", 
-            base_url=self.base_url
-        )
+        self._openai_client: Any = None
+        self._anthropic_client: Any = None
+        self._gemini_client: Any = None
+
+    # ─── lazy clients ────────────────────────────────────────────────────────
+
+    def _openai(self):
+        if self._openai_client is None:
+            from openai import AsyncOpenAI
+            key = settings.OPENAI_API_KEY
+            if not key:
+                raise RuntimeError("OPENAI_API_KEY not set")
+            self._openai_client = AsyncOpenAI(api_key=key)
+        return self._openai_client
+
+    def _anthropic(self):
+        if self._anthropic_client is None:
+            import anthropic
+            key = settings.ANTHROPIC_API_KEY
+            if not key:
+                raise RuntimeError("ANTHROPIC_API_KEY not set")
+            self._anthropic_client = anthropic.AsyncAnthropic(api_key=key)
+        return self._anthropic_client
+
+    def _gemini(self):
+        if self._gemini_client is None:
+            import google.generativeai as genai
+            key = settings.GOOGLE_API_KEY
+            if not key:
+                raise RuntimeError("GOOGLE_API_KEY not set")
+            genai.configure(api_key=key)
+            self._gemini_client = genai
+        return self._gemini_client
+
+    # ─── provider dispatch ───────────────────────────────────────────────────
 
     async def get_completion(
-        self, 
-        messages: List[dict], 
-        model: str = "gpt-4o", 
+        self,
+        messages: List[dict],
+        model: str = "gpt-4o-mini",
         tools: Optional[List[dict]] = None,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ) -> Tuple[Optional[str], Optional[List[Any]], Optional[Any]]:
         """
-        Execute a chat completion request.
-        Returns (content, tool_calls, usage)
+        Returns (content, tool_calls, usage).
+        Automatically routes to the right provider based on model name.
         """
-        if not self.api_key or self.api_key == "mock-key":
-            logger.warning("Attempted LLM call without API key. Returning placeholder.")
-            return "DEGRADED MODE: Please configure a real API key to activate AI reasoning.", None, None
+        logger.debug(f"LLM call → model={model} msgs={len(messages)}")
 
-        try:
-            kwargs = {
-                "model": model,
-                "messages": messages,
-                "temperature": temperature,
-                "timeout": 60.0
-            }
-            if tools:
-                kwargs["tools"] = tools
-                kwargs["tool_choice"] = "auto"
+        if model.startswith("claude-"):
+            return await self._call_anthropic(messages, model, tools, temperature)
+        elif model.startswith("gemini-"):
+            return await self._call_gemini(messages, model, tools, temperature)
+        else:
+            return await self._call_openai(messages, model, tools, temperature)
 
-            logger.debug(f"Calling LLM ({model}) with {len(messages)} messages")
-            response = await self.client.chat.completions.create(**kwargs)
-            message = response.choices[0].message
-            usage = response.usage
-            
-            logger.debug(f"LLM response received. Tool calls: {bool(getattr(message, 'tool_calls', None))}")
-            return message.content, getattr(message, "tool_calls", None), usage
-        except Exception as e:
-            logger.error(f"LLM Completion failed: {e}")
-            raise
+    # ─── OpenAI ──────────────────────────────────────────────────────────────
+
+    async def _call_openai(self, messages, model, tools, temperature):
+        kwargs: dict = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "timeout": 60.0,
+        }
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+
+        resp = await self._openai().chat.completions.create(**kwargs)
+        msg = resp.choices[0].message
+        return msg.content, getattr(msg, "tool_calls", None), resp.usage
+
+    # ─── Anthropic ───────────────────────────────────────────────────────────
+
+    async def _call_anthropic(self, messages, model, tools, temperature):
+        """
+        Translates the OpenAI message format → Anthropic format.
+        System messages are extracted and passed separately.
+        Tool definitions are translated from OpenAI schema → Anthropic schema.
+        """
+        system = ""
+        anthropic_messages = []
+
+        for m in messages:
+            role = m["role"]
+            content = m.get("content") or ""
+            if role == "system":
+                system = content
+            elif role == "tool":
+                # Map OpenAI tool result → Anthropic tool_result block
+                anthropic_messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": m.get("tool_call_id", ""),
+                        "content": content,
+                    }]
+                })
+            else:
+                # user / assistant
+                tool_calls = m.get("tool_calls")
+                if tool_calls:
+                    blocks = []
+                    if content:
+                        blocks.append({"type": "text", "text": content})
+                    for tc in tool_calls:
+                        import json
+                        blocks.append({
+                            "type": "tool_use",
+                            "id": tc.id,
+                            "name": tc.function.name,
+                            "input": json.loads(tc.function.arguments or "{}"),
+                        })
+                    anthropic_messages.append({"role": "assistant", "content": blocks})
+                else:
+                    anthropic_messages.append({"role": role, "content": content})
+
+        kwargs: dict = {
+            "model": model,
+            "max_tokens": 4096,
+            "temperature": temperature,
+            "messages": anthropic_messages,
+        }
+        if system:
+            kwargs["system"] = system
+        if tools:
+            kwargs["tools"] = [
+                {
+                    "name": t["function"]["name"],
+                    "description": t["function"].get("description", ""),
+                    "input_schema": t["function"].get("parameters", {"type": "object", "properties": {}}),
+                }
+                for t in tools
+            ]
+
+        resp = await self._anthropic().messages.create(**kwargs)
+
+        text_content = ""
+        tool_calls_out = []
+
+        for block in resp.content:
+            if block.type == "text":
+                text_content += block.text
+            elif block.type == "tool_use":
+                # Wrap in OpenAI-compatible shape so the rest of the worker doesn't change
+                tool_calls_out.append(_AnthropicToolCall(block.id, block.name, block.input))
+
+        usage = _Usage(
+            prompt_tokens=resp.usage.input_tokens,
+            completion_tokens=resp.usage.output_tokens,
+            total_tokens=resp.usage.input_tokens + resp.usage.output_tokens,
+        )
+        return text_content or None, tool_calls_out or None, usage
+
+    # ─── Google Gemini ────────────────────────────────────────────────────────
+
+    async def _call_gemini(self, messages, model, tools, temperature):
+        """
+        Translates messages to Gemini content format.
+        Tool calls are not yet translated (Gemini has different function-calling API).
+        """
+        import asyncio, functools
+        genai = self._gemini()
+        gemini_model = genai.GenerativeModel(
+            model_name=model,
+            generation_config={"temperature": temperature},
+        )
+
+        # Build conversation history
+        history = []
+        last_user_content = ""
+        for m in messages:
+            role = m["role"]
+            content = m.get("content") or ""
+            if role == "system":
+                # Prepend system prompt to first user turn
+                last_user_content = f"{content}\n\n"
+            elif role == "user":
+                history.append({"role": "user", "parts": [last_user_content + content]})
+                last_user_content = ""
+            elif role == "assistant":
+                history.append({"role": "model", "parts": [content]})
+
+        if not history:
+            history.append({"role": "user", "parts": [last_user_content]})
+
+        # Use executor so we don't block the event loop (Gemini SDK is sync)
+        loop = asyncio.get_event_loop()
+        chat = gemini_model.start_chat(history=history[:-1])
+        response = await loop.run_in_executor(
+            None,
+            functools.partial(chat.send_message, history[-1]["parts"][0])
+        )
+
+        text = response.text
+        usage = _Usage(
+            prompt_tokens=0,  # Gemini doesn't always expose token counts
+            completion_tokens=0,
+            total_tokens=0,
+        )
+        return text, None, usage
+
+
+# ─── Shim types so the rest of the codebase stays unchanged ──────────────────
+
+import json as _json
+from dataclasses import dataclass
+
+
+@dataclass
+class _FunctionCall:
+    name: str
+    arguments: str  # JSON string
+
+
+@dataclass
+class _AnthropicToolCall:
+    """Mimics openai.types.chat.ChatCompletionMessageToolCall"""
+    id: str
+    _name: str
+    _input: dict
+
+    def __post_init__(self):
+        self.function = _FunctionCall(
+            name=self._name,
+            arguments=_json.dumps(self._input),
+        )
+
+
+@dataclass
+class _Usage:
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
 
 llm_service = LLMService()

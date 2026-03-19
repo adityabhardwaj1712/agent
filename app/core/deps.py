@@ -3,7 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, APIKeyHea
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from ..core.auth import verify_token
+from ..core.auth_service import verify_token
 from ..core.scopes import CurrentAgent, has_scopes, parse_scopes
 from ..db.database import get_db
 from ..models.agent import Agent
@@ -64,7 +64,11 @@ async def get_current_agent(
     if not agent:
         raise HTTPException(status_code=401, detail="Unknown agent")
 
-    return CurrentAgent(agent_id=agent.agent_id, scopes=parse_scopes(getattr(agent, "scopes", None)))
+    return CurrentAgent(
+        agent_id=agent.agent_id, 
+        user_id=agent.owner_id,
+        scopes=parse_scopes(getattr(agent, "scopes", None))
+    )
 
 
 def require_scopes(required: list[str]):

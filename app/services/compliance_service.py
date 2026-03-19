@@ -23,6 +23,10 @@ class ComplianceService:
         r"wget\s+.*-O\s+-"
     ]
 
+    TOXIC_KEYWORDS = [
+        "hate", "violence", "threat", "harass", "abuse", "toxic", "poison"
+    ]
+
     async def scan_content(self, content: str) -> Dict[str, Any]:
         """
         Returns a compliance report for the given text.

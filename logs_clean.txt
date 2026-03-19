@@ -1,0 +1,28 @@
+ve
+api-1  |     await self._serve(sockets)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 86, in _serve
+api-1  |     config.load()
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 441, in load
+api-1  |     self.loaded_app = import_from_string(self.app)
+api-1  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+api-1  |     module = importlib.import_module(module_str)
+api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+api-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+api-1  |   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+api-1  |   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+api-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+api-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+api-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+api-1  |   File "/app/app/main.py", line 9, in <module>
+api-1  |     from .api.router import router as api_router
+api-1  |   File "/app/app/api/router.py", line 19, in <module>
+api-1  |     from .admin import router as admin_router
+api-1  |   File "/app/app/api/admin.py", line 4, in <module>
+api-1  |     from ..services.circuit_breaker import circuit_breaker, CircuitState, replay_dlq, DLQ_STREAM
+api-1  |   File "/app/app/services/circuit_breaker.py", line 11, in <module>
+api-1  |     from ..db.redis_client import get_async_redis_client
+api-1  | ImportError: cannot import name 'get_async_redis_client' from 'app.db.redis_client' (/app/app/db/redis_client.py)

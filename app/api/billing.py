@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
 from ..db.database import get_db
 from ..schemas.billing_schema import SubscriptionResponse, UsageRecordResponse, BillingSummary

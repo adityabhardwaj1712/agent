@@ -6,8 +6,10 @@ from datetime import timedelta
 from ..db.database import get_db
 from ..schemas.user_schema import UserResponse, UserCreate, Token
 from ..services.user_service import user_service
-from ..core.auth import create_user_token
+from ..core.auth_service import create_user_token
 from ..core.deps import get_current_user
+
+print(f"DEBUG: Importing app.api.auth from {__file__}")
 
 router = APIRouter()
 

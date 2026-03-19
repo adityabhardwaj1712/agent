@@ -43,7 +43,18 @@ def main() -> None:
         _fail(f"GET /v1/analytics/metrics failed: {code} {data}")
 
     # 3) Register agent
-    owner_id = str(uuid.uuid4())
+    # Register user first so owner_id exists
+    email = f"smoke_{uuid.uuid4().hex[:8]}@example.com"
+    code, usr = request_json(
+        "POST",
+        "/v1/auth/register",
+        json={"email": email, "password": "password123"}
+    )
+    if code != 200:
+        _fail(f"POST /auth/register failed: {code} {usr}")
+    
+    owner_id = usr.get("user_id", str(uuid.uuid4()))
+    
     code, reg = request_json(
         "POST",
         "/v1/agents/register",

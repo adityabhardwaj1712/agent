@@ -18,3 +18,12 @@ pytest
 httpx
 slowapi
 loguru
+anthropic
+google-generativeai
+e2b-code-interpreter
+email-validator
+stripe
+passlib[bcrypt]
+bcrypt==3.2.2
+python-multipart
+aiohttp

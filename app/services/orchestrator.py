@@ -1,16 +1,32 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
+import asyncio
 import json
+import time
 import uuid
-from ..db.redis_client import get_redis_client
+from dataclasses import dataclass
+from enum import IntEnum
+from typing import Any, Dict, Optional
 
+import redis.asyncio as aioredis
+from loguru import logger
+
+from ..config import settings
+from ..db.database import AsyncSessionLocal
+from ..models.task import Task
+from ..models.agent import Agent
+
+QUEUE_KEY = "agent_tasks_priority"
+
+class Priority(IntEnum):
+    LOW = 1
+    NORMAL = 5
+    HIGH = 10
+    CRITICAL = 50
 
 @dataclass(frozen=True)
 class EnqueueResult:
     task_id: str
-
 
 @dataclass(frozen=True)
 class TaskStatus:
@@ -18,84 +34,86 @@ class TaskStatus:
     status: str
     result: Optional[str] = None
 
-
 class Orchestrator:
     """
-    Orchestrator for task management using direct Redis queue.
-    Removes Celery dependency for better integration with async workers.
+    Modernized Orchestrator using Redis ZSETs for priority queuing.
+    Supports async dequeue and integrated metrics.
     """
-    
-    def enqueue_task(self, payload: str, agent_id: Optional[str] = None, 
-                     goal_id: Optional[str] = None, 
-                     parent_task_id: Optional[str] = None) -> EnqueueResult:
-        """
-        Enqueue a task to be processed by workers.
-        """
+
+    async def enqueue_task(
+        self, 
+        db: AsyncSessionLocal,
+        payload: str, 
+        user_id: str,
+        agent_id: Optional[str] = None, 
+        priority: Priority = Priority.NORMAL,
+        goal_id: Optional[str] = None, 
+        parent_task_id: Optional[str] = None
+    ) -> EnqueueResult:
         task_id = str(uuid.uuid4())
         
-        redis = get_redis_client()
+        # 1. Create DB Record
+        task = Task(
+            task_id=task_id,
+            user_id=user_id,
+            agent_id=agent_id,
+            payload=payload,
+            goal_id=goal_id,
+            parent_task_id=parent_task_id,
+            status="queued"
+        )
+        db.add(task)
+        await db.commit()
+
+        # 2. Calculate score for ZSET (Priority first, then timestamp)
+        # Higher score = higher priority
+        # Score = (Priority * 10^12) + (Now)
+        score = int(priority) * 1_000_000_000_000 + int(time.time())
+        
         task_data = {
             "task_id": task_id,
+            "user_id": user_id,
             "payload": payload,
             "agent_id": agent_id,
+            "priority": int(priority),
             "goal_id": goal_id,
-            "parent_task_id": parent_task_id
+            "parent_task_id": parent_task_id,
+            "created_at": time.time()
         }
+
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
+        await redis.zadd(QUEUE_KEY, {json.dumps(task_data): score})
         
-        # Push to Redis queue (LPUSH for FIFO with BLPOP)
-        redis.lpush("agent_tasks", json.dumps(task_data))
-        
-        # Increment metrics
-        redis.incr("metrics:tasks_submitted_total")
-        if agent_id:
-            redis.incr(f"metrics:tasks_submitted_by_agent:{agent_id}")
-        
+        logger.info(f"Enqueued task {task_id} with priority {priority.name}")
         return EnqueueResult(task_id=task_id)
 
-    def get_status(self, task_id: str) -> TaskStatus:
-        """
-        Synchronous status check using asyncio.run() - handles legacy sync callers.
-        """
-        import asyncio
-        from ..db.database import AsyncSessionLocal
-        from ..models.task import Task
-        
-        async def _get_status():
-            async with AsyncSessionLocal() as db:
-                task = await db.get(Task, task_id)
-                if task:
-                    return TaskStatus(
-                        task_id=task_id,
-                        status=task.status,
-                        result=task.result
-                    )
-                return TaskStatus(task_id=task_id, status="not_found")
-        
+async def dequeue_next_task(redis_client: aioredis.Redis) -> Optional[Dict[str, Any]]:
+    """
+    Pops the highest priority task from the ZSET.
+    """
+    # ZPOPMIN would be for lowest score. For priority where HIGH=50, we want ZPOPMAX.
+    results = await redis_client.zpopmax(QUEUE_KEY, count=1)
+    if not results:
+        return None
+    
+    # results is a list of (member, score)
+    task_json, score = results[0]
+    return json.loads(task_json)
+
+async def run_reputation_decay_scheduler(interval_seconds: int = 3600):
+    """
+    Periodically decays agent reputations to ensure recent performance matters more.
+    """
+    while True:
         try:
-            return asyncio.run(_get_status())
-        except Exception:
-            # Fallback for nested loops
-            return TaskStatus(task_id=task_id, status="unknown")
-
-    async def get_status_async(self, task_id: str) -> TaskStatus:
-        """
-        Async version of status check.
-        """
-        from ..db.database import AsyncSessionLocal
-        from ..models.task import Task
-        
-        async with AsyncSessionLocal() as db:
-            task = await db.get(Task, task_id)
-            if task:
-                return TaskStatus(
-                    task_id=task_id,
-                    status=task.status,
-                    result=task.result
-                )
-            return TaskStatus(task_id=task_id, status="not_found")
-
-    def run_workflow(self, name: str, payload: dict) -> str:
-        raise NotImplementedError("Workflows are not implemented yet")
-
+            logger.info("Running reputation decay cycle...")
+            from .reputation import decay_all_reputations
+            async with AsyncSessionLocal() as db:
+                await decay_all_reputations(db)
+            await asyncio.sleep(interval_seconds)
+        except Exception as e:
+            logger.error(f"Reputation decay error: {e}")
+            await asyncio.sleep(60)
 
 orchestrator = Orchestrator()

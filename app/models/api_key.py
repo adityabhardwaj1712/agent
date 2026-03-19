@@ -26,7 +26,7 @@ class APIKey(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     # Relationships
-    user = relationship("User", backref="api_keys")
+    user = relationship("User", back_populates="api_keys")
 
     @staticmethod
     def generate_key_pair() -> tuple[str, str]:

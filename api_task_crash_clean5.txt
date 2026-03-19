@@ -1,0 +1,50 @@
+﻿api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+api-1  |     await app(scope, receive, sender)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 116, in app
+api-1  |     response = await f(request)
+api-1  |                ^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 691, in app
+api-1  |     content = await serialize_response(
+api-1  |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 296, in serialize_response
+api-1  |     raise ResponseValidationError(
+api-1  | fastapi.exceptions.ResponseValidationError: 1 validation error:
+api-1  |   {'type': 'missing', 'loc': ('response', 'created_at'), 'msg': 'Field required', 'input': {'task_id': 'd76495fa-19e2-4c92-88c2-8544012addfd', 'agent_id': 'f9512c4f-f0c8-4ece-9aec-ff308b95adf4', 'payload': 'do a simple task', 'status': 'queued'}}
+api-1  | 
+api-1  |   File "/app/app/api/tasks.py", line 13, in run
+api-1  |     POST /v1/tasks/run
+api-1  | 
+api-1  | During handling of the above exception, another exception occurred:
+api-1  | 
+api-1  | Traceback (most recent call last):
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+api-1  |     result = await app(  # type: ignore[func-returns-value]
+api-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+api-1  |     return await self.app(scope, receive, send)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1160, in __call__
+api-1  |     await super().__call__(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 107, in __call__
+api-1  |     await self.middleware_stack(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 176, in __call__
+api-1  |     response = await self.handler(request, exc)
+api-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/main.py", line 31, in global_exception_handler
+api-1  |     logger.error(f"Unhandled exception: {exc}", exc_info=True)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/loguru/_logger.py", line 2090, in error
+api-1  |     __self._log("ERROR", False, __self._options, __message, args, kwargs)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/loguru/_logger.py", line 2055, in _log
+api-1  |     log_record["message"] = message.format(*args, **kwargs)
+api-1  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  | KeyError: "'type'"
+api-1  | INFO:     127.0.0.1:35028 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:53776 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:56740 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:40964 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:38004 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:35330 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:47318 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:41100 - "GET / HTTP/1.1" 200 OK

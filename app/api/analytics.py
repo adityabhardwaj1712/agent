@@ -20,7 +20,7 @@ async def get_metrics(db: AsyncSession = Depends(get_db)):
     # 2. Database: Task Success Rate
     from ..models.task import Task
     tasks_count_result = await db.execute(select(Task.status, func.count()).group_by(Task.status))
-    task_stats = dict(tasks_count_result.all())
+    task_stats = {row[0]: row[1] for row in tasks_count_result.all()}
     
     completed = task_stats.get("completed", 0)
     failed = task_stats.get("failed", 0)
@@ -32,7 +32,7 @@ async def get_metrics(db: AsyncSession = Depends(get_db)):
     
     # 4. Events Table: Summary
     event_counts = await db.execute(select(Event.event_type, func.count()).group_by(Event.event_type))
-    counts = dict(event_counts.all())
+    counts = {row[0]: row[1] for row in event_counts.all()}
     
     return {
         "active_agents": active_agents,
@@ -61,7 +61,7 @@ async def fleet_pulse(db: AsyncSession = Depends(get_db)):
     
     # Success Rate
     tasks_status_result = await db.execute(select(Task.status, func.count()).group_by(Task.status))
-    task_stats = dict(tasks_status_result.all())
+    task_stats = {row[0]: row[1] for row in tasks_status_result.all()}
     completed = task_stats.get("completed", 0)
     failed = task_stats.get("failed", 0)
     total = completed + failed

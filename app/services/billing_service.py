@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 
 from ..models.user import User
 from ..models.billing import Subscription, UsageRecord
-from ..db.redis_client import get_redis_client
+from ..db.redis_client import get_async_redis_client
 from ..config import settings
 
 # Initialize logger
@@ -108,7 +108,7 @@ class BillingService:
         """
         Atomically increments usage metrics in Redis with granular attribution.
         """
-        redis = await get_redis_client()
+        redis = await get_async_redis_client()
         
         # Get current billing period (YYYY-MM)
         now = datetime.utcnow()
@@ -133,7 +133,7 @@ class BillingService:
         Retrieves current usage and compares against plan limits.
         If agent_id is provided, returns usage for that specific agent.
         """
-        redis = await get_redis_client()
+        redis = await get_async_redis_client()
         now = datetime.utcnow()
         period = now.strftime("%Y-%m")
         

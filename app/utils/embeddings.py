@@ -1,6 +1,7 @@
 import os
 import hashlib
 from typing import List
+from loguru import logger
 
 
 def _hash_embedding(text: str, dim: int = 1536) -> List[float]:
@@ -14,8 +15,13 @@ def _hash_embedding(text: str, dim: int = 1536) -> List[float]:
 
 
 def embed(text: str) -> List[float]:
+    """
+    Generate real semantic embeddings using OpenAI text-embedding-3-small.
+    Falls back to a deterministic hash only if API key is missing or call fails.
+    """
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        logger.warning("OPENAI_API_KEY not set. Using hashing fallback for embeddings.")
         return _hash_embedding(text)
 
     try:
@@ -23,7 +29,10 @@ def embed(text: str) -> List[float]:
 
         client = OpenAI(api_key=api_key)
         model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+        
+        # Real semantic vector generation
         res = client.embeddings.create(model=model, input=text)
         return list(res.data[0].embedding)
-    except Exception:
+    except Exception as e:
+        logger.error(f"OpenAI Embedding failed: {e}. Falling back to hash.")
         return _hash_embedding(text)

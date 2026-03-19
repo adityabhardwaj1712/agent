@@ -1,0 +1,50 @@
+﻿api-1  |   File "/usr/local/lib/python3.11/contextlib.py", line 158, in __exit__
+api-1  |     self.gen.throw(typ, value, traceback)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 193, in __call__
+api-1  |     response = await self.dispatch_func(request, call_next)
+api-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/core/middleware.py", line 16, in dispatch
+api-1  |     response: Response = await call_next(request)
+api-1  |                          ^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 168, in call_next
+api-1  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/base.py", line 144, in coro
+api-1  |     await self.app(scope, receive_or_disconnect, send_no_error)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 87, in __call__
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+api-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+api-1  |     await app(scope, receive, sender)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 716, in __call__
+api-1  |     await self.middleware_stack(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 736, in app
+api-1  |     await route.handle(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 290, in handle
+api-1  |     await self.app(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 130, in app
+api-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+api-1  |     raise exc
+api-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+api-1  |     await app(scope, receive, sender)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 116, in app
+api-1  |     response = await f(request)
+api-1  |                ^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 670, in app
+api-1  |     raw_response = await run_endpoint_function(
+api-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 324, in run_endpoint_function
+api-1  |     return await dependant.call(**values)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/app/app/api/tasks.py", line 20, in run
+api-1  |     result = await send_task(db, data)
+api-1  |                    ^^^^^^^^^^^^^^^^^^^
+api-1  | TypeError: send_task() missing 1 required positional argument: 'user_id'
+api-1  | INFO:     127.0.0.1:60594 - "GET / HTTP/1.1" 200 OK

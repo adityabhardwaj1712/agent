@@ -1,0 +1,93 @@
+﻿docker : time="2026-03
+-19T12:22:46+05:30" 
+level=warning msg="C:\
+\Users\\Aditya.Bhardwa
+j\\Desktop\\agent\\doc
+ker-compose.yml: the 
+attribute `version` 
+is obsolete, it will 
+be ignored, please 
+remove it to avoid 
+potential confusion"
+At line:1 char:1
++ docker compose run 
+--rm smoke > 
+smoke_logs.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (time="2026   
+ -03-1...tial conf    
+usion":String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+time="2026-03-19T12:22
+:46+05:30" 
+level=warning 
+msg="Found orphan 
+containers ([agent-smo
+ke-run-5ee42a2df260 ag
+ent-smoke-run-50093843
+51ab agent-api-run-d69
+d672c5aa1 agent-api-ru
+n-98fe9f287420 agent-a
+pi-run-ad83708fcd14 ag
+ent-api-run-4683be8612
+2e agent-api-run-8c6ac
+bd1363b agent-api-run-
+e33260cfb5bf agent-api
+-run-ebfb345b8f09 agen
+t-api-run-b593816eaca2
+]) for this project. 
+If you removed or 
+renamed this service 
+in your compose file, 
+you can run this 
+command with the 
+--remove-orphans flag 
+to clean it up."
+ Container agent-db-1 
+Running 
+ Container 
+agent-redis-1 Running 
+ Container 
+agent-api-1 Running 
+ Container agent-db-1 
+Waiting 
+ Container agent-db-1 
+Healthy 
+ Container 
+agent-redis-1 Waiting 
+ Container 
+agent-api-1 Waiting 
+ Container agent-db-1 
+Waiting 
+ Container agent-db-1 
+Healthy 
+ Container 
+agent-redis-1 Healthy 
+ Container 
+agent-api-1 Healthy 
+ Container agent-smoke
+-run-47c097a4d3c7 
+Creating 
+ Container agent-smoke
+-run-47c097a4d3c7 
+Created 
+Starting AgentCloud Initialization...
+Checking for JWT RSA keys...
+RSA keys already exist. Skipping generation.
+Initialization complete. Executing: python scripts/smoke.py
+GET 
+/v1/analytics/metrics 
+failed: 500 
+{'message': 'An 
+internal server error 
+occurred. Please 
+contact support.'}
+

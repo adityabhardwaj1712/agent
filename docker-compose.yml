@@ -15,7 +15,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-secret-key-change-me}
       - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
       - RUN_MIGRATIONS=true
-      - DEPLOYMENT_MODE=cloud
+      - DEPLOYMENT_MODE=local
       - DEPLOYMENT_REGION=us-east-1
     depends_on:
       db:

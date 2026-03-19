@@ -1,0 +1,50 @@
+﻿api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/utils/handlers.py", line 2163, in set_backend
+api-1  |     return cls.set_backend(name, dryrun=dryrun)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/utils/handlers.py", line 2188, in set_backend
+api-1  |     cls._set_backend(name, dryrun)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/utils/handlers.py", line 2311, in _set_backend
+api-1  |     super(SubclassBackendMixin, cls)._set_backend(name, dryrun)
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/utils/handlers.py", line 2224, in _set_backend
+api-1  |     ok = loader(**kwds)
+api-1  |          ^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/handlers/bcrypt.py", line 626, in _load_backend_mixin
+api-1  |     return mixin_cls._finalize_backend_mixin(name, dryrun)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/handlers/bcrypt.py", line 421, in _finalize_backend_mixin
+api-1  |     if detect_wrap_bug(IDENT_2A):
+api-1  |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/handlers/bcrypt.py", line 380, in detect_wrap_bug
+api-1  |     if verify(secret, bug_hash):
+api-1  |        ^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/utils/handlers.py", line 792, in verify
+api-1  |     return consteq(self._calc_checksum(secret), chk)
+api-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  |   File "/usr/local/lib/python3.11/site-packages/passlib/handlers/bcrypt.py", line 655, in _calc_checksum
+api-1  |     hash = _bcrypt.hashpw(secret, config)
+api-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1  | ValueError: password cannot be longer than 72 bytes, truncate manually if necessary (e.g. my_password[:72])
+api-1  | INFO:     127.0.0.1:33932 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:43442 - "GET / HTTP/1.1" 429 Too Many Requests
+api-1  | INFO:     127.0.0.1:33340 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:56652 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:36678 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:34050 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:34752 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:55102 - "GET / HTTP/1.1" 429 Too Many Requests
+api-1  | INFO:     127.0.0.1:42250 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:48522 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:40264 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:53002 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:39812 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:59830 - "GET / HTTP/1.1" 429 Too Many Requests
+api-1  | INFO:     127.0.0.1:54376 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:35496 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:45742 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:33702 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:40610 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:52384 - "GET / HTTP/1.1" 429 Too Many Requests
+api-1  | INFO:     127.0.0.1:35942 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:58358 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:37862 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:35014 - "GET / HTTP/1.1" 200 OK

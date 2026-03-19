@@ -7,6 +7,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from .api.router import router as api_router
+from .api.task_ws import router as ws_router
 from .config import settings
 from .core.middleware import MetricsMiddleware
 
@@ -27,7 +28,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    logger.error("Unhandled exception: {exc}", exc=exc, exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"message": "An internal server error occurred. Please contact support."},
@@ -49,9 +50,10 @@ app.add_middleware(
 app.add_middleware(MetricsMiddleware)
 
 app.include_router(api_router, prefix="/v1")
+app.include_router(ws_router)
 
 @app.get("/")
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 def health(request: Request):
     return {"status": "running", "version": "1.0.0"}
 

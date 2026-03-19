@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from ..models.agent import Agent
-from ..core.auth import create_token
+from ..core.auth_service import create_token
 from ..core.scopes import parse_scopes
 from ..schemas.agent_schema import AgentCreate
 
@@ -13,7 +13,8 @@ async def register_agent(db: AsyncSession, data: AgentCreate):
         name=data.name,
         role=data.role,
         description=data.description,
-        owner_id=data.owner_id
+        owner_id=data.owner_id,
+        scopes=",".join(data.scopes) if data.scopes else "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL"
     )
     db.add(db_agent)
     await db.commit()

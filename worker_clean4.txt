@@ -1,0 +1,34 @@
+﻿worker-1  | Starting AgentCloud Initialization...
+worker-1  | Checking for JWT RSA keys...
+worker-1  | RSA keys already exist. Skipping generation.
+worker-1  | Initialization complete. Executing: python -m app.workers.agent_worker
+worker-1  | 2026-03-19 09:26:26.689 | INFO     | __main__:run_worker:54 - AgentCloud Worker started ΓÇö priority queue + circuit breaker + event bus active
+worker-1  | 2026-03-19 09:26:26.689 | INFO     | __main__:run_worker:62 - Event bus consumer started
+worker-1  | 2026-03-19 09:26:26.696 | INFO     | app.services.orchestrator:run_reputation_decay_scheduler:110 - Running reputation decay cycle...
+worker-1  | 2026-03-19 09:26:26.705 | INFO     | app.services.event_bus:start_consuming:143 - Event bus consumer 'worker_cec3304f' started
+worker-1  | 2026-03-19 09:26:26,730 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+worker-1  | 2026-03-19 09:26:26,731 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:26:26,732 INFO sqlalchemy.engine.Engine select current_schema()
+worker-1  | 2026-03-19 09:26:26,732 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:26:26,734 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+worker-1  | 2026-03-19 09:26:26,734 INFO sqlalchemy.engine.Engine [raw sql] ()
+worker-1  | 2026-03-19 09:26:26,735 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:26:26,776 INFO sqlalchemy.engine.Engine SELECT agents.agent_id, agents.name, agents.role, agents.description, agents.owner_id, agents.scopes, agents.reputation_score, agents.total_tasks, agents.successful_tasks, agents.failed_tasks, agents.personality_config, agents.created_at 
+worker-1  | FROM agents
+worker-1  | 2026-03-19 09:26:26,776 INFO sqlalchemy.engine.Engine [generated in 0.00041s] ()
+worker-1  | 2026-03-19 09:26:26,781 INFO sqlalchemy.engine.Engine COMMIT
+worker-1  | 2026-03-19 09:26:44,771 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+worker-1  | 2026-03-19 09:26:44,775 INFO sqlalchemy.engine.Engine SELECT tasks.task_id AS tasks_task_id, tasks.user_id AS tasks_user_id, tasks.agent_id AS tasks_agent_id, tasks.goal_id AS tasks_goal_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.payload AS tasks_payload, tasks.status AS tasks_status, tasks.result AS tasks_result, tasks.thought_process AS tasks_thought_process, tasks.input_data AS tasks_input_data, tasks.output_data AS tasks_output_data, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at 
+worker-1  | FROM tasks 
+worker-1  | WHERE tasks.task_id = $1::VARCHAR
+worker-1  | 2026-03-19 09:26:44,775 INFO sqlalchemy.engine.Engine [generated in 0.00031s] ('84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a',)
+worker-1  | 2026-03-19 09:26:44,785 INFO sqlalchemy.engine.Engine UPDATE tasks SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE tasks.task_id = $3::VARCHAR
+worker-1  | 2026-03-19 09:26:44,785 INFO sqlalchemy.engine.Engine [generated in 0.00036s] ('processing', datetime.datetime(2026, 3, 19, 9, 26, 44, 785174), '84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a')
+worker-1  | 2026-03-19 09:26:44,791 INFO sqlalchemy.engine.Engine COMMIT
+worker-1  | 2026-03-19 09:26:44.797 | INFO     | __main__:process_one_task:149 - Processing task 84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a | agent=a275da2f-0ecd-4e12-91b9-16f80068854e | priority=5
+worker-1  | 2026-03-19 09:26:44.798 | ERROR    | __main__:process_one_task:322 - Task 84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a error: log_event() got an unexpected keyword argument 'user_id'
+worker-1  | 2026-03-19 09:26:44.798 | ERROR    | __main__:run_worker:89 - Task 84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a failed: log_event() got an unexpected keyword argument 'user_id'
+worker-1  | 2026-03-19 09:26:44.806 | WARNING  | app.services.circuit_breaker:record_failure:122 - Circuit for agent a275da2f-0ecd-4e12-91b9-16f80068854e: OPEN ΓÇö avg quality 0.00 < 0.3
+worker-1  | Slack Webhook URL not configured. Skipping notification.
+worker-1  | 2026-03-19 09:26:49.823 | WARNING  | __main__:run_worker:77 - Circuit OPEN for agent a275da2f-0ecd-4e12-91b9-16f80068854e ΓÇö task 84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a ΓåÆ DLQ
+worker-1  | 2026-03-19 09:26:49.847 | WARNING  | app.services.circuit_breaker:send_to_dlq:189 - Task 84600e70-1f3f-4e0f-9fb0-22fd18a3aa4a ΓåÆ DLQ (reason: circuit_open)

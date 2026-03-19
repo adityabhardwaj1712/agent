@@ -9,12 +9,14 @@ from .approvals import router as approvals_router
 from .audit import router as audit_router
 from .traces import router as traces_router
 from .goals import router as goals_router
-from .ws import router as ws_router
+from .task_ws import router as ws_router
 from .deployment import router as deployment_router
 from .marketplace import router as marketplace_router
 from .billing import router as billing_router
 from .developer import router as developer_router
 from .webhooks import router as webhooks_router
+from .workflows import router as workflows_router
+from .admin import router as admin_router
 
 router = APIRouter()
 
@@ -34,3 +36,5 @@ router.include_router(marketplace_router, prefix="/marketplace", tags=["marketpl
 router.include_router(billing_router, prefix="/billing", tags=["billing"])
 router.include_router(developer_router, tags=["developer"])
 router.include_router(webhooks_router, tags=["webhooks"])
+router.include_router(workflows_router, tags=["workflows"])
+router.include_router(admin_router, tags=["admin"])

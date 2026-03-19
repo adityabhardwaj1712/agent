@@ -38,7 +38,7 @@ async def update_reputation(db: AsyncSession, agent_id: str, success: bool, task
     await db.commit()
     return agent.reputation_score
 
-async def apply_reputation_decay(db: AsyncSession):
+async def decay_all_reputations(db: AsyncSession):
     # Slowly decay all agents toward 50.0 (baseline)
     # This prevents old high scores from lasting forever if agent is inactive
     stmt = select(Agent)
