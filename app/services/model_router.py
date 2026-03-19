@@ -23,7 +23,7 @@ def select_model(payload: str) -> ModelChoice:
         
     return ModelChoice(name="gpt-4o-mini", reason="standard task fallback", provider="OpenAI")
 
-async def call_provider(choice: ModelChoice, prompt: str = None, context: str = "", tools: list = None, messages: list = None) -> tuple[str, list]:
+async def call_provider(choice: ModelChoice, prompt: str = None, context: str = "", tools: list = None, messages: list = None) -> tuple[str, list, Any]:
     """
     AXON Resiliency: Executes LLM call using llm_service with fallback.
     """
@@ -36,23 +36,23 @@ async def call_provider(choice: ModelChoice, prompt: str = None, context: str = 
     
     # 1. Primary Attempt
     try:
-        content, tool_calls = await llm_service.get_completion(
+        content, tool_calls, usage = await llm_service.get_completion(
             messages=messages,
             model=choice.name,
             tools=tools
         )
-        return content or "", tool_calls or []
+        return content or "", tool_calls or [], usage
     except Exception as e:
         logger.warning(f"Primary LLM attempt failed: {e}. Retrying with fallback gpt-4o-mini.")
         
     # 2. Resiliency Fallback
     try:
-        content, tool_calls = await llm_service.get_completion(
+        content, tool_calls, usage = await llm_service.get_completion(
             messages=messages,
             model="gpt-4o-mini",
             tools=tools
         )
-        return content or "", tool_calls or []
+        return content or "", tool_calls or [], usage
     except Exception as e:
         logger.error(f"Critical LLM Failure: {e}")
-        return f"AXON Critical Failure: {str(e)[:100]}", []
+        return f"AXON Critical Failure: {str(e)[:100]}", [], None

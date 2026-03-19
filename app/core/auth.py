@@ -25,6 +25,17 @@ def create_token(agent_id: str, scopes: list[str] | None = None):
         algorithm=settings.JWT_ALGORITHM
     )
 
+def create_user_token(user_id: str):
+    payload = {
+        "user": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    }
+    return jwt.encode(
+        payload,
+        PRIVATE_KEY,
+        algorithm=settings.JWT_ALGORITHM
+    )
+
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, PUBLIC_KEY, algorithms=[settings.JWT_ALGORITHM])

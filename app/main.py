@@ -10,6 +10,16 @@ from .api.router import router as api_router
 from .config import settings
 from .core.middleware import MetricsMiddleware
 
+from .core.logging_config import setup_logging
+from .core.env_validator import validate_or_exit, print_environment_summary
+
+# Setup logging
+logger = setup_logging()
+
+# Validate environment
+print_environment_summary()
+validate_or_exit()
+
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AgentCloud", version="1.0.0")
 app.state.limiter = limiter
@@ -17,8 +27,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Log the full exception in production logs, but hide it from the user
-    print(f"CRITICAL ERROR: {exc}") 
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"message": "An internal server error occurred. Please contact support."},

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from sqlalchemy.orm import relationship
 import sqlalchemy as sa
 from ..db.base import Base
 import datetime
@@ -10,10 +11,14 @@ class Agent(Base):
     name = Column(String, nullable=False)
     role = Column(String, nullable=True) # e.g., "Software Engineer", "Researcher"
     description = Column(Text, nullable=True)
-    owner_id = Column(String, index=True)
+    owner_id = Column(String, ForeignKey("users.user_id"), index=True)
+    
+    # Relationships
+    owner = relationship("User", back_populates="agents")
     scopes = Column(Text, default="READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL")
     reputation_score = Column(sa.Float, default=50.0)
     total_tasks = Column(sa.Integer, default=0)
     successful_tasks = Column(sa.Integer, default=0)
     failed_tasks = Column(sa.Integer, default=0)
+    personality_config = Column(Text, nullable=True) # JSON config for persona/tone
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

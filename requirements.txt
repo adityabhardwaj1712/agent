@@ -17,3 +17,4 @@ prometheus-client
 pytest
 httpx
 slowapi
+loguru

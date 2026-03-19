@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
-
-from celery.result import AsyncResult
-
-from ..workers.celery_worker import celery, run_task
+import json
+import uuid
+from ..db.redis_client import get_redis_client
 
 
 @dataclass(frozen=True)
@@ -21,27 +20,82 @@ class TaskStatus:
 
 
 class Orchestrator:
-    def enqueue_task(self, payload: str) -> EnqueueResult:
-        result = run_task.delay(payload)
-        return EnqueueResult(task_id=result.id)
+    """
+    Orchestrator for task management using direct Redis queue.
+    Removes Celery dependency for better integration with async workers.
+    """
+    
+    def enqueue_task(self, payload: str, agent_id: Optional[str] = None, 
+                     goal_id: Optional[str] = None, 
+                     parent_task_id: Optional[str] = None) -> EnqueueResult:
+        """
+        Enqueue a task to be processed by workers.
+        """
+        task_id = str(uuid.uuid4())
+        
+        redis = get_redis_client()
+        task_data = {
+            "task_id": task_id,
+            "payload": payload,
+            "agent_id": agent_id,
+            "goal_id": goal_id,
+            "parent_task_id": parent_task_id
+        }
+        
+        # Push to Redis queue (LPUSH for FIFO with BLPOP)
+        redis.lpush("agent_tasks", json.dumps(task_data))
+        
+        # Increment metrics
+        redis.incr("metrics:tasks_submitted_total")
+        if agent_id:
+            redis.incr(f"metrics:tasks_submitted_by_agent:{agent_id}")
+        
+        return EnqueueResult(task_id=task_id)
 
     def get_status(self, task_id: str) -> TaskStatus:
-        result = AsyncResult(task_id, app=celery)
-        if result.successful():
-            return TaskStatus(task_id=task_id, status="completed", result=str(result.result))
-        if result.failed():
-            return TaskStatus(task_id=task_id, status="failed", result=str(result.result))
-        if result.status in {"PENDING", "RETRY", "STARTED"}:
-            return TaskStatus(
-                task_id=task_id,
-                status="running" if result.status == "STARTED" else "queued",
-            )
-        return TaskStatus(task_id=task_id, status=result.status.lower())
+        """
+        Synchronous status check using asyncio.run() - handles legacy sync callers.
+        """
+        import asyncio
+        from ..db.database import AsyncSessionLocal
+        from ..models.task import Task
+        
+        async def _get_status():
+            async with AsyncSessionLocal() as db:
+                task = await db.get(Task, task_id)
+                if task:
+                    return TaskStatus(
+                        task_id=task_id,
+                        status=task.status,
+                        result=task.result
+                    )
+                return TaskStatus(task_id=task_id, status="not_found")
+        
+        try:
+            return asyncio.run(_get_status())
+        except Exception:
+            # Fallback for nested loops
+            return TaskStatus(task_id=task_id, status="unknown")
+
+    async def get_status_async(self, task_id: str) -> TaskStatus:
+        """
+        Async version of status check.
+        """
+        from ..db.database import AsyncSessionLocal
+        from ..models.task import Task
+        
+        async with AsyncSessionLocal() as db:
+            task = await db.get(Task, task_id)
+            if task:
+                return TaskStatus(
+                    task_id=task_id,
+                    status=task.status,
+                    result=task.result
+                )
+            return TaskStatus(task_id=task_id, status="not_found")
 
     def run_workflow(self, name: str, payload: dict) -> str:
-        # Temporal-ready stub (future): run named workflow DAG
         raise NotImplementedError("Workflows are not implemented yet")
 
 
 orchestrator = Orchestrator()
-

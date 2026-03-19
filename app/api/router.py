@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from .agents import router as agents_router
+from .auth import router as auth_router
 from .memory import router as memory_router
 from .tasks import router as tasks_router
 from .analytics import router as analytics_router
@@ -10,10 +11,15 @@ from .traces import router as traces_router
 from .goals import router as goals_router
 from .ws import router as ws_router
 from .deployment import router as deployment_router
+from .marketplace import router as marketplace_router
+from .billing import router as billing_router
+from .developer import router as developer_router
+from .webhooks import router as webhooks_router
 
 router = APIRouter()
 
 router.include_router(agents_router, tags=["agents"])
+router.include_router(auth_router, prefix="/auth", tags=["auth"])
 router.include_router(memory_router, tags=["memory"])
 router.include_router(tasks_router, tags=["tasks"])
 router.include_router(analytics_router, tags=["analytics"])
@@ -24,3 +30,7 @@ router.include_router(traces_router, tags=["traces"])
 router.include_router(goals_router, tags=["goals"])
 router.include_router(ws_router, tags=["websocket"])
 router.include_router(deployment_router, tags=["infrastructure"])
+router.include_router(marketplace_router, prefix="/marketplace", tags=["marketplace"])
+router.include_router(billing_router, prefix="/billing", tags=["billing"])
+router.include_router(developer_router, tags=["developer"])
+router.include_router(webhooks_router, tags=["webhooks"])

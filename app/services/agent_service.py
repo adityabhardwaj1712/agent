@@ -30,19 +30,19 @@ async def register_agent(db: AsyncSession, data: AgentCreate):
         "token": token,
     }
 
-async def get_agent(db: AsyncSession, agent_id: str):
-    result = await db.execute(select(Agent).filter(Agent.agent_id == agent_id))
+async def get_agent(db: AsyncSession, agent_id: str, owner_id: str):
+    result = await db.execute(
+        select(Agent).filter(Agent.agent_id == agent_id, Agent.owner_id == owner_id)
+    )
     return result.scalars().first()
 
-async def list_agents(db: AsyncSession, owner_id: str = None):
-    query = select(Agent)
-    if owner_id:
-        query = query.filter(Agent.owner_id == owner_id)
+async def list_agents(db: AsyncSession, owner_id: str):
+    query = select(Agent).filter(Agent.owner_id == owner_id)
     result = await db.execute(query)
     return result.scalars().all()
 
-async def delete_agent(db: AsyncSession, agent_id: str):
-    agent = await get_agent(db, agent_id)
+async def delete_agent(db: AsyncSession, agent_id: str, owner_id: str):
+    agent = await get_agent(db, agent_id, owner_id)
     if agent:
         await db.delete(agent)
         await db.commit()

@@ -9,7 +9,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from .billing_service import billing_service
+
 async def create_goal(db: AsyncSession, data: GoalCreate, owner_id: str):
+    # 1. Check Plan Limits (Active Goals)
+    if not await billing_service.check_limits(db, owner_id, "active_goals"):
+        raise PermissionError("Plan active goals limit reached")
+
     goal_id = str(uuid.uuid4())
     db_goal = Goal(
         goal_id=goal_id,
@@ -23,13 +29,12 @@ async def create_goal(db: AsyncSession, data: GoalCreate, owner_id: str):
     await db.refresh(db_goal)
 
     # Trigger Autonomous Planning
+    # Ensure planner_service and send_task handle owner_id
     plan = await planner_service.generate_plan(db, data.description, owner_id)
     if plan:
-        logger.info(f"Goal {goal_id} planned: {plan.summary}")
+        logger.info(f"Goal {goal_id} planned for user {owner_id}: {plan.summary}")
         
-        # Map of temporary plan index to real task_id
         task_id_map = {}
-        
         for i, task_plan in enumerate(plan.tasks):
             parent_id = None
             if task_plan.depends_on is not None:
@@ -40,29 +45,31 @@ async def create_goal(db: AsyncSession, data: GoalCreate, owner_id: str):
                 agent_id=task_plan.agent_id,
                 goal_id=goal_id,
                 parent_task_id=parent_id
-            ))
+            ), user_id=owner_id) # Pass user_id
             
             task_id_map[i] = created_task["task_id"]
             
         db_goal.status = "active"
         await db.commit()
     else:
-        logger.warning(f"Goal {goal_id} planning failed. Manual intervention needed.")
+        logger.warning(f"Goal {goal_id} planning failed for user {owner_id}.")
         db_goal.status = "failed_planning"
         await db.commit()
 
     return db_goal
 
-async def get_goal(db: AsyncSession, goal_id: str):
-    return await db.get(Goal, goal_id)
+async def get_goal(db: AsyncSession, goal_id: str, owner_id: str):
+    query = select(Goal).where(Goal.goal_id == goal_id, Goal.owner_id == owner_id)
+    result = await db.execute(query)
+    return result.scalars().first()
 
-async def list_goals(db: AsyncSession):
-    stmt = select(Goal).order_by(Goal.created_at.desc())
+async def list_goals(db: AsyncSession, owner_id: str):
+    stmt = select(Goal).where(Goal.owner_id == owner_id).order_by(Goal.created_at.desc())
     result = await db.execute(stmt)
     return result.scalars().all()
 
-async def update_goal_status(db: AsyncSession, goal_id: str, status: str):
-    goal = await get_goal(db, goal_id)
+async def update_goal_status(db: AsyncSession, goal_id: str, owner_id: str, status: str):
+    goal = await get_goal(db, goal_id, owner_id)
     if goal:
         goal.status = status
         await db.commit()
