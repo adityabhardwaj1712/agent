@@ -1,15 +1,25 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+
 from ..db.database import get_db
+from ..core.deps import get_current_user
 from ..core.audit import log_audit
 from ..services.agent_service import register_agent, get_agent, list_agents, delete_agent
 from ..schemas.agent_schema import AgentCreate, AgentResponse
-from typing import List
+from ..models.user import User
 
 router = APIRouter(prefix="/agents")
 
 @router.post("/register", response_model=AgentResponse)
-async def create_agent(request: Request, data: AgentCreate, db: AsyncSession = Depends(get_db)):
+async def create_agent(
+    request: Request,
+    data: AgentCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    # Enforce that the owner_id matches the authenticated user
+    data.owner_id = user.user_id
     result = await register_agent(db, data)
     await log_audit(
         db,

@@ -23,7 +23,7 @@ export default function TaskTable() {
         <table className="ac-table">
           <thead>
             <tr>
-              <th style={{ width: '40px' }}><input type="checkbox" /></th>
+              <th style={{ width: '40px' }}><input type="checkbox" style={{ accentColor: 'var(--accent-primary)' }} /></th>
               <th>Task ID</th>
               <th>Agent</th>
               <th>Status</th>
@@ -33,16 +33,31 @@ export default function TaskTable() {
           </thead>
           <tbody>
             {TASKS.map((task) => (
-              <tr key={task.id}>
-                <td><input type="checkbox" /></td>
-                <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{task.id}</td>
-                <td>{task.agent}</td>
+              <tr key={task.id} style={{ transition: 'background 0.2s ease' }}>
+                <td><input type="checkbox" style={{ accentColor: 'var(--accent-primary)' }} /></td>
+                <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono, monospace)' }}>
+                  {task.id}
+                </td>
                 <td>
-                  <span className="ac-status-pill" style={{ background: `${task.color}15`, color: task.color, border: `1px solid ${task.color}30` }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: task.color }}></div>
+                      {task.agent}
+                   </div>
+                </td>
+                <td>
+                  <span className="ac-status-pill" style={{ 
+                    background: `${task.color}15`, 
+                    color: task.color, 
+                    border: `1px solid ${task.color}30`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: task.color }}></span>
                     {task.status}
                   </span>
                 </td>
-                <td>{task.duration}</td>
+                <td style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>{task.duration}</td>
                 <td>{task.last}</td>
               </tr>
             ))}

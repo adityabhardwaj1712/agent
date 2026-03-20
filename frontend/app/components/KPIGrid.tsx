@@ -29,15 +29,26 @@ export default function KPIGrid() {
           </div>
           <div className="ac-kpi-value">{kpi.value}</div>
           
-          <div className="ac-kpi-trend">
+          <div className="ac-kpi-trend" style={{ transition: 'transform 0.3s ease' }}>
             <svg width="100%" height="40" viewBox="0 0 100 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id={`grad-${kpi.label}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={kpi.color} stopOpacity="0.2" />
+                  <stop offset="100%" stopColor={kpi.color} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path 
+                d={`M 0 40 L 0 ${40 - kpi.trend[0]} ${kpi.trend.map((v, i) => `L ${i * (100 / (kpi.trend.length - 1))} ${40 - v}`).join(' ')} L 100 40 Z`}
+                fill={`url(#grad-${kpi.label})`}
+              />
               <path 
                 d={`M 0 ${40 - kpi.trend[0]} ${kpi.trend.map((v, i) => `L ${i * (100 / (kpi.trend.length - 1))} ${40 - v}`).join(' ')}`}
                 fill="none"
                 stroke={kpi.color}
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
               />
             </svg>
           </div>

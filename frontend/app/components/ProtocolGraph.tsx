@@ -87,28 +87,31 @@ export default function ProtocolGraph({ events }: ProtocolGraphProps) {
       </div>
 
       {/* Connection Lines */}
-      <svg width="80" height="120" style={{ zIndex: 1, overflow: "visible" }}>
+      <svg width="120" height="200" style={{ zIndex: 1, overflow: "visible", position: 'absolute', left: '160px' }}>
         <defs>
           <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#3B82F6" />
-            <stop offset="100%" stopColor="#38BDF8" />
+            <stop offset="0%" stopColor="var(--accent-primary)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="var(--accent-blue-soft)" stopOpacity="0.8" />
           </linearGradient>
+          <filter id="glow">
+             <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+             <feMerge>
+                <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
+             </feMerge>
+          </filter>
         </defs>
         {agents.map((_, i) => (
           <g key={i}>
-            <line
-              x1="0"
-              y1={30 + i * 52}
-              x2="80"
-              y2={60}
+            <path
+              d={`M 0 ${30 + i * 60} C 60 ${30 + i * 60}, 60 100, 120 100`}
+              fill="none"
               stroke="url(#lineGrad)"
               strokeWidth="2"
-              strokeDasharray="6 4"
-              opacity="0.6"
-            />
-            <circle cx="80" cy="60" r="3" fill="#38BDF8" opacity="0.8">
-              <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
-            </circle>
+              strokeDasharray="4 4"
+              style={{ filter: 'url(#glow)' }}
+            >
+               <animate attributeName="stroke-dashoffset" from="20" to="0" dur="3s" repeatCount="indefinite" />
+            </path>
           </g>
         ))}
       </svg>
