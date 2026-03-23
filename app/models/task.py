@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+import sqlalchemy as sa
 from ..db.base import Base
 import datetime
 
@@ -16,5 +17,7 @@ class Task(Base):
     thought_process = Column(Text, nullable=True) # Store agent's internal reasoning
     input_data = Column(Text, nullable=True)
     output_data = Column(Text, nullable=True)
+    cost = Column(sa.Float, default=0.0)
+    model_used = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

@@ -9,7 +9,7 @@ from ..services.user_service import user_service
 from ..core.auth_service import create_user_token
 from ..core.deps import get_current_user
 
-print(f"DEBUG: Importing app.api.auth from {__file__}")
+# debug print removed
 
 router = APIRouter()
 

@@ -17,6 +17,7 @@ from .developer import router as developer_router
 from .webhooks import router as webhooks_router
 from .workflows import router as workflows_router
 from .admin import router as admin_router
+from .query import router as query_router
 
 router = APIRouter()
 
@@ -38,3 +39,4 @@ router.include_router(developer_router, tags=["developer"])
 router.include_router(webhooks_router, tags=["webhooks"])
 router.include_router(workflows_router, tags=["workflows"])
 router.include_router(admin_router, tags=["admin"])
+router.include_router(query_router, tags=["query"])

@@ -8,6 +8,15 @@ from ..schemas.trace_schema import TraceResponse
 
 router = APIRouter(prefix="/traces")
 
+@router.get("/", response_model=List[TraceResponse])
+async def list_all_traces(db: AsyncSession = Depends(get_db)):
+    """
+    List all traces across all tasks.
+    """
+    result = await db.execute(select(Trace).order_by(Trace.created_at.desc()))
+    return result.scalars().all()
+
+
 @router.get("/{task_id}", response_model=List[TraceResponse])
 async def get_task_traces(task_id: str, db: AsyncSession = Depends(get_db)):
     """

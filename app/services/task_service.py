@@ -57,3 +57,13 @@ async def get_task_status(db: AsyncSession, task_id: str, user_id: str):
         }
     
     return {"task_id": task_id, "status": "not_found", "result": None}
+
+
+async def list_tasks(db: AsyncSession, user_id: str | None = None, skip: int = 0, limit: int = 100):
+    """List tasks with pagination, optionally filtered by user."""
+    query = select(Task).order_by(Task.created_at.desc())
+    if user_id:
+        query = query.filter(Task.user_id == user_id)
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()

@@ -21,4 +21,6 @@ class Agent(Base):
     successful_tasks = Column(sa.Integer, default=0)
     failed_tasks = Column(sa.Integer, default=0)
     personality_config = Column(Text, nullable=True) # JSON config for persona/tone
+    model_name = Column(String, default="gpt-4o")
+    base_cost = Column(sa.Float, default=0.01) # Cost per task in credits/USD
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

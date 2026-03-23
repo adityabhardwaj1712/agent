@@ -2,6 +2,8 @@ import React from "react";
 import "./globals.css";
 import { SidebarNav } from "./components/SidebarNav";
 import { CommandPalette } from "./components/CommandPalette";
+import ShortcutsOverlay from './components/ShortcutsOverlay';
+import FleetQueryPanel from './components/FleetQueryPanel';
 import ThemeToggle from "./components/ThemeToggle";
 import CostTicker from "./components/CostTicker";
 import { Search, Bell, Plus, Settings } from "lucide-react";
@@ -19,6 +21,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="ac-shell">
+        <ShortcutsOverlay />
+        <FleetQueryPanel />
         <CommandPalette />
         <aside className="ac-sidebar">
           <div className="ac-sidebar-logo">

@@ -1,0 +1,247 @@
+﻿    await wrap_app_han
+dling_exceptions(app, 
+request)(scope, 
+receive, send)
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/starlette/_excepti
+on_handler.py", line 
+53, in wrapped_app
+    raise exc
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/starlette/_excepti
+on_handler.py", line 
+42, in wrapped_app
+    await app(scope, 
+receive, sender)
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/fastapi/routing.py
+", line 116, in app
+    response = await 
+f(request)
+               
+^^^^^^^^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/fastapi/routing.py
+", line 670, in app
+    raw_response = 
+await 
+run_endpoint_function(
+                   ^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/fastapi/routing.py
+", line 324, in 
+run_endpoint_function
+    return await depen
+dant.call(**values)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+  File "/app/app/api/a
+uth.py", line 24, in 
+register
+    return await user_
+service.create_user(db
+=db, schema=schema)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+  File "/app/app/servi
+ces/user_service.py", 
+line 20, in 
+create_user
+    hashed_password=ge
+t_password_hash(schema
+.password),
+                    ^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^
+  File "/app/app/core/
+security.py", line 
+23, in 
+get_password_hash
+    return pwd_context
+.hash(_pre_hash(passwo
+rd))
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/context.py
+", line 2258, in hash
+    return 
+record.hash(secret, 
+**kwds)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 779, 
+in hash
+    self.checksum = se
+lf._calc_checksum(secr
+et)
+                    ^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/handlers/b
+crypt.py", line 591, 
+in _calc_checksum
+    self._stub_require
+s_backend()
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2254, 
+in 
+_stub_requires_backend
+    cls.set_backend()
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2156, 
+in set_backend
+    return owner.set_b
+ackend(name, 
+dryrun=dryrun)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2163, 
+in set_backend
+    return 
+cls.set_backend(name, 
+dryrun=dryrun)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2188, 
+in set_backend
+    cls._set_backend(n
+ame, dryrun)
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2311, 
+in _set_backend
+    super(SubclassBack
+endMixin, cls)._set_ba
+ckend(name, dryrun)
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 2224, 
+in _set_backend
+    ok = 
+loader(**kwds)
+         
+^^^^^^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/handlers/b
+crypt.py", line 626, 
+in _load_backend_mixin
+    return mixin_cls._
+finalize_backend_mixin
+(name, dryrun)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/handlers/b
+crypt.py", line 421, 
+in _finalize_backend_m
+ixin
+    if detect_wrap_bug
+(IDENT_2A):
+       ^^^^^^^^^^^^^^^
+^^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/handlers/b
+crypt.py", line 380, 
+in detect_wrap_bug
+    if verify(secret, 
+bug_hash):
+       ^^^^^^^^^^^^^^^
+^^^^^^^^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/utils/hand
+lers.py", line 792, 
+in verify
+    return consteq(sel
+f._calc_checksum(secre
+t), chk)
+                   ^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^
+  File "/usr/local/lib
+/python3.11/site-packa
+ges/passlib/handlers/b
+crypt.py", line 655, 
+in _calc_checksum
+    hash = _bcrypt.has
+hpw(secret, config)
+           ^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+ValueError: password 
+cannot be longer than 
+72 bytes, truncate 
+manually if necessary 
+(e.g. 
+my_password[:72])
+2026-03-23 05:15:36,003 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-03-23 05:15:36,003 INFO sqlalchemy.engine.Engine SELECT count(agents.agent_id) AS count_1 
+FROM agents
+2026-03-23 05:15:36,003 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] ()
+2026-03-23 05:15:36,005 INFO sqlalchemy.engine.Engine SELECT tasks.status, count(*) AS count_1 
+FROM tasks GROUP BY tasks.status
+2026-03-23 05:15:36,005 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] ()
+2026-03-23 05:15:36,008 INFO sqlalchemy.engine.Engine SELECT events.event_type, count(*) AS count_1 
+FROM events GROUP BY events.event_type
+2026-03-23 05:15:36,009 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] ()
+2026-03-23 05:15:36,010 INFO sqlalchemy.engine.Engine SELECT sum(tasks.cost) AS sum_1 
+FROM tasks
+2026-03-23 05:15:36,010 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] ()
+2026-03-23 05:15:36,011 INFO sqlalchemy.engine.Engine SELECT tasks.model_used, sum(tasks.cost) AS sum_1 
+FROM tasks GROUP BY tasks.model_used
+2026-03-23 05:15:36,011 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] ()
+2026-03-23 05:15:36,012 INFO sqlalchemy.engine.Engine SELECT agents.name, sum(tasks.cost) AS sum_1 
+FROM agents JOIN tasks ON tasks.agent_id = agents.agent_id GROUP BY agents.name ORDER BY sum(tasks.cost) DESC 
+ LIMIT $1::INTEGER
+2026-03-23 05:15:36,013 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] (5,)
+2026-03-23 05:15:36,014 INFO sqlalchemy.engine.Engine SELECT sum(tasks.cost) AS sum_1 
+FROM tasks 
+WHERE tasks.created_at >= $1::TIMESTAMP WITHOUT TIME ZONE
+2026-03-23 05:15:36,014 INFO sqlalchemy.engine.Engine [cached since 543.8s ago] (datetime.datetime(2026, 3, 22, 5, 15, 36, 14026),)
+INFO:     172.20.0.1:58326 - "GET /v1/analytics/metrics HTTP/1.1" 200 OK
+2026-03-23 05:15:36,016 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     172.20.0.1:58326 - "GET /v1/traces HTTP/1.1" 307 Temporary Redirect
+2026-03-23 05:15:36,025 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-03-23 05:15:36,026 INFO sqlalchemy.engine.Engine SELECT traces.trace_id, traces.task_id, traces.agent_id, traces.step, traces.input_data, traces.output_data, traces.metadata_info, traces.created_at 
+FROM traces ORDER BY traces.created_at DESC
+2026-03-23 05:15:36,026 INFO sqlalchemy.engine.Engine [cached since 400s ago] ()
+INFO:     172.20.0.1:58326 - "GET /v1/traces/ HTTP/1.1" 200 OK
+2026-03-23 05:15:36,028 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     127.0.0.1:54244 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46084 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47260 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36574 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35740 - "GET / HTTP/1.1" 200 OK

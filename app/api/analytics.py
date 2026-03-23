@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
+import datetime
+
 from ..db.database import get_db
 from ..db.redis_client import get_redis_client
 from ..models.agent import Agent
@@ -34,14 +36,43 @@ async def get_metrics(db: AsyncSession = Depends(get_db)):
     event_counts = await db.execute(select(Event.event_type, func.count()).group_by(Event.event_type))
     counts = {row[0]: row[1] for row in event_counts.all()}
     
+    # 5. Cost Breakdown
+    total_cost_result = await db.execute(select(func.sum(Task.cost)))
+    total_cost = total_cost_result.scalar() or 0.0
+    
+    # Cost per model
+    model_cost_result = await db.execute(select(Task.model_used, func.sum(Task.cost)).group_by(Task.model_used))
+    model_breakdown = {row[0] or "unknown": row[1] for row in model_cost_result.all()}
+    
+    # Cost per agent (Top 5)
+    agent_cost_result = await db.execute(
+        select(Agent.name, func.sum(Task.cost))
+        .join(Task, Task.agent_id == Agent.agent_id)
+        .group_by(Agent.name)
+        .order_by(func.sum(Task.cost).desc())
+        .limit(5)
+    )
+    agent_breakdown = {row[0]: row[1] for row in agent_cost_result.all()}
+    
+    # Burn Rate (Daily)
+    yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    burn_rate_result = await db.execute(select(func.sum(Task.cost)).filter(Task.created_at >= yesterday))
+    daily_burn = burn_rate_result.scalar() or 0.0
+
     return {
-        "active_agents": active_agents,
+            "active_agents": active_agents,
         "tasks_last_24h": total,
         "success_rate": f"{success_rate:.1f}%",
         "auto_healing_events": healing_events,
         "avg_reasoning_time": r.get("metrics:avg_reasoning_ms") or "840ms",
         "events_summary": counts,
-        "hitl_interceptions": counts.get("HITL_Intercepted", 0)
+        "hitl_interceptions": counts.get("HITL_Intercepted", 0),
+        "recent_tasks": [],
+        "cost_total": total_cost,
+
+        "cost_daily_burn": daily_burn,
+        "cost_by_model": model_breakdown,
+        "cost_by_agent": agent_breakdown,
     }
 
 @router.get("/fleet-pulse")

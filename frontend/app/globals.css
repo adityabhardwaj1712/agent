@@ -622,3 +622,86 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   animation: spin 1s linear infinite;
 }
+
+/* ═══════════ ENHANCED ADDITIONS ═══════════ */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+/* Agent cards hover */
+.ac-agent-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Premium footer */
+.ac-footer {
+  padding: 16px 40px;
+  border-top: 1px solid var(--border-muted);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Status dot pulse */
+.ac-status-dot-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: pulse 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Sidebar version badge */
+.ac-version-badge {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(59,130,246,0.12);
+  color: var(--accent-primary);
+  border: 1px solid rgba(59,130,246,0.2);
+  letter-spacing: 0.04em;
+}
+
+/* Toast animation */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ac-toast {
+  animation: toastIn 0.3s ease-out;
+}
+
+/* Table row hover */
+.ac-table tr:hover td {
+  color: var(--text-primary);
+}
+
+/* Select input */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
