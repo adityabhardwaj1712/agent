@@ -20,24 +20,38 @@ async def send_task(db: AsyncSession, data: TaskCreate, user_id: str):
     if "urgent" in (data.payload or "").lower():
         priority = Priority.CRITICAL
     
-    await orchestrator.enqueue_task(
-        db=db,
-        payload=data.payload,
-        user_id=user_id,
-        agent_id=data.agent_id,
-        priority=priority,
-        goal_id=data.goal_id,
-        parent_task_id=data.parent_task_id
-    )
+    try:
+        await orchestrator.enqueue_task(
+            db=db,
+            payload=data.payload,
+            user_id=user_id,
+            agent_id=data.agent_id,
+            priority=priority,
+            goal_id=data.goal_id,
+            parent_task_id=data.parent_task_id
+        )
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"Failed to enqueue task: {e}")
+        raise e
     
     # 4. Record Usage
-    await billing_service.record_usage(user_id, "tasks")
-    
+    try:
+        await billing_service.record_usage(user_id, "tasks")
+    except Exception as e:
+        from loguru import logger
+        logger.warning(f"Failed to record usage for user {user_id}: {e}")
+
     # Fetch task for response (orchestrator created it)
-    from sqlalchemy import select
-    res = await db.execute(select(Task).where(Task.user_id == user_id).order_by(Task.created_at.desc()))
-    task = res.scalars().first()
-    return task
+    try:
+        from sqlalchemy import select
+        res = await db.execute(select(Task).where(Task.user_id == user_id).order_by(Task.created_at.desc()))
+        task = res.scalars().first()
+        return task
+    except Exception as e:
+        from loguru import logger
+        logger.error(f"Failed to fetch created task: {e}")
+        return None
 
 
 async def get_task_status(db: AsyncSession, task_id: str, user_id: str):

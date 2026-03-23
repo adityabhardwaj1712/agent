@@ -44,12 +44,11 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({ id, children, onReord
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      style={{
-        cursor: 'grab',
-        opacity: isDragging ? 0.5 : 1,
-        transition: 'all 0.2s ease',
-        transform: isDragging ? 'scale(0.98)' : 'scale(1)',
-      }}
+      className={`transition-all duration-300 cursor-grab active:cursor-grabbing ${
+        isDragging 
+        ? 'opacity-40 scale-95 grayscale blur-[1px] rotate-1' 
+        : 'opacity-100 scale-100'
+      }`}
     >
       {children}
     </div>

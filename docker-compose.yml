@@ -23,24 +23,28 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/').read(); print('ok')\""]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "python -c \"import urllib.request, json; resp = urllib.request.urlopen('http://localhost:8000/').read(); status = json.loads(resp); exit(0 if status['status'] == 'running' else 1)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
 
   worker:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: python -m app.workers.agent_worker
+    command: sh -c "PYTHONPATH=/app python -m app.workers.agent_worker"
     env_file:
       - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/agentcloud
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
       - SECRET_KEY=${SECRET_KEY:-secret-key-change-me}
     depends_on:
       db:
+        condition: service_healthy
+      api:
         condition: service_healthy
       redis:
         condition: service_started
@@ -53,6 +57,8 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -97,3 +103,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+volumes:
+  postgres_data:

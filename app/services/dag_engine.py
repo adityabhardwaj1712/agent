@@ -95,6 +95,19 @@ class WorkflowEngine:
 
         state = dict(initial_state)
         node_results: List[NodeResult] = []
+        
+        if not wf.nodes:
+            logger.warning(f"Workflow {wf.name} [{workflow_id}] has no nodes")
+            return WorkflowResult(
+                workflow_id=workflow_id,
+                workflow_name=wf.name,
+                status="failed",
+                final_state=state,
+                node_results=[],
+                total_duration_ms=int((time.monotonic() - start) * 1000),
+                error="Workflow definition contains no nodes",
+            )
+
         current_node_id = resume_from or wf.entry_node or wf.nodes[0].node_id
 
         logger.info(f"Workflow {wf.name} [{workflow_id}] starting at node={current_node_id}")

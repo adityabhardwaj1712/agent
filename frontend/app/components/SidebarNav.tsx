@@ -44,12 +44,10 @@ export function SidebarNav() {
   return (
     <nav className="ac-nav-vertical" style={{ gap: 0 }}>
       {navGroups.map((group) => (
-        <div key={group.label} style={{ marginBottom: 20 }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
-            color: "var(--text-tertiary)", textTransform: "uppercase",
-            padding: "0 12px", marginBottom: 6
-          }}>{group.label}</div>
+        <div key={group.label} className="mb-6">
+          <div className="text-[10px] font-bold tracking-[0.2em] text-tertiary uppercase px-4 mb-3 opacity-60">
+            {group.label}
+          </div>
           {group.items.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
@@ -58,23 +56,23 @@ export function SidebarNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`ac-nav-item ${isActive ? "ac-nav-item-active" : ""}`}
-                style={{ position: "relative", marginBottom: 1 }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 mb-1 group relative ${
+                  isActive 
+                    ? "gradient-bg text-white shadow-lg glow scale-[1.02]" 
+                    : "text-secondary hover:bg-tertiary hover:text-primary"
+                }`}
               >
-                <span className="ac-nav-icon" style={{ opacity: isActive ? 1 : 0.6 }}>
-                  <Icon size={16} />
-                </span>
-                <span style={{ flex: 1 }}>{item.name}</span>
+                <Icon size={18} className={`${isActive ? "text-white" : "opacity-70 group-hover:opacity-100 transition-opacity"}`} />
+                <span className={`text-sm tracking-tight ${isActive ? "font-bold" : "font-medium"}`}>{item.name}</span>
+                
                 {(item as any).badge && (
-                  <span style={{
-                    fontSize: 9, padding: "2px 6px", borderRadius: 4,
-                    background: "rgba(16,185,129,0.15)", color: "#10B981",
-                    border: "1px solid rgba(16,185,129,0.25)", fontWeight: 700,
-                    letterSpacing: "0.04em"
-                  }}>{(item as any).badge}</span>
+                  <span className="ml-auto text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-white font-bold backdrop-blur-md border border-white/10">
+                    {(item as any).badge}
+                  </span>
                 )}
+                
                 {isActive && (
-                  <ChevronRight size={12} style={{ color: "var(--accent-primary)", opacity: 0.6 }} />
+                  <div className="absolute right-2 w-1 h-1 rounded-full bg-white animate-pulse" />
                 )}
               </Link>
             );

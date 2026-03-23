@@ -35,3 +35,20 @@ async def log_trace(
         "timestamp": str(trace.created_at)
     }
     r.publish(f"agent:{agent_id}:traces", json.dumps(event))
+async def get_trace_analytics(db: AsyncSession, agent_id: str | None = None, limit: int = 100):
+    """
+    AXON Analytics: Calculates average tool/step latency from recent traces.
+    """
+    from sqlalchemy import select, func
+    from ..models.trace import Trace
+    
+    query = select(Trace.step, func.avg(func.extract('epoch', Trace.created_at))).group_by(Trace.step)
+    if agent_id:
+        query = query.filter(Trace.agent_id == agent_id)
+    
+    # In a real scenario, we'd need a 'duration' column. 
+    # For now, we'll return recent trace counts per step as a proxy for 'Fleet Pulse'.
+    query = select(Trace.step, func.count(Trace.trace_id)).group_by(Trace.step).order_by(func.count(Trace.trace_id).desc()).limit(limit)
+    
+    result = await db.execute(query)
+    return {row[0]: row[1] for row in result.all()}

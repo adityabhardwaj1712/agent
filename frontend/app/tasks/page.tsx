@@ -1,25 +1,46 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { apiJson, wsUrl } from "../lib/api";
-import { Play, RefreshCw, Activity, Clock, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Bot, Zap } from "lucide-react";
+import { 
+  Play, 
+  Activity, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Loader2, 
+  ChevronDown, 
+  ChevronUp, 
+  Bot, 
+  Zap,
+  Terminal,
+  Cpu,
+  ShieldCheck,
+  Command,
+  Layers,
+  Sparkles
+} from "lucide-react";
 
 type TaskRunResponse = { task_id: string; agent_id: string; payload: string; status: string; result?: string | null };
 type TaskStatusResponse = { task_id: string; status: string; result?: string | null; thought_process?: string };
 type AgentOption = { agent_id: string; name: string; role?: string };
 
-const STATUS_COLOR: Record<string, string> = {
-  completed: "#10B981", success: "#10B981",
-  failed: "#EF4444", error: "#EF4444",
-  processing: "#3B82F6", pending: "#F59E0B", queued: "#8B5CF6",
+const STATUS_COLOR: Record<string, { color: string, bg: string, border: string }> = {
+  completed: { color: "#10B981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.2)" },
+  success: { color: "#10B981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.2)" },
+  failed: { color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.2)" },
+  error: { color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.2)" },
+  processing: { color: "#6366F1", bg: "rgba(99, 102, 241, 0.1)", border: "rgba(99, 102, 241, 0.2)" },
+  pending: { color: "#F59E0B", bg: "rgba(245, 158, 11, 0.1)", border: "rgba(245, 158, 11, 0.2)" },
+  queued: { color: "#8B5CF6", bg: "rgba(139, 92, 246, 0.1)", border: "rgba(139, 92, 246, 0.2)" },
 };
 
 const SAMPLE_TASKS = [
-  "Research the latest advancements in quantum computing and summarize key findings",
-  "Write a Python function to parse JSON and validate schema",
-  "Analyze this dataset and provide statistical summary",
-  "Create a blog post outline about AI trends in 2026",
-  "Debug this code and suggest optimizations",
+  "Research advancements in quantum computing",
+  "Write a Python JSON parser with schema validation",
+  "Analyze this dataset for statistical anomalies",
+  "Outline AI trends for 2026",
+  "Optimize this code for performance",
 ];
 
 export default function TasksPage() {
@@ -35,7 +56,7 @@ export default function TasksPage() {
   const [showThought, setShowThought] = useState(false);
 
   useEffect(() => {
-    apiJson<AgentOption[]>("/v1/agents/my").then(r => {
+    apiJson<AgentOption[]>("/agents/my").then(r => {
       if (r.ok && r.data.length > 0) {
         setAgents(r.data);
         setAgentId(r.data[0].agent_id);
@@ -52,23 +73,22 @@ export default function TasksPage() {
     setLiveLog([]);
     setRunResult(null);
     try {
-      const r = await apiJson<TaskRunResponse>("/v1/tasks/run", {
+      const r = await apiJson<TaskRunResponse>("/tasks/run", {
         method: "POST",
         json: { agent_id: agentId, payload },
       });
       if (r.ok) {
         setRunResult(r.data);
         setTaskId(r.data.task_id);
-        setLiveLog([`✓ Task submitted: ${r.data.task_id}`]);
+        setLiveLog([`[SYS] DISPATCH_SUCCESS: ${r.data.task_id}`]);
         setPolling(true);
-        // Try WebSocket
         try {
-          const ws = new WebSocket(wsUrl(`/ws/tasks/${r.data.task_id}`));
+          const ws = new WebSocket(wsUrl(`/tasks/${r.data.task_id}`));
           ws.onmessage = (e) => {
             try {
               const msg = JSON.parse(e.data);
-              if (msg.type === "status") setLiveLog(p => [...p, `→ Status: ${msg.status}`]);
-              if (msg.type === "trace") setLiveLog(p => [...p, `  ↳ ${msg.step}`]);
+              if (msg.type === "status") setLiveLog(p => [...p, `[STATUS] ${msg.status.toUpperCase()}`]);
+              if (msg.type === "trace") setLiveLog(p => [...p, `[TRACE] ${msg.step}`]);
               if (msg.type === "result") {
                 setStatusResult({ task_id: r.data.task_id, status: "completed", result: msg.result });
                 setPolling(false);
@@ -76,10 +96,9 @@ export default function TasksPage() {
               }
             } catch {}
           };
-          ws.onerror = () => { /* fallback to polling */ };
         } catch {}
       } else {
-        setLiveLog([`✗ Error: ${(r.error as any)?.detail || "Unknown error"}`]);
+        setLiveLog([`[ERR] DISPATCH_FAILED: ${(r.error as any)?.detail || "GATEWAY_TIMEOUT"}`]);
       }
     } finally {
       setLoading(false);
@@ -89,12 +108,12 @@ export default function TasksPage() {
   const refreshStatus = useCallback(async (id?: string) => {
     const tid = (id ?? taskId).trim();
     if (!tid) return;
-    const r = await apiJson<TaskStatusResponse>(`/v1/tasks/${encodeURIComponent(tid)}`);
+    const r = await apiJson<TaskStatusResponse>(`/tasks/${encodeURIComponent(tid)}`);
     if (r.ok) {
       setStatusResult(r.data);
       if (["completed", "success", "failed", "error"].includes(r.data.status?.toLowerCase())) {
         setPolling(false);
-        setLiveLog(p => [...p, `✓ Final status: ${r.data.status}`]);
+        setLiveLog(p => [...p, `[FINAL] MISSION_${r.data.status.toUpperCase()}`]);
       }
     }
   }, [taskId]);
@@ -111,187 +130,174 @@ export default function TasksPage() {
     return () => { cancelled = true; };
   }, [polling, taskId, refreshStatus]);
 
-  const statusColor = STATUS_COLOR[(statusResult?.status || runResult?.status || "").toLowerCase()] || "var(--text-tertiary)";
-  const isDone = statusResult && ["completed", "success", "failed", "error"].includes(statusResult.status?.toLowerCase());
+  const status = (statusResult?.status || runResult?.status || "idle").toLowerCase();
+  const statusConfig = STATUS_COLOR[status] || { color: "var(--text-tertiary)", bg: "var(--bg-tertiary)", border: "var(--card-border)" };
 
   return (
-    <div style={{ maxWidth: 900, animation: "slideUp 0.4s ease-out" }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Tasks</h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 5 }}>Submit tasks to agents and monitor execution in real time</p>
+    <div className="max-w-[1200px] mx-auto animate-slide-in p-4 md:p-8">
+      <div className="mb-10">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="px-3 py-1 bg-indigo-500 text-white rounded-lg text-[10px] font-black tracking-widest uppercase">
+            Mission Control
+          </span>
+          <span className="text-secondary text-[10px] font-bold tracking-tighter opacity-70">UPLINK_STABLE // AXON-9</span>
+        </div>
+        <h1 className="text-4xl font-black text-primary tracking-tighter">Command Dispatch</h1>
+        <p className="text-secondary text-sm max-w-xl mt-3 leading-relaxed">
+          Orchestrate autonomous agent sequences with high-precision task payloads and real-time observability across the neural network.
+        </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Submit Panel */}
-        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", borderRadius: 16, padding: 24 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
-            <Zap size={16} style={{ color: "var(--accent-primary)" }} /> Submit Task
-          </h2>
+        <div className="glass-card p-8 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-8">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+               <Command size={20} />
+             </div>
+             <h2 className="text-xl font-black text-primary uppercase tracking-tight">Dispatch Parameters</h2>
+          </div>
 
           {/* Agent selector */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Agent</label>
-            {agents.length > 0 ? (
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-tertiary uppercase tracking-widest opacity-60">Target Neural Node</label>
+            <div className="relative group">
+              <Bot size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-tertiary group-focus-within:text-indigo-500 transition-colors" />
               <select
                 value={agentId}
                 onChange={e => setAgentId(e.target.value)}
-                style={{
-                  width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
-                  background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                  color: "var(--text-primary)", outline: "none", cursor: "pointer"
-                }}
+                className="w-full pl-12 pr-10 py-4 bg-tertiary/20 border border-white/5 rounded-2xl text-sm font-bold text-primary outline-none appearance-none focus:border-indigo-500/50 transition-all cursor-pointer shadow-inner"
               >
                 {agents.map(a => (
-                  <option key={a.agent_id} value={a.agent_id}>{a.name}{a.role ? ` · ${a.role}` : ""}</option>
+                  <option key={a.agent_id} value={a.agent_id} className="bg-slate-900">{a.name}{a.role ? ` — ${a.role}` : ""}</option>
                 ))}
               </select>
-            ) : (
-              <input
-                value={agentId}
-                onChange={e => setAgentId(e.target.value)}
-                placeholder="Paste agent_id..."
-                style={{
-                  width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
-                  background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                  color: "var(--text-primary)", outline: "none"
-                }}
-              />
-            )}
+              <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none" />
+            </div>
           </div>
 
-          {/* Sample tasks */}
-          <div style={{ marginBottom: 8 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Quick Examples</label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {SAMPLE_TASKS.slice(0, 3).map((t, i) => (
+          {/* Quick Examples */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-tertiary uppercase tracking-widest opacity-60">Template Registry</label>
+            <div className="flex flex-wrap gap-2">
+              {SAMPLE_TASKS.map((t, i) => (
                 <button
                   key={i}
                   onClick={() => setPayload(t)}
-                  style={{
-                    textAlign: "left", padding: "7px 10px", borderRadius: 8,
-                    background: payload === t ? "rgba(59,130,246,0.1)" : "var(--bg-tertiary)",
-                    border: `1px solid ${payload === t ? "rgba(59,130,246,0.3)" : "var(--border-muted)"}`,
-                    color: payload === t ? "var(--accent-primary)" : "var(--text-secondary)",
-                    cursor: "pointer", fontSize: 11, fontWeight: payload === t ? 600 : 400,
-                    transition: "all 0.15s", lineHeight: 1.4
-                  }}
-                >{t}</button>
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${
+                    payload === t 
+                    ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                    : "bg-tertiary/30 text-secondary hover:bg-tertiary/50 border border-white/5"
+                  }`}
+                >
+                  {t.length > 25 ? t.substring(0, 25) + "..." : t}
+                </button>
               ))}
             </div>
           </div>
 
           {/* Payload */}
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Task Payload</label>
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-tertiary uppercase tracking-widest opacity-60">Mission Objective Payload</label>
             <textarea
               value={payload}
               onChange={e => setPayload(e.target.value)}
-              placeholder="Describe what you want the agent to do..."
+              placeholder="Define high-level autonomous goal..."
               rows={4}
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 13,
-                background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                color: "var(--text-primary)", outline: "none", resize: "vertical",
-                fontFamily: "inherit", lineHeight: 1.5
-              }}
+              className="w-full p-5 bg-tertiary/20 border border-white/5 rounded-2xl text-sm leading-relaxed text-primary outline-none focus:border-indigo-500/50 transition-all resize-none shadow-inner scrollbar-hide"
             />
           </div>
 
           <button
             onClick={onRun}
             disabled={!canRun || loading}
-            style={{
-              width: "100%", padding: "12px 0", borderRadius: 10, border: "none",
-              background: !canRun || loading ? "rgba(59,130,246,0.3)" : "var(--accent-primary)",
-              color: "white", cursor: !canRun || loading ? "not-allowed" : "pointer",
-              fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center",
-              justifyContent: "center", gap: 8,
-              boxShadow: canRun && !loading ? "0 4px 14px rgba(59,130,246,0.4)" : "none"
-            }}
+            className={`w-full py-4 rounded-2xl font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${
+              !canRun || loading 
+              ? "opacity-40 cursor-not-allowed bg-tertiary/50" 
+              : "gradient-bg text-white shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-1"
+            }`}
           >
-            {loading ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Running...</> : <><Play size={16} /> Run Task</>}
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} fill="currentColor" />}
+            {loading ? "Initializing Dispatch..." : "Execute Displacement"}
           </button>
         </div>
 
         {/* Results Panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="flex flex-col gap-6">
           {/* Live Log */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", borderRadius: 16, padding: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-                <Activity size={14} style={{ color: polling ? "#10B981" : "var(--text-tertiary)" }} />
-                Live Log
-                {polling && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", animation: "pulse 1.5s ease-in-out infinite", display: "inline-block" }} />}
-              </h2>
-              {taskId && (
-                <button onClick={() => refreshStatus()} style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  color: "var(--accent-primary)", fontSize: 11, fontWeight: 600,
-                  display: "flex", alignItems: "center", gap: 4
-                }}>
-                  <RefreshCw size={11} /> Refresh
-                </button>
+          <div className="glass-card p-6 rounded-3xl border border-white/10 shadow-2xl h-[300px] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                 <Terminal size={14} className={polling ? "text-green-500" : "text-tertiary"} />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-tertiary opacity-70">Observability Feed</span>
+              </div>
+              {polling && (
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10B981]" />
+                  <span className="text-[10px] font-black text-green-500 uppercase">Live_Telemetry</span>
+                </div>
               )}
             </div>
-            <div style={{
-              fontFamily: "monospace", fontSize: 11, lineHeight: 1.7,
-              background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: "10px 12px",
-              minHeight: 80, maxHeight: 140, overflowY: "auto",
-              color: "var(--text-secondary)"
-            }}>
-              {liveLog.length === 0
-                ? <span style={{ color: "var(--text-tertiary)" }}>Awaiting task submission…</span>
-                : liveLog.map((l, i) => <div key={i}>{l}</div>)
-              }
+            
+            <div className="flex-1 bg-black/40 rounded-2xl p-4 font-mono text-[11px] overflow-y-auto space-y-2 scrollbar-hide border border-white/5">
+              {liveLog.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full opacity-20 italic space-y-2">
+                   <Activity size={24} />
+                   <p>Awaiting Signal...</p>
+                </div>
+              ) : (
+                liveLog.map((l, i) => (
+                  <div key={i} className="flex gap-3 group">
+                    <span className="text-indigo-500/50 font-bold">[{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
+                    <span className="text-slate-300 group-last:text-indigo-400 group-last:font-bold">{l}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           {/* Status + Result */}
-          {(runResult || statusResult) && (
-            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", borderRadius: 16, padding: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <h2 style={{ fontSize: 14, fontWeight: 700 }}>Result</h2>
-                <span style={{
-                  padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-                  background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}30`
-                }}>
-                  {statusResult?.status || runResult?.status || "—"}
-                </span>
+          {(runResult || statusResult) ? (
+            <div className="glass-card p-8 rounded-3xl border border-white/10 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-[10px] font-black uppercase tracking-widest text-tertiary opacity-70">Mission Output</span>
+                <div 
+                  className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                  style={{ background: statusConfig.bg, color: statusConfig.color, border: `1px solid ${statusConfig.border}` }}
+                >
+                  {status.toUpperCase()}
+                </div>
               </div>
 
               {statusResult?.result && (
-                <div style={{
-                  background: "var(--bg-tertiary)", borderRadius: 8, padding: "10px 12px",
-                  fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 10
-                }}>
+                <div className="bg-tertiary/10 border border-white/5 rounded-2xl p-6 text-sm leading-relaxed text-secondary mb-6 backdrop-blur-sm">
                   {statusResult.result}
                 </div>
               )}
 
               {statusResult?.thought_process && (
-                <div>
+                <div className="space-y-4">
                   <button
                     onClick={() => setShowThought(p => !p)}
-                    style={{
-                      background: "none", border: "none", cursor: "pointer",
-                      color: "var(--text-tertiary)", fontSize: 11, fontWeight: 600,
-                      display: "flex", alignItems: "center", gap: 4, padding: 0
-                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
                   >
-                    {showThought ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                    Thought Process
+                    {showThought ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    Cognitive Trace
                   </button>
                   {showThought && (
-                    <div style={{
-                      marginTop: 8, fontFamily: "monospace", fontSize: 11, lineHeight: 1.7,
-                      background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: "10px 12px",
-                      color: "#64748b", fontStyle: "italic"
-                    }}>
+                    <div className="bg-black/20 rounded-2xl p-5 font-mono text-[11px] text-tertiary leading-loose border border-white/5 italic">
                       {statusResult.thought_process}
                     </div>
                   )}
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="flex-1 min-h-[200px] glass-card rounded-3xl border border-white/5 border-dashed flex flex-col items-center justify-center gap-4 opacity-40">
+              <div className="w-16 h-16 rounded-full bg-tertiary/20 flex items-center justify-center text-tertiary">
+                <Layers size={32} />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-tertiary">Awaiting Mission Displacement</p>
             </div>
           )}
         </div>

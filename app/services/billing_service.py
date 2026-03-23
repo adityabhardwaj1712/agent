@@ -101,7 +101,7 @@ class BillingService:
         await db.commit()
         await db.refresh(subscription)
         
-        logger.audit(f"User {user_id} subscribed to {plan} (ID: {subscription.subscription_id})")
+        logger.info(f"User {user_id} subscribed to {plan} (ID: {subscription.subscription_id})")
         return subscription
 
     async def record_usage(self, user_id: str, metric: str, quantity: int = 1, agent_id: Optional[str] = None, task_id: Optional[str] = None):

@@ -45,19 +45,31 @@ def main() -> None:
     # 3) Register agent
     # Register user first so owner_id exists
     email = f"smoke_{uuid.uuid4().hex[:8]}@example.com"
+    password = "password123"
     code, usr = request_json(
         "POST",
         "/v1/auth/register",
-        json={"email": email, "password": "password123"}
+        json={"email": email, "password": password}
     )
     if code != 200:
-        _fail(f"POST /auth/register failed: {code} {usr}")
+        _fail(f"POST /v1/auth/register failed: {code} {usr}")
     
-    owner_id = usr.get("user_id", str(uuid.uuid4()))
+    # Login to get token for agent registration
+    code, login_data = request_json(
+        "POST",
+        "/v1/auth/login",
+        data={"username": email, "password": password}
+    )
+    if code != 200:
+        _fail(f"POST /v1/auth/login failed: {code} {login_data}")
+    
+    user_token = login_data["access_token"]
+    owner_id = usr.get("user_id")
     
     code, reg = request_json(
         "POST",
         "/v1/agents/register",
+        token=user_token,
         json={"name": "smoke-agent", "owner_id": owner_id},
     )
     if code != 200 or "agent_id" not in reg or "token" not in reg:

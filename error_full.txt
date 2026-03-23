@@ -1,0 +1,41 @@
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\logging\config.py", line 490, in configure_custom
+    result = c(**kwargs)
+             ^^^^^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\logging.py", line 42, in __init__
+    self.use_colors = sys.stdout.isatty()
+                      ^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'isatty'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\click\core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\click\core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\click\core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\click\core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\main.py", line 409, in main
+    run(
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\main.py", line 513, in run
+    config = Config(
+             ^^^^^^^
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\config.py", line 272, in __init__
+    self.configure_logging()
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\site-packages\uvicorn\config.py", line 364, in configure_logging
+    logging.config.dictConfig(self.log_config)
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\logging\config.py", line 942, in dictConfig
+    dictConfigClass(config).configure()
+  File "C:\Users\Aditya.Bhardwaj\AppData\Local\Programs\Python\Python312\Lib\logging\config.py", line 590, in configure
+    raise ValueError('Unable to configure '
+ValueError: Unable to configure formatter 'default'

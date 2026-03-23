@@ -20,81 +20,76 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="ac-shell">
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const theme = localStorage.getItem('theme') || 'dark';
+              if (theme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+              } else {
+                document.documentElement.removeAttribute('data-theme');
+              }
+            })()
+          `
+        }} />
+      </head>
+      <body className="ac-shell transition-colors duration-300">
         <ShortcutsOverlay />
         <FleetQueryPanel />
         <CommandPalette />
-        <aside className="ac-sidebar">
-          <div className="ac-sidebar-logo">
-            <div className="ac-logo-mark">A</div>
-            <span className="ac-sidebar-logo-text">AgentCloud</span>
+        <aside className="ac-sidebar glass-card">
+          <div className="ac-sidebar-logo mb-8">
+            <h1 className="text-2xl font-bold flex items-center gradient-text">
+              <span className="ac-logo-mark mr-3 gradient-bg text-white border-none">A</span>
+              AgentCloud
+            </h1>
           </div>
           
           <SidebarNav />
 
-          <div style={{ marginTop: 'auto', padding: '16px 0 0 0' }}>
-             <button className="ac-nav-item" style={{ 
-               background: 'var(--accent-primary)', 
-               color: 'white', 
-               width: '100%', 
-               justifyContent: 'center',
-               boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-             }}>
-               <Plus size={16} />
-               <span>Add New Agent</span>
+          <div className="mt-auto pt-4">
+             <button className="nav-item flex items-center px-4 py-3 rounded-xl gradient-bg text-white w-full justify-center shadow-lg hover:opacity-90 transition glow">
+               <Plus size={16} className="mr-2" />
+               <span className="font-semibold">New Agent</span>
              </button>
           </div>
         </aside>
 
         <main className="ac-main">
-          <header className="ac-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <header className="ac-header glass-card !sticky !top-0 !z-40">
+            <div className="flex items-center gap-6">
                <CostTicker />
             </div>
             
             <div className="ac-header-actions">
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                 <Search size={16} style={{ position: 'absolute', left: '12px', color: 'var(--text-tertiary)' }} />
+              <div className="relative flex items-center w-80">
+                 <Search size={16} className="absolute left-4 text-tertiary z-10" />
                  <input 
                     type="text" 
-                    placeholder="Search agents, tasks, logs..." 
+                    placeholder="Search Agents, Tasks, Logs [Ctrl+K]" 
                     className="ac-header-input"
-                    style={{ 
-                      padding: '8px 12px 8px 36px',
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border-muted)',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      width: '280px',
-                      color: 'var(--text-primary)',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
                  />
-                 <span style={{ position: 'absolute', right: '12px', fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 600, opacity: 0.6 }}>Ctrl+K</span>
               </div>
               
-              <button className="ac-header-btn"><Bell size={18} /></button>
+              <button className="ac-header-btn glass-card !w-10 !h-10 !flex !items-center !justify-center" aria-label="Notifications"><Bell size={18} /></button>
               <ThemeToggle />
-              <div style={{ 
-                width: '32px', 
-                height: '32px', 
-                borderRadius: '50%', 
-                background: 'var(--bg-tertiary)', 
-                overflow: 'hidden',
-                border: '1px solid var(--border-muted)'
-              }}>
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-color cursor-pointer shadow-sm">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full" />
               </div>
             </div>
           </header>
 
-          <div className="ac-content-container">
+          <div className="ac-content-container animate-slide-in">
             {children}
           </div>
 
           <footer className="ac-footer">
-             AgentCloud Autonomous Protocols © 2026 | System Status: Optimal
+             <div className="flex items-center gap-2">
+                <span className="ac-status-dot-live"></span>
+                <span className="text-xs text-tertiary">AgentCloud OS v1.0 • System Optimal</span>
+             </div>
+             <div className="text-xs text-tertiary">© 2026 AXON Neural Network</div>
           </footer>
         </main>
       </body>

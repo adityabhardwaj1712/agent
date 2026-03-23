@@ -31,6 +31,18 @@ async def list_templates(
         db, category, search, sort, free_only, skip, limit
     )
 
+@router.get("/featured", response_model=List[AgentTemplateResponse])
+async def list_featured(
+    limit: int = 5,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get featured agent templates.
+    """
+    return await marketplace_service.list_templates(
+        db, sort="popular", limit=limit
+    )
+
 @router.post("/templates", response_model=AgentTemplateResponse)
 async def create_template(
     schema: AgentTemplateCreate,

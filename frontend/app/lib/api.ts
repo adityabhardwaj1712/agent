@@ -3,11 +3,12 @@ export type ApiResult<T> =
   | { ok: false; status: number; error: unknown };
 
 function apiBase(): string {
-  return (typeof window !== "undefined"
+  const base = (typeof window !== "undefined"
     ? (window as any).__NEXT_PUBLIC_API_BASE_URL
     : undefined) ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "http://localhost:8000";
+  return base.endsWith('/') ? base + 'v1' : base + '/v1';
 }
 
 export function getToken(): string | null {

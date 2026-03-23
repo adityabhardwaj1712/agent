@@ -13,7 +13,7 @@ init(autoreset=True)
 # Configuration
 API_BASE_URL = "http://127.0.0.1:8000/v1"
 TEST_USER_EMAIL = f"test_{int(time.time())}@agentcloud.com"
-TEST_USER_PASSWORD = "testpassword123"
+TEST_USER_PASSWORD = os.getenv("TEST_PASSWORD", "testpassword123")
 
 class AgentCloudTester:
     def __init__(self, base_url: str = API_BASE_URL):

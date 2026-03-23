@@ -41,20 +41,20 @@ const ROLE_COLORS: Record<string, string> = {
 
 function ReputationBar({ score }: { score: number }) {
   const pct = Math.min(100, Math.max(0, score));
-  const color = pct >= 80 ? "#10B981" : pct >= 50 ? "#F59E0B" : "#EF4444";
+  const color = pct >= 80 ? "var(--accent-success)" : pct >= 50 ? "var(--accent-warning)" : "var(--accent-danger)";
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{
-        flex: 1, height: 4, background: "rgba(255,255,255,0.08)",
-        borderRadius: 4, overflow: "hidden"
-      }}>
-        <div style={{
-          width: `${pct}%`, height: "100%", background: color,
-          borderRadius: 4, transition: "width 0.6s ease",
-          boxShadow: `0 0 8px ${color}60`
-        }} />
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-1.5 bg-tertiary rounded-full overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
+        <div 
+          className="h-full transition-all duration-700 ease-out"
+          style={{ 
+            width: `${pct}%`, 
+            background: color,
+            boxShadow: `0 0 12px ${color}40`
+          }} 
+        />
       </div>
-      <span style={{ fontSize: 11, color, fontWeight: 700, minWidth: 32 }}>{pct.toFixed(0)}</span>
+      <span className="text-[10px] font-bold tracking-tight" style={{ color }}>{pct.toFixed(0)}</span>
     </div>
   );
 }
@@ -66,69 +66,34 @@ function AgentCard({
   onDelete: (id: string) => void;
   onCopyToken: (token: string) => void;
 }) {
-  const roleColor = ROLE_COLORS[agent.role || ""] || "#3B82F6";
-  const roleIcon = ROLE_ICONS[agent.role || ""] || <Bot size={16} />;
+  const roleColor = ROLE_COLORS[agent.role || ""] || "var(--accent-primary)";
+  const roleIcon = ROLE_ICONS[agent.role || ""] || <Bot size={18} />;
   const successRate = agent.total_tasks > 0
     ? Math.round((agent.successful_tasks / agent.total_tasks) * 100)
     : 0;
 
   return (
-    <div className="ac-agent-card" style={{
-      background: "var(--bg-card)",
-      border: "1px solid var(--border-muted)",
-      borderRadius: 16,
-      padding: 20,
-      transition: "all 0.2s ease",
-      position: "relative",
-      overflow: "hidden",
-    }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = `${roleColor}40`;
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-        (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 32px ${roleColor}15`;
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-muted)";
-        (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
-      }}
-    >
+    <div className="glass-card p-5 rounded-2xl relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
       {/* Top accent line */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: 2,
-        background: `linear-gradient(90deg, ${roleColor}, transparent)`,
-        borderRadius: "16px 16px 0 0"
-      }} />
+      <div className="absolute top-0 left-0 right-0 h-1 opacity-50 transition-opacity group-hover:opacity-100" style={{ background: `linear-gradient(90deg, ${roleColor}, transparent)` }} />
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 10,
-            background: `${roleColor}18`,
-            border: `1px solid ${roleColor}30`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: roleColor
-          }}>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: `${roleColor}15`, color: roleColor }}>
             {roleIcon}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>{agent.name}</div>
+            <h3 className="font-bold text-sm text-primary leading-tight" style={{ color: 'var(--text-primary)' }}>{agent.name}</h3>
             {agent.role && (
-              <div style={{ fontSize: 11, color: roleColor, fontWeight: 600, marginTop: 1 }}>{agent.role}</div>
+              <span className="text-[10px] font-bold uppercase tracking-wider block mt-0.5 opacity-80" style={{ color: roleColor }}>{agent.role}</span>
             )}
           </div>
         </div>
         <button
           onClick={() => onDelete(agent.agent_id)}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: "var(--text-tertiary)", padding: 4, borderRadius: 6,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.15s ease"
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#EF4444"; (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.1)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)"; (e.currentTarget as HTMLElement).style.background = "none"; }}
+          className="p-1.5 rounded-lg text-tertiary hover:bg-red-500/10 hover:text-red-500 transition-colors"
+          style={{ color: 'var(--text-tertiary)' }}
         >
           <Trash2 size={14} />
         </button>
@@ -136,98 +101,53 @@ function AgentCard({
 
       {/* Description */}
       {agent.description && (
-        <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 14, minHeight: 36 }}>
+        <p className="text-xs text-secondary leading-relaxed mb-4 line-clamp-2 h-8" style={{ color: 'var(--text-secondary)' }}>
           {agent.description}
         </p>
       )}
 
       {/* Reputation */}
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Reputation</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Star size={10} style={{ color: "#F59E0B", fill: "#F59E0B" }} />
-          </div>
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-1.5">
+          <span className="text-[10px] uppercase font-bold text-tertiary tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Reputation</span>
+          <Star size={10} className="text-yellow-500 fill-yellow-500" />
         </div>
         <ReputationBar score={agent.reputation_score} />
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+      {/* Grid Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {[
           { label: "Tasks", value: agent.total_tasks, color: "var(--accent-primary)" },
-          { label: "Success", value: `${successRate}%`, color: "#10B981" },
-          { label: "Failed", value: agent.failed_tasks, color: "#EF4444" },
+          { label: "Succ.", value: `${successRate}%`, color: "var(--accent-success)" },
+          { label: "Fail", value: agent.failed_tasks, color: "var(--accent-danger)" },
         ].map(s => (
-          <div key={s.label} style={{
-            background: "var(--bg-tertiary)", borderRadius: 8, padding: "8px 10px",
-            textAlign: "center", border: "1px solid var(--border-muted)"
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2, fontWeight: 600 }}>{s.label}</div>
+          <div key={s.label} className="bg-tertiary/40 rounded-lg p-2 text-center border border-color transition-colors group-hover:bg-tertiary/60" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--card-border)' }}>
+            <div className="text-xs font-bold leading-none mb-1" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-[9px] uppercase font-bold text-tertiary tracking-tighter" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Scopes */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-        {agent.scopes.slice(0, 3).map(scope => (
-          <span key={scope} style={{
-            fontSize: 10, padding: "2px 7px", borderRadius: 4,
-            background: "rgba(59,130,246,0.1)", color: "var(--accent-primary)",
-            border: "1px solid rgba(59,130,246,0.15)", fontWeight: 600
-          }}>{scope}</span>
-        ))}
-        {agent.scopes.length > 3 && (
-          <span style={{ fontSize: 10, color: "var(--text-tertiary)", padding: "2px 4px" }}>
-            +{agent.scopes.length - 3} more
-          </span>
-        )}
-      </div>
-
-      {/* Agent ID */}
-      <div style={{
-        background: "var(--bg-tertiary)", borderRadius: 8, padding: "8px 12px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        border: "1px solid var(--border-muted)"
-      }}>
-        <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "monospace" }}>
-          {agent.agent_id.substring(0, 18)}…
-        </span>
-        {agent.token && (
-          <button
-            onClick={() => onCopyToken(agent.token!)}
-            style={{
-              display: "flex", alignItems: "center", gap: 4,
-              background: "none", border: "1px solid var(--border-muted)",
-              borderRadius: 6, padding: "3px 8px", cursor: "pointer",
-              color: "var(--text-secondary)", fontSize: 10, fontWeight: 600,
-              transition: "all 0.15s"
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-primary)"; (e.currentTarget as HTMLElement).style.color = "var(--accent-primary)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-muted)"; (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)"; }}
-          >
-            <Copy size={11} /> JWT
-          </button>
-        )}
+      {/* Footer Actions */}
+      <div className="flex items-center justify-between pt-3 border-t border-color" style={{ borderColor: 'var(--card-border)' }}>
+        <div className="flex items-center gap-2">
+           {agent.token && (
+            <button
+              onClick={() => onCopyToken(agent.token!)}
+              className="px-2 py-1 rounded-md border border-color text-[9px] font-bold text-secondary hover:bg-tertiary transition-colors flex items-center gap-1"
+              style={{ borderColor: 'var(--card-border)', color: 'var(--text-secondary)', background: 'var(--bg-card)' }}
+            >
+              <Copy size={10} /> JWT
+            </button>
+          )}
+        </div>
         <Link 
           href={`/agents/${agent.agent_id}`}
-          style={{
-            color: roleColor,
-            fontSize: 11,
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            textDecoration: "none",
-            padding: "2px 6px",
-            borderRadius: 4,
-            transition: "all 0.15s"
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${roleColor}15`; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; }}
+          className="text-[10px] font-bold flex items-center gap-1 hover:gap-1.5 transition-all text-secondary group-hover:text-primary"
+          style={{ color: 'var(--text-secondary)' }}
         >
-          Details <ChevronRight size={12} />
+          VIEW DETAILS <ChevronRight size={10} />
         </Link>
       </div>
     </div>
@@ -249,9 +169,14 @@ function RegisterAgentModal({
     setError(null);
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("agentcloud_token") : null;
-      const result = await apiJson("/v1/agents/register", {
+      const result = await apiJson("/agents/register", {
         method: "POST",
-        json: { name: name.trim(), role: role.trim() || undefined, description: description.trim() || undefined, owner_id: "placeholder" },
+        json: { 
+          name: name.trim(), 
+          role: role.trim() || "Generalist Agent", 
+          description: description.trim() || undefined, 
+          owner_id: "agentcloud-user" 
+        },
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!result.ok) {
@@ -268,94 +193,74 @@ function RegisterAgentModal({
   const PRESET_ROLES = ["Research Analyst", "Software Engineer", "Data Scientist", "Content Strategist", "Project Manager", "Security Auditor", "DevOps Engineer"];
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
-      zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center"
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{
-        background: "var(--bg-secondary)", border: "1px solid var(--border-active)",
-        borderRadius: 20, padding: 28, width: "min(520px, 90vw)",
-        boxShadow: "0 24px 64px rgba(0,0,0,0.5)"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="glass-card w-full max-w-lg p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-active)' }}>
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Register Agent</h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 4 }}>Create a new autonomous agent</p>
+            <h2 className="text-2xl font-bold text-primary tracking-tight" style={{ color: 'var(--text-primary)' }}>Register Agent</h2>
+            <p className="text-secondary text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Deploy a new autonomous intelligence unit</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 20 }}>×</button>
+          <button onClick={onClose} className="text-tertiary hover:text-primary transition-colors text-2xl" style={{ color: 'var(--text-tertiary)' }}>&times;</button>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Agent Name *</label>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold text-tertiary tracking-widest block px-1" style={{ color: 'var(--text-secondary)' }}>Agent Name *</label>
             <input
               value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. my-research-agent"
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
-                background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                color: "var(--text-primary)", outline: "none"
-              }}
+              placeholder="e.g. neuro-analyst-01"
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 bg-tertiary border border-color outline-none"
+              style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderColor: 'var(--card-border)' }}
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Role</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+          <div className="space-y-3">
+            <label className="text-[10px] uppercase font-bold text-tertiary tracking-widest block px-1" style={{ color: 'var(--text-secondary)' }}>Specialized Role</label>
+            <div className="flex flex-wrap gap-2">
               {PRESET_ROLES.map(r => (
-                <button key={r} onClick={() => setRole(r)} style={{
-                  padding: "4px 12px", borderRadius: 6, fontSize: 12, cursor: "pointer",
-                  border: `1px solid ${role === r ? "var(--accent-primary)" : "var(--border-muted)"}`,
-                  background: role === r ? "rgba(59,130,246,0.15)" : "var(--bg-tertiary)",
-                  color: role === r ? "var(--accent-primary)" : "var(--text-secondary)",
-                  fontWeight: 600, transition: "all 0.15s"
-                }}>{r}</button>
+                <button key={r} onClick={() => setRole(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${role === r ? 'border-indigo-500 bg-indigo-500/10 text-indigo-500' : 'border-color text-tertiary bg-tertiary'}`}
+                  style={{ 
+                    borderColor: role === r ? 'var(--accent-primary)' : 'var(--card-border)',
+                    background: role === r ? 'var(--accent-blue-soft)' : 'var(--bg-tertiary)',
+                    color: role === r ? 'var(--accent-primary)' : 'var(--text-tertiary)'
+                  }}
+                >
+                  {r}
+                </button>
               ))}
             </div>
             <input
               value={role} onChange={e => setRole(e.target.value)}
-              placeholder="Or type a custom role..."
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
-                background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                color: "var(--text-primary)", outline: "none"
-              }}
+              placeholder="Or define a custom role..."
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 bg-tertiary border border-color outline-none"
+              style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderColor: 'var(--card-border)' }}
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</label>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold text-tertiary tracking-widest block px-1" style={{ color: 'var(--text-secondary)' }}>Mission Directive</label>
             <textarea
               value={description} onChange={e => setDescription(e.target.value)}
-              placeholder="What does this agent do?"
+              placeholder="Describe the agent's primary focus and constraints..."
               rows={3}
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
-                background: "var(--bg-input)", border: "1px solid var(--border-active)",
-                color: "var(--text-primary)", outline: "none", resize: "vertical",
-                fontFamily: "inherit"
-              }}
+              className="w-full px-4 py-3 rounded-xl text-sm transition-all focus:ring-2 focus:ring-indigo-500/20 bg-tertiary border border-color outline-none resize-none"
+              style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderColor: 'var(--card-border)' }}
             />
           </div>
 
           {error && (
-            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#EF4444", fontSize: 13 }}>
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold animate-in slide-in-from-top-1">
               {error}
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-            <button onClick={onClose} style={{
-              flex: 1, padding: "11px 0", borderRadius: 10, border: "1px solid var(--border-muted)",
-              background: "transparent", color: "var(--text-secondary)", cursor: "pointer", fontSize: 14, fontWeight: 600
-            }}>Cancel</button>
-            <button onClick={handleRegister} disabled={loading} style={{
-              flex: 2, padding: "11px 0", borderRadius: 10, border: "none",
-              background: loading ? "rgba(59,130,246,0.4)" : "var(--accent-primary)",
-              color: "white", cursor: loading ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 700,
-              boxShadow: loading ? "none" : "0 4px 14px rgba(59,130,246,0.4)"
-            }}>
-              {loading ? "Registering..." : "Register Agent"}
+          <div className="flex gap-4 pt-4">
+            <button onClick={onClose} className="flex-1 px-6 py-3 rounded-xl text-sm font-bold text-secondary border border-color hover:bg-tertiary transition-all" style={{ color: 'var(--text-secondary)', borderColor: 'var(--card-border)' }}>
+              Abort
+            </button>
+            <button onClick={handleRegister} disabled={loading} className="flex-[2] py-3 rounded-xl text-sm font-bold text-white gradient-bg shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2">
+              {loading && <RefreshCw size={14} className="animate-spin" />}
+              {loading ? "INITIALIZING..." : "DEPLOY AGENT"}
             </button>
           </div>
         </div>
@@ -375,7 +280,7 @@ export default function AgentsPage() {
   const fetchAgents = useCallback(async () => {
     setLoading(true);
     try {
-      const endpoint = tab === "my" ? "/v1/agents/my" : tab === "builtin" ? "/v1/agents/builtin" : "/v1/agents/";
+      const endpoint = tab === "my" ? "/agents/my" : tab === "builtin" ? "/agents/builtin" : "/agents/";
       const result = await apiJson<Agent[]>(endpoint);
       if (result.ok) setAgents(result.data);
       else setAgents([]);
@@ -387,7 +292,7 @@ export default function AgentsPage() {
   useEffect(() => { fetchAgents(); }, [fetchAgents]);
 
   const handleDelete = async (agent_id: string) => {
-    const result = await apiJson(`/v1/agents/${agent_id}`, { method: "DELETE" });
+    const result = await apiJson(`/agents/${agent_id}`, { method: "DELETE" });
     if (result.ok) fetchAgents();
   };
 
@@ -410,118 +315,94 @@ export default function AgentsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1200, animation: "slideUp 0.4s ease-out" }}>
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>Agents</h1>
-            <p style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 5 }}>
-              Manage your autonomous agents and built-in templates
-            </p>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "10px 18px", borderRadius: 10, border: "none",
-              background: "var(--accent-primary)", color: "white",
-              cursor: "pointer", fontSize: 14, fontWeight: 700,
-              boxShadow: "0 4px 14px rgba(59,130,246,0.4)",
-              transition: "all 0.2s"
-            }}
-          >
-            <Plus size={16} /> New Agent
-          </button>
+    <div className="max-w-[1400px] animate-slide-in">
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div>
+          <h1 className="text-4xl font-black text-primary tracking-tighter mb-2" style={{ color: 'var(--text-primary)' }}>
+            Agents <span className="text-indigo-500/50 text-2xl font-light ml-2">CORE</span>
+          </h1>
+          <p className="text-secondary text-sm max-w-md leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Orchestrate your fleet of autonomous intelligence units. Monitor performance, reputation, and task execution across the AXON network.
+          </p>
         </div>
-
-        {/* Summary stats */}
-        <div style={{ display: "flex", gap: 16, marginTop: 20 }}>
-          {[
-            { label: "Total Agents", value: stats.total, icon: <Bot size={16} />, color: "var(--accent-primary)" },
-            { label: "Avg Reputation", value: stats.avgRep, icon: <Star size={16} />, color: "#F59E0B" },
-            { label: "Tasks Run", value: stats.totalTasks, icon: <Activity size={16} />, color: "#10B981" },
-          ].map(s => (
-            <div key={s.label} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 16px", borderRadius: 10,
-              background: "var(--bg-card)", border: "1px solid var(--border-muted)"
-            }}>
-              <span style={{ color: s.color }}>{s.icon}</span>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{s.label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white gradient-bg shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
+        >
+          <Plus size={18} /> INITIALIZE AGENT
+        </button>
       </div>
 
-      {/* Tabs + Search */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-        <div style={{ display: "flex", gap: 4, background: "var(--bg-card)", padding: 4, borderRadius: 10, border: "1px solid var(--border-muted)" }}>
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+        {[
+          { label: "Active Nodes", value: stats.total, icon: <Bot size={20} />, color: "var(--accent-primary)" },
+          { label: "Avg Reputation", value: `${stats.avgRep}%`, icon: <Star size={20} />, color: "#F59E0B" },
+          { label: "Neural Tasks", value: stats.totalTasks.toLocaleString(), icon: <Activity size={20} />, color: "#10B981" },
+        ].map(s => (
+          <div key={s.label} className="glass-card p-6 rounded-2xl stat-card group">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: `${s.color}15`, color: s.color }}>
+                {s.icon}
+              </div>
+              <div>
+                <div className="text-2xl font-black text-primary leading-tight" style={{ color: 'var(--text-primary)' }}>{s.value}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-tertiary mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{s.label}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+        <div className="flex p-1 bg-tertiary/20 rounded-xl border border-color" style={{ background: 'var(--bg-card)', borderColor: 'var(--card-border)' }}>
           {(["my", "all", "builtin"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              padding: "7px 16px", borderRadius: 7, border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 600, transition: "all 0.2s",
-              background: tab === t ? "var(--accent-primary)" : "transparent",
-              color: tab === t ? "white" : "var(--text-secondary)",
-              boxShadow: tab === t ? "0 2px 8px rgba(59,130,246,0.3)" : "none"
-            }}>
-              {t === "my" ? "My Agents" : t === "all" ? "All Agents" : "Built-in"}
+            <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 rounded-lg text-xs font-bold transition-all ${tab === t ? 'gradient-bg text-white shadow-md' : 'text-tertiary hover:text-secondary'}`}
+              style={{ color: tab === t ? 'white' : 'var(--text-tertiary)' }}
+            >
+              {t === "my" ? "Personal" : t === "all" ? "Network" : "Templates"}
             </button>
           ))}
         </div>
-        <div style={{ position: "relative" }}>
-          <Search size={14} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)" }} />
+        <div className="relative w-full sm:w-auto">
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-tertiary" />
           <input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search agents..."
-            style={{
-              paddingLeft: 32, paddingRight: 14, paddingTop: 8, paddingBottom: 8,
-              borderRadius: 9, border: "1px solid var(--border-muted)",
-              background: "var(--bg-card)", color: "var(--text-primary)", fontSize: 13,
-              outline: "none", width: 220
-            }}
+            placeholder="Search neural signatures..."
+            className="w-full sm:w-[300px] pl-10 pr-4 py-2.5 rounded-xl text-sm bg-tertiary border border-color outline-none transition-all focus:ring-2 focus:ring-indigo-500/10"
+            style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderColor: 'var(--card-border)' }}
           />
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Main Grid */}
       {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => (
-            <div key={i} style={{
-              height: 280, borderRadius: 16, background: "var(--bg-card)",
-              border: "1px solid var(--border-muted)", animation: "pulse 1.5s ease-in-out infinite"
-            }} />
+            <div key={i} className="h-[280px] rounded-2xl bg-tertiary border border-color animate-pulse" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--card-border)' }} />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "80px 20px",
-          background: "var(--bg-card)", borderRadius: 16,
-          border: "1px dashed var(--border-active)"
-        }}>
-          <Bot size={48} style={{ color: "var(--text-tertiary)", margin: "0 auto 16px" }} />
-          <h3 style={{ color: "var(--text-secondary)", marginBottom: 8 }}>
-            {tab === "my" ? "No agents yet" : "No agents found"}
+        <div className="glass-card py-20 rounded-3xl border-dashed border-2 flex flex-col items-center justify-center text-center px-6" style={{ borderColor: 'var(--border-active)' }}>
+          <div className="w-20 h-20 rounded-full bg-tertiary flex items-center justify-center mb-6" style={{ background: 'var(--bg-tertiary)' }}>
+            <Bot size={40} className="text-tertiary opacity-30" />
+          </div>
+          <h3 className="text-xl font-bold text-secondary mb-2" style={{ color: 'var(--text-secondary)' }}>
+            {tab === "my" ? "Command Center Empty" : "No Neural Matches"}
           </h3>
-          <p style={{ color: "var(--text-tertiary)", fontSize: 14, marginBottom: 20 }}>
-            {tab === "my" ? "Register your first agent to get started" : "Try adjusting your search"}
+          <p className="text-tertiary text-sm max-w-xs mb-8" style={{ color: 'var(--text-tertiary)' }}>
+            {tab === "my" ? "You haven't deployed any personal agents yet. Initialize your first node to begin." : "Try refining your search parameters."}
           </p>
           {tab === "my" && (
-            <button onClick={() => setShowModal(true)} style={{
-              padding: "10px 20px", borderRadius: 10, border: "none",
-              background: "var(--accent-primary)", color: "white",
-              cursor: "pointer", fontSize: 14, fontWeight: 600
-            }}>
-              Register First Agent
+            <button onClick={() => setShowModal(true)} className="px-8 py-3 rounded-xl font-bold text-sm text-white gradient-bg shadow-xl">
+              INITIALIZE FIRST AGENT
             </button>
           )}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
           {filtered.map(agent => (
             <AgentCard
               key={agent.agent_id}
@@ -533,17 +414,10 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {/* Toast */}
+      {/* Toast Notification */}
       {copied && (
-        <div style={{
-          position: "fixed", bottom: 24, right: 24,
-          background: "var(--accent-success)", color: "white",
-          padding: "12px 20px", borderRadius: 10, display: "flex",
-          alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.3)", zIndex: 999,
-          animation: "slideUp 0.3s ease-out"
-        }}>
-          <Check size={16} /> JWT Token Copied!
+        <div className="fixed bottom-10 right-10 gradient-bg text-white px-6 py-4 rounded-2xl flex items-center gap-3 font-bold text-sm shadow-2xl animate-in slide-in-from-bottom-5 duration-300 z-50">
+          <Check size={18} /> Neural Hash Copied to Clipboard
         </div>
       )}
 

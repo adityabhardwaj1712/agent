@@ -1,0 +1,2602 @@
+{
+  "metrics": {
+    "files": {
+      "python": 135,
+      "typescript": 31
+    },
+    "lines": {
+      "python": 9773,
+      "typescript": 3895
+    }
+  },
+  "issues": [
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "alembic\\env.py",
+      "line": 59,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "alembic\\env.py",
+      "line": 61,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_analyzer.py",
+      "line": 50,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 89,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 273,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 274,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 279,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 286,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 293,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\agentcloud_test_suite.py",
+      "line": 360,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\seed_tools.py",
+      "line": 69,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "scripts\\seed_tools.py",
+      "line": 72,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Security",
+      "severity": "critical",
+      "file": "scripts\\test_agentcloud.py",
+      "line": 16,
+      "description": "Hardcoded credential detected",
+      "suggestion": "Use environment variables"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\admin.py",
+      "line": 10,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\admin.py",
+      "line": 14,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\admin.py",
+      "line": 19,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\admin.py",
+      "line": 25,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\admin.py",
+      "line": 26,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 28,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 46,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 59,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 60,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 69,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 95,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 108,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 121,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 139,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 144,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 168,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 173,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\agents.py",
+      "line": 184,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 19,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 24,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 36,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 40,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 44,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 48,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 59,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 84,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 89,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 94,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\analytics.py",
+      "line": 114,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\approvals.py",
+      "line": 17,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\approvals.py",
+      "line": 28,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\approvals.py",
+      "line": 46,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\approvals.py",
+      "line": 47,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\audit.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\auth.py",
+      "line": 21,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\auth.py",
+      "line": 24,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\auth.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\billing.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\billing.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\billing.py",
+      "line": 45,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\developer.py",
+      "line": 40,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\developer.py",
+      "line": 64,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\developer.py",
+      "line": 83,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\developer.py",
+      "line": 96,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\developer.py",
+      "line": 111,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\goals.py",
+      "line": 18,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\goals.py",
+      "line": 25,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\goals.py",
+      "line": 33,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\marketplace.py",
+      "line": 30,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\marketplace.py",
+      "line": 43,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\memory.py",
+      "line": 21,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\memory.py",
+      "line": 23,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\memory.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\memory.py",
+      "line": 36,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\protocol.py",
+      "line": 28,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\protocol.py",
+      "line": 30,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\protocol.py",
+      "line": 47,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\query.py",
+      "line": 39,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\query.py",
+      "line": 49,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\query.py",
+      "line": 59,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\query.py",
+      "line": 69,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tasks.py",
+      "line": 21,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tasks.py",
+      "line": 23,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tasks.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tasks.py",
+      "line": 44,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tasks.py",
+      "line": 46,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 52,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 54,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 79,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 80,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 90,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 109,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 111,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 116,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 118,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 127,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 137,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 139,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 140,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\task_ws.py",
+      "line": 141,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 20,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 21,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 36,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 49,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 52,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 62,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\tools.py",
+      "line": 65,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\traces.py",
+      "line": 16,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\traces.py",
+      "line": 25,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\webhooks.py",
+      "line": 46,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\webhooks.py",
+      "line": 53,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\api\\workflows.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\audit.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\deps.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\deps.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\deps.py",
+      "line": 38,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\deps.py",
+      "line": 62,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 69,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 71,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 73,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 88,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 155,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\core\\llm.py",
+      "line": 209,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\integrations\\slack.py",
+      "line": 63,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 67,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 141,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 151,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 156,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 158,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 165,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\agent_service.py",
+      "line": 172,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 35,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 51,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 60,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 67,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 71,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 73,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\api_key_service.py",
+      "line": 74,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\axon_service.py",
+      "line": 24,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 67,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 73,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 78,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 84,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 101,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 102,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 111,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 119,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 120,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 125,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 126,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 129,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 136,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 147,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 161,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 173,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 190,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\billing_service.py",
+      "line": 195,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 45,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 46,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 54,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 60,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 70,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 72,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 82,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 86,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 93,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 95,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 98,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 103,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 112,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 123,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 125,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 128,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 134,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 138,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 139,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 142,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 145,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 150,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 152,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 153,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 156,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 157,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 180,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 181,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 193,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 194,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 202,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\circuit_breaker.py",
+      "line": 203,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 115,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 124,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 180,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 201,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 211,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\dag_engine.py",
+      "line": 222,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\email_service.py",
+      "line": 49,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 130,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 140,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 177,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 212,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 222,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 229,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 237,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_bus.py",
+      "line": 245,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\event_store.py",
+      "line": 22,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\external_integration_service.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\external_integration_service.py",
+      "line": 35,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\external_integration_service.py",
+      "line": 62,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\external_integration_service.py",
+      "line": 63,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 16,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 28,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 33,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 43,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 53,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 63,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 68,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 72,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\goal_service.py",
+      "line": 75,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\inbox.py",
+      "line": 22,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 43,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 56,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 57,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 63,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 79,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 80,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 92,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 96,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 109,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\marketplace_service.py",
+      "line": 110,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\memory_service.py",
+      "line": 20,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\memory_service.py",
+      "line": 21,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\memory_service.py",
+      "line": 36,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 66,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 85,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 86,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 96,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 114,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\orchestrator.py",
+      "line": 117,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\planner.py",
+      "line": 30,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\protocol_service.py",
+      "line": 22,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\protocol_service.py",
+      "line": 25,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\protocol_service.py",
+      "line": 34,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\reputation.py",
+      "line": 9,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\reputation.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\reputation.py",
+      "line": 38,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\reputation.py",
+      "line": 45,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\reputation.py",
+      "line": 54,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\skill_library_service.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\skill_library_service.py",
+      "line": 30,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\skill_library_service.py",
+      "line": 38,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\skill_library_service.py",
+      "line": 40,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\slack_service.py",
+      "line": 29,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\slack_service.py",
+      "line": 68,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\task_service.py",
+      "line": 15,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\task_service.py",
+      "line": 60,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\task_service.py",
+      "line": 82,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 58,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 92,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 140,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 172,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 188,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 214,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_executor.py",
+      "line": 235,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 15,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 16,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 20,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 27,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 31,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 39,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 40,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 44,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 47,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\tool_service.py",
+      "line": 48,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\trace_service.py",
+      "line": 26,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\user_service.py",
+      "line": 12,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\user_service.py",
+      "line": 24,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\user_service.py",
+      "line": 25,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\services\\user_service.py",
+      "line": 31,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 43,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 48,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 75,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 78,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 91,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 102,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 109,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 112,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 120,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 127,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 131,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 161,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 164,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 177,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 180,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 181,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 186,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 190,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 193,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 197,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 218,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 240,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 248,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 259,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 264,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 277,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 282,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 285,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 287,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 289,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 292,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 297,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 302,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 304,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 312,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 315,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 327,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 337,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 345,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 356,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 357,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 360,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "medium",
+      "file": "app\\workers\\agent_worker.py",
+      "line": 367,
+      "description": "Async without try-catch",
+      "suggestion": "Wrap in try-except"
+    }
+  ],
+  "summary": {
+    "medium": 322,
+    "critical": 1
+  }
+}

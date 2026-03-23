@@ -61,6 +61,11 @@ async def run_worker():
     asyncio.create_task(event_bus.start_consuming())
     logger.info("Event bus consumer started")
 
+    # AXON Power-up: Load Dynamic Tools from DB
+    from app.services.tool_service import load_dynamic_tools
+    async with AsyncSessionLocal() as db:
+        await load_dynamic_tools(db)
+
     while True:
         try:
             task_dict = await dequeue_next_task(redis_client)
@@ -261,7 +266,22 @@ async def process_one_task(redis_client, task_dict: dict):
                             final_result = f"Security blocked: {sec['findings']}"
                             blocked = True
                             break
-                        tool_res = await ToolExecutor.execute(tc.function.name, tc.function.arguments)
+                        exec_context = {
+                            "db": db,
+                            "task_id": task_id,
+                            "agent_id": agent_id_str
+                        }
+                        tool_res = await ToolExecutor.execute(tc.function.name, tc.function.arguments, context=exec_context)
+                        
+                        # Handle HITL Pause
+                        if "pending_approval" in tool_res:
+                            final_result = f"Paused: This task requires manual approval for tool '{tc.function.name}'."
+                            task_obj = await db.get(Task, task_id)
+                            if task_obj:
+                                task_obj.status = "pending_approval"
+                            blocked = True
+                            break
+
                         messages.append({
                             "role": "tool", "tool_call_id": tc.id,
                             "name": tc.function.name, "content": tool_res,

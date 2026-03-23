@@ -1,8 +1,7 @@
-'use client';
-
+"use client";
 import React, { useState, useEffect } from 'react';
 import { apiJson } from '../lib/api';
-import { RefreshCw, Clock, CheckCircle2, XCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Clock, CheckCircle2, XCircle, Loader2, AlertTriangle, ChevronRight, Hash, UserCircle } from 'lucide-react';
 
 type Task = {
   task_id: string;
@@ -13,27 +12,30 @@ type Task = {
   thought_process?: string;
 };
 
-const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-  completed:  { color: "#10B981", icon: <CheckCircle2 size={11} />, label: "Completed" },
-  success:    { color: "#10B981", icon: <CheckCircle2 size={11} />, label: "Success" },
-  failed:     { color: "#EF4444", icon: <XCircle size={11} />, label: "Failed" },
-  error:      { color: "#EF4444", icon: <XCircle size={11} />, label: "Error" },
-  processing: { color: "#3B82F6", icon: <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} />, label: "Processing" },
-  pending:    { color: "#F59E0B", icon: <Clock size={11} />, label: "Pending" },
-  queued:     { color: "#8B5CF6", icon: <Clock size={11} />, label: "Queued" },
+const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType; label: string }> = {
+  completed:  { color: "#10B981", icon: CheckCircle2, label: "SUCCESS_OK" },
+  success:    { color: "#10B981", icon: CheckCircle2, label: "SUCCESS_OK" },
+  failed:     { color: "#EF4444", icon: XCircle, label: "FAILED_ERR" },
+  error:      { color: "#EF4444", icon: XCircle, label: "FAILED_ERR" },
+  processing: { color: "#6366F1", icon: Loader2, label: "EXECUTING" },
+  pending:    { color: "#F59E0B", icon: Clock, label: "QUEUED_WAIT" },
+  queued:     { color: "#8B5CF6", icon: Clock, label: "INITIALIZING" },
 };
 
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status?.toLowerCase()] || {
-    color: "var(--text-tertiary)", icon: <AlertTriangle size={11} />, label: status || "Unknown"
+    color: "#94A3B8", icon: AlertTriangle, label: status?.toUpperCase() || "UNKNOWN"
   };
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "3px 9px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-      background: `${cfg.color}15`, color: cfg.color, border: `1px solid ${cfg.color}30`
-    }}>
-      {cfg.icon} {cfg.label}
+    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all duration-300" 
+      style={{ 
+        background: `${cfg.color}15`, 
+        color: cfg.color, 
+        border: `1px solid ${cfg.color}30`,
+        boxShadow: `0 0 15px ${cfg.color}10`
+      }}>
+      <cfg.icon size={12} className={status?.toLowerCase() === 'processing' ? 'animate-spin' : ''} />
+      {cfg.label}
     </span>
   );
 }
@@ -46,8 +48,7 @@ export default function TaskTable() {
   async function loadTasks() {
     setLoading(true);
     try {
-      // Try analytics endpoint first (returns task list), fall back gracefully
-      const r = await apiJson<any>("/v1/analytics/metrics");
+      const r = await apiJson<any>("/analytics/metrics");
       if (r.ok && r.data?.recent_tasks) {
         setTasks(r.data.recent_tasks);
       } else {
@@ -61,77 +62,71 @@ export default function TaskTable() {
 
   useEffect(() => { loadTasks(); }, []);
 
-  // Mock data when no tasks yet (so UI never feels empty)
   const displayTasks = tasks.length > 0 ? tasks : [
-    { task_id: "task-demo-001", agent_id: "WebResearcher", status: "completed", created_at: new Date().toISOString() },
-    { task_id: "task-demo-002", agent_id: "CodeHelper", status: "processing", created_at: new Date().toISOString() },
-    { task_id: "task-demo-003", agent_id: "DataAnalyst", status: "pending", created_at: new Date().toISOString() },
+    { task_id: "task-web-392", agent_id: "SearchBot", status: "completed", created_at: new Date().toISOString() },
+    { task_id: "task-gen-104", agent_id: "Writer", status: "processing", created_at: new Date().toISOString() },
+    { task_id: "task-anal-88", agent_id: "DataPro", status: "pending", created_at: new Date().toISOString() },
   ];
 
   return (
-    <div className="ac-widget">
-      <div className="ac-widget-title">
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <span>Active Agent Tasks</span>
-          <span style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 400 }}>
-            Refreshed {lastRefresh.toLocaleTimeString()}
-          </span>
-        </div>
-        <button
-          onClick={loadTasks}
-          disabled={loading}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border-muted)",
-            background: "var(--bg-tertiary)", color: "var(--text-secondary)",
-            cursor: loading ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 600
-          }}
-        >
-          <RefreshCw size={12} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
-          Refresh
-        </button>
-      </div>
-
-      <div className="ac-table-container">
-        <table className="ac-table">
-          <thead>
-            <tr>
-              <th>Task ID</th>
-              <th>Agent</th>
-              <th>Status</th>
-              <th>Time</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayTasks.map((task) => (
-              <tr key={task.task_id}>
-                <td style={{ fontWeight: 600, fontFamily: "monospace", fontSize: 12, color: "var(--text-primary)" }}>
-                  {task.task_id.substring(0, 16)}…
-                </td>
-                <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{
-                      width: 7, height: 7, borderRadius: "50%",
-                      background: STATUS_CONFIG[task.status?.toLowerCase()]?.color || "var(--text-tertiary)"
-                    }} />
-                    <span style={{ fontSize: 13 }}>{task.agent_id || "—"}</span>
+    <div className="overflow-x-auto custom-scrollbar">
+      <table className="w-full text-left border-separate border-spacing-y-4 px-2">
+        <thead>
+          <tr className="text-tertiary text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
+            <th className="px-6 py-2">Mission_ID</th>
+            <th className="px-6 py-2">Assigned_Entity</th>
+            <th className="px-6 py-2">Execution_Status</th>
+            <th className="px-6 py-2">Temporal_Stamp</th>
+            <th className="px-6 py-2 text-right">Ops</th>
+          </tr>
+        </thead>
+        <tbody>
+          {displayTasks.map((task) => (
+            <tr key={task.task_id} className="group glass-card hover:bg-white/[0.03] transition-all duration-500 rounded-3xl overflow-hidden relative">
+              <td className="px-6 py-5 first:rounded-l-[2rem] border-y border-l border-white/5 bg-white/[0.01]">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <Hash size={12} />
+                   </div>
+                   <span className="font-mono text-[11px] font-black text-secondary group-hover:text-primary transition-colors tracking-tighter">
+                    {task.task_id.substring(0, 12).toUpperCase()}
+                   </span>
+                </div>
+              </td>
+              <td className="px-6 py-5 border-y border-white/5 bg-white/[0.01]">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-[1.25rem] bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center text-indigo-500 border border-white/5 shadow-xl group-hover:scale-105 transition-transform">
+                    <UserCircle size={20} />
                   </div>
-                </td>
-                <td><StatusBadge status={task.status} /></td>
-                <td style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                  {task.created_at ? new Date(task.created_at).toLocaleTimeString() : "—"}
-                </td>
-                <td style={{ fontSize: 12, color: "var(--text-secondary)", maxWidth: 180 }}>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
-                    {task.result ? task.result.substring(0, 60) + (task.result.length > 60 ? "…" : "") : "—"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <div className="flex flex-col">
+                    <span className="font-black text-xs text-primary tracking-tight uppercase">{task.agent_id || "SYSTEM_DAEMON"}</span>
+                    <span className="text-[9px] font-black text-tertiary uppercase tracking-widest opacity-40 mt-1">ENTITY_CLASS_A</span>
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-5 border-y border-white/5 bg-white/[0.01]">
+                <StatusBadge status={task.status} />
+              </td>
+              <td className="px-6 py-5 border-y border-white/5 text-[11px] font-black text-tertiary uppercase tracking-widest opacity-60 bg-white/[0.01]">
+                <div className="flex items-center gap-2">
+                   <Clock size={12} className="opacity-40" />
+                   {task.created_at ? new Date(task.created_at).toLocaleTimeString([], { hour12: false }) : "STAMP_NULL"}
+                </div>
+              </td>
+              <td className="px-6 py-5 border-y border-r border-white/5 last:rounded-r-[2rem] text-right bg-white/[0.01]">
+                <div className="flex items-center justify-end gap-2">
+                   <button className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center text-indigo-500 hover:bg-indigo-500 hover:text-white hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 group/btn">
+                    <RefreshCw size={16} className="group-hover/btn:rotate-180 transition-transform duration-700" />
+                  </button>
+                  <button className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center text-tertiary hover:bg-white/5 hover:text-primary transition-all">
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

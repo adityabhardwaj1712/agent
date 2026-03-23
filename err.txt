@@ -1,0 +1,13 @@
+(sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedObjectError'>: type "vector" does not exist
+[SQL: 
+CREATE TABLE memories (
+	memory_id VARCHAR NOT NULL, 
+	agent_id VARCHAR, 
+	content TEXT, 
+	embedding VECTOR(1536), 
+	created_at TIMESTAMP WITHOUT TIME ZONE, 
+	PRIMARY KEY (memory_id)
+)
+
+]
+(Background on this error at: https://sqlalche.me/e/20/f405)

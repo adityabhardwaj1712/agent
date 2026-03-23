@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, Send, X, Bot, Zap, MessageSquare, Terminal, ChevronRight } from 'lucide-react';
+import { Search, Send, X, Bot, Zap, MessageSquare, Terminal, ChevronRight, Loader2, Sparkles, Cpu, Layers } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 
 export default function FleetQueryPanel() {
@@ -9,7 +9,7 @@ export default function FleetQueryPanel() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'bot', text: string, data?: any }[]>([
-    { role: 'bot', text: "Hello! I'm your Fleet Assistant. Ask me anything about your agents or operations." }
+    { role: 'bot', text: "NEURAL_INTERFACE_READY. Query the fleet for optimization protocols." }
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +34,7 @@ export default function FleetQueryPanel() {
       });
       setMessages(prev => [...prev, { role: 'bot', text: result.answer, data: result.data }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'bot', text: "Sorry, I'm having trouble connecting to the fleet right now." }]);
+      setMessages(prev => [...prev, { role: 'bot', text: "CONNECTION_FAILURE. Protocol sync error." }]);
     } finally {
       setLoading(false);
     }
@@ -45,48 +45,51 @@ export default function FleetQueryPanel() {
       {/* Floating Toggle */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="ac-btn-primary fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-[500] hover:scale-110 active:scale-95 transition-all"
-        style={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)', background: 'var(--accent-primary)' }}
+        className="fixed bottom-10 right-10 w-16 h-16 rounded-2xl bg-indigo-500 text-white shadow-[0_12px_40px_rgba(99,102,241,0.4)] flex items-center justify-center z-[500] hover:scale-110 active:scale-95 transition-all group"
       >
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
+        <div className="absolute inset-0 bg-indigo-500 rounded-2xl animate-pulse blur-xl opacity-20 group-hover:opacity-40" />
+        {isOpen ? <X size={28} className="relative z-10" /> : <Sparkles size={28} className="relative z-10 animate-pulse" />}
       </button>
 
       {/* Query Panel */}
       {isOpen && (
-        <div className="fixed bottom-28 right-8 w-[400px] h-[550px] bg-secondary border border-active rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.6)] z-[500] flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed bottom-32 right-10 w-[450px] h-[650px] glass-card border border-white/10 rounded-[2.5rem] shadow-[0_32px_120px_rgba(0,0,0,0.6)] z-[500] flex flex-col overflow-hidden animate-slide-in">
           {/* Header */}
-          <div className="p-6 bg-tertiary border-b border-muted flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center text-accent">
-                <Bot size={20} />
+          <div className="p-8 bg-white/5 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                <Bot size={24} />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider">Fleet Assistant</h3>
-                <div className="flex items-center gap-1.5 text-[10px] text-success font-bold uppercase">
-                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                   AI Engine Active
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Neural_Fleet_Assistant</h3>
+                <div className="flex items-center gap-2 text-[9px] font-black text-green-500 uppercase tracking-widest mt-1">
+                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                   AI_CORE_ACTIVE
                 </div>
               </div>
             </div>
+            <button onClick={() => setIsOpen(false)} className="text-tertiary hover:text-primary transition-colors">
+               <X size={20} />
+            </button>
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-in`} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className={`max-w-[90%] p-5 rounded-2xl text-[13px] font-medium leading-relaxed shadow-xl ${
                   m.role === 'user' 
-                  ? 'bg-accent-primary text-white rounded-tr-none' 
-                  : 'bg-tertiary border border-muted text-secondary rounded-tl-none'
+                  ? 'bg-indigo-500 text-white rounded-tr-none' 
+                  : 'bg-white/5 border border-white/10 text-secondary rounded-tl-none'
                 }`}>
                   {m.text}
                   {m.data && (
-                    <div className="mt-4 p-3 bg-secondary rounded-xl border border-muted font-mono text-[11px] text-accent overflow-hidden">
-                       <div className="flex items-center gap-2 mb-2 text-tertiary font-bold uppercase text-[9px]">
-                         <Terminal size={10} />
-                         Structured Data
+                    <div className="mt-5 p-4 bg-black/40 rounded-xl border border-white/5 font-mono text-[10px] text-indigo-400 overflow-hidden">
+                       <div className="flex items-center gap-2 mb-3 text-tertiary font-black uppercase text-[9px] tracking-widest opacity-40">
+                         <Terminal size={12} />
+                         STRUCTURED_BLOCK
                        </div>
-                       <pre className="overflow-x-auto">
+                       <pre className="overflow-x-auto custom-scrollbar whitespace-pre-wrap">
                          {JSON.stringify(m.data, null, 2)}
                        </pre>
                     </div>
@@ -95,38 +98,45 @@ export default function FleetQueryPanel() {
               </div>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-tertiary p-4 rounded-2xl rounded-tl-none flex gap-1">
-                  <div className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-bounce" />
-                  <div className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                  <div className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-bounce [animation-delay:0.4s]" />
+              <div className="flex justify-start animate-pulse">
+                <div className="bg-white/5 p-5 rounded-2xl rounded-tl-none flex gap-2 border border-white/5">
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" />
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]" />
                 </div>
               </div>
             )}
           </div>
 
           {/* Input */}
-          <div className="p-4 bg-tertiary border-t border-muted">
-            <div className="relative flex items-center gap-3">
+          <div className="p-6 bg-black/20 border-t border-white/5">
+            <div className="relative flex items-center gap-4">
               <input 
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
-                placeholder="Ask e.g. 'How many agents?'"
-                className="w-full bg-secondary border border-active rounded-xl py-3 pl-4 pr-12 text-sm outline-none focus:border-accent transition-all"
+                placeholder="EXECUTE_COMMAND..."
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-[13px] font-black uppercase tracking-tight text-primary outline-none focus:border-indigo-500/50 transition-all placeholder:text-tertiary/20"
               />
               <button 
                 onClick={handleSend}
                 disabled={loading || !prompt.trim()}
-                className="absolute right-2 p-2 text-accent hover:bg-accent-primary/10 rounded-lg transition-colors disabled:opacity-30"
+                className="absolute right-3 p-2.5 text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500 hover:text-white rounded-xl transition-all disabled:opacity-20"
               >
-                <Send size={18} />
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
               </button>
             </div>
-            <p className="mt-3 text-[10px] text-tertiary text-center flex items-center justify-center gap-1">
-              <Zap size={10} className="text-warning" />
-              Powered by AgentCloud Core Logic
-            </p>
+            <div className="mt-4 flex items-center justify-center gap-3">
+               <div className="flex items-center gap-1.5 text-[9px] font-black text-tertiary uppercase tracking-[0.2em] opacity-30">
+                 <Cpu size={10} />
+                 Axon_Compute
+               </div>
+               <div className="w-1 h-1 rounded-full bg-white/10" />
+               <div className="flex items-center gap-1.5 text-[9px] font-black text-tertiary uppercase tracking-[0.2em] opacity-30">
+                 <Layers size={10} />
+                 Deep_Sync
+               </div>
+            </div>
           </div>
         </div>
       )}

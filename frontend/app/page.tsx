@@ -5,18 +5,20 @@ import ProtocolGraph from "./components/ProtocolGraph";
 import KPIGrid from "./components/KPIGrid";
 import IncidentTimeline from "./components/IncidentTimeline";
 import TaskTable from "./components/TaskTable";
+import AgentTerminal from "./components/AgentTerminal";
 import DraggableWidget from "./components/DraggableWidget";
+import { apiJson } from "./lib/api";
 
 export default function Home() {
-  const [widgets, setWidgets] = useState<string[]>(['kpi', 'graph', 'tasks']);
+  const [widgets, setWidgets] = useState<string[]>(['kpi', 'graph', 'terminal', 'tasks']);
   const [traces, setTraces] = useState<any[]>([]);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-    fetch(`${base}/v1/traces`, { cache: "no-store" })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setTraces(data))
-      .catch(() => {});
+    async function loadTraces() {
+      const r = await apiJson<any[]>("/traces");
+      if (r.ok) setTraces(r.data);
+    }
+    loadTraces();
   }, []);
 
   const handleReorder = (draggedId: string, targetId: string) => {
@@ -32,58 +34,95 @@ export default function Home() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'slideUp 0.6s ease-out' }}>
-      <header style={{ marginBottom: '8px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
-          System Overview
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-          Real-time monitoring of autonomous agent collaborations and protocol health.
-        </p>
-      </header>
+    <div className="flex flex-col gap-8 animate-slide-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h2 className="text-3xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>
+            Good morning, <span className="gradient-text">John 👋</span>
+          </h2>
+          <p className="mt-1 text-secondary" style={{ color: 'var(--text-secondary)' }}>
+            Here's what's happening with your agents today
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button className="glass-card px-4 py-2 rounded-xl hover:scale-105 transition flex items-center">
+            <div className="ac-status-dot-live mr-2"></div>
+            <span className="font-medium text-primary" style={{ color: 'var(--text-primary)' }}>System Optimal</span>
+          </button>
+          <button className="gradient-bg px-6 py-2 rounded-xl text-white font-medium hover:opacity-90 transition glow flex items-center shadow-lg">
+            <Plus size={18} className="mr-2" />
+            New Agent
+          </button>
+        </div>
+      </div>
 
-      {widgets.map((widgetId: string) => {
-        if (widgetId === 'kpi') {
-          return (
-            <DraggableWidget key="kpi" id="kpi" onReorder={handleReorder}>
-              <KPIGrid />
-            </DraggableWidget>
-          );
-        }
-        if (widgetId === 'graph') {
-          return (
-            <DraggableWidget key="graph" id="graph" onReorder={handleReorder}>
-              <div className="ac-dashboard-row">
-                <div className="ac-widget" style={{ padding: 0, overflow: 'hidden', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-                  <div className="ac-widget-title" style={{ padding: '24px 24px 0 24px' }}>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span>Live Agent Collaboration</span>
-                        <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: 400 }}>ACP Protocol Flow</span>
-                     </div>
-                     <div className="ac-pill" style={{ background: 'var(--accent-blue-soft)', color: 'var(--accent-primary)', border: '1px solid var(--border-active)' }}>
-                        Connected
-                     </div>
+      {/* KPI Grid Section */}
+      <KPIGrid />
+
+      {/* Dynamic Widgets Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {widgets.map((widgetId: string) => {
+          if (widgetId === 'kpi') return null; // Already rendered above
+          
+          if (widgetId === 'terminal') {
+            return (
+              <div key="terminal" className="lg:col-span-2 flex flex-col gap-6">
+                <DraggableWidget id="terminal" onReorder={handleReorder}>
+                  <div className="glass-card rounded-2xl p-6 h-[500px] flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Neural Feed</h3>
+                      <button className="text-tertiary hover:text-primary transition" style={{ color: 'var(--text-tertiary)' }}><Activity size={18} /></button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <AgentTerminal />
+                    </div>
                   </div>
-                  <div style={{ flex: 1, position: 'relative' }}>
+                </DraggableWidget>
+                <DraggableWidget id="timeline" onReorder={handleReorder}>
+                   <div className="glass-card rounded-2xl p-6">
+                     <h3 className="text-xl font-bold mb-4 text-primary" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
+                     <IncidentTimeline />
+                   </div>
+                </DraggableWidget>
+              </div>
+            )
+          }
+          
+          if (widgetId === 'graph') {
+            return (
+              <DraggableWidget key="graph" id="graph" onReorder={handleReorder}>
+                <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Architecture Pulse</h3>
+                    <div className="badge badge-info bg-indigo-500/10 text-indigo-500 px-2 py-1 rounded text-[10px] font-bold">LIVE</div>
+                  </div>
+                  <div className="flex-1 relative min-h-[300px]">
                     <ProtocolGraph events={traces} />
                   </div>
                 </div>
-                <IncidentTimeline />
+              </DraggableWidget>
+            );
+          }
+          
+          if (widgetId === 'tasks') {
+            return (
+              <div key="tasks" className="lg:col-span-3">
+                <DraggableWidget id="tasks" onReorder={handleReorder}>
+                  <div className="glass-card rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Active Tasks</h3>
+                      <button className="text-sm font-medium gradient-text hover:opacity-80">View All Tasks</button>
+                    </div>
+                    <TaskTable />
+                  </div>
+                </DraggableWidget>
               </div>
-            </DraggableWidget>
-          );
-        }
-        if (widgetId === 'tasks') {
-          return (
-            <DraggableWidget key="tasks" id="tasks" onReorder={handleReorder}>
-              <div style={{ marginBottom: '20px' }}>
-                <TaskTable />
-              </div>
-            </DraggableWidget>
-          );
-        }
-        return null;
-      })}
+            );
+          }
+          return null;
+        })}
+      </div>
     </div>
   );
 }

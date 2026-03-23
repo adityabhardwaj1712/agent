@@ -87,8 +87,12 @@ async def seed_builtin_agents(db: AsyncSession, owner_id: str):
             failed_tasks=0,
         )
         db.add(agent)
-    await db.commit()
-
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        from loguru import logger
+        logger.error(f"Failed to seed builtin agents: {e}")
 
 async def register_agent(db: AsyncSession, data: AgentCreate):
     agent_id = str(uuid.uuid4())
@@ -103,8 +107,12 @@ async def register_agent(db: AsyncSession, data: AgentCreate):
         scopes=scopes_str,
     )
     db.add(db_agent)
-    await db.commit()
-    await db.refresh(db_agent)
+    try:
+        await db.commit()
+        await db.refresh(db_agent)
+    except Exception as e:
+        await db.rollback()
+        raise e
 
     scopes = sorted(list(parse_scopes(getattr(db_agent, "scopes", None))))
     token = create_token(agent_id, scopes=scopes)

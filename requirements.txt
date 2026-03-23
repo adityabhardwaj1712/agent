@@ -8,7 +8,7 @@ prometheus-client
 slowapi
 redis
 python-multipart
-bcrypt==3.2.0
+bcrypt==4.0.1
 passlib[bcrypt]==1.7.4
 PyJWT
 alembic
@@ -23,3 +23,4 @@ google-generativeai
 aiohttp
 stripe
 httpx
+psycopg2-binary

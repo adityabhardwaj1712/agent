@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { apiJson } from "../lib/api";
 import { 
   BarChart3, 
@@ -20,7 +20,7 @@ export default function AnalyticsPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const r = await apiJson<any>("/v1/analytics/metrics");
+      const r = await apiJson<any>("/analytics/metrics");
       if (r.ok) setResult(r.data);
     } finally {
       setLoading(false);
@@ -32,129 +32,134 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <main className="max-w-7xl mx-auto p-8">
-      <header className="flex justify-between items-end mb-10">
+    <div className="max-w-[1400px] animate-slide-in p-4 md:p-8">
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-2 text-accent-primary">
-            <BarChart3 size={20} />
-            <span className="text-xs font-bold uppercase tracking-widest">Intelligence Metrics</span>
+          <div className="flex items-center gap-2 mb-2 text-indigo-500">
+            <BarChart3 size={18} />
+            <span className="text-[10px] font-black tracking-[0.2em] uppercase">Fleet Intelligence</span>
           </div>
-          <h1 className="text-4xl font-bold text-white">System Analytics</h1>
-          <p className="text-secondary mt-2">Real-time performance and financial health of your agent fleet.</p>
+          <h1 className="text-4xl font-black text-primary tracking-tighter">Neural Analytics</h1>
+          <p className="text-secondary text-sm max-w-md mt-2 leading-relaxed">
+            Real-time performance metrics and financial health monitoring for the autonomous AXON network.
+          </p>
         </div>
         <button 
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm font-semibold transition-all"
           onClick={refresh}
           disabled={loading}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white gradient-bg shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50"
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-          {loading ? "Refreshing..." : "Refresh Intelligence"}
+          {loading ? "SYNCING..." : "SYNC INTELLIGENCE"}
         </button>
-      </header>
+      </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard 
           label="Execution Success" 
           value={result?.success_rate ? `${(result.success_rate * 100).toFixed(1)}%` : "98.4%"} 
           trend="+2.1%" 
-          icon={<Zap size={20} className="text-yellow-400" />} 
+          icon={<Zap size={20} />} 
+          color="#FBBF24"
         />
         <StatCard 
           label="Active Pulse" 
           value={result?.active_agents ?? "12"} 
-          subLabel="Live Agents"
-          icon={<Users size={20} className="text-accent-primary" />} 
+          subLabel="Live Agent Nodes"
+          icon={<Users size={20} />} 
+          color="var(--accent-primary)"
         />
         <StatCard 
-          label="Estimated Cost" 
+          label="Operational Flux" 
           value={`$${result?.total_cost?.toFixed(2) ?? "42.12"}`} 
           trend="+12%" 
-          icon={<DollarSign size={20} className="text-green-400" />} 
+          icon={<DollarSign size={20} />} 
+          color="#10B981"
         />
         <StatCard 
           label="Audit Integrity" 
           value="100%" 
-          subLabel="Verified Steps"
-          icon={<ShieldCheck size={20} className="text-purple-400" />} 
+          subLabel="Verified States"
+          icon={<ShieldCheck size={20} />} 
+          color="#A78BFA"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Efficiency Chart Simulated */}
-        <div className="ac-widget lg:col-span-2">
-           <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <TrendingUp size={20} className="text-accent-primary" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+        {/* Efficiency Chart */}
+        <div className="lg:col-span-2 glass-card p-8 rounded-3xl border border-white/10 shadow-2xl">
+           <div className="flex justify-between items-center mb-8">
+              <h2 className="text-lg font-black text-primary flex items-center gap-3">
+                <TrendingUp size={20} className="text-indigo-500" />
                 Execution Efficiency
               </h2>
               <div className="flex gap-2">
-                <span className="px-2 py-1 bg-accent-primary/10 text-accent-primary rounded text-[10px] font-bold">24H</span>
-                <span className="px-2 py-1 bg-white/5 text-secondary rounded text-[10px] font-bold">7D</span>
+                <span className="px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-500 text-[10px] font-black">24H_CYCLE</span>
+                <span className="px-3 py-1 rounded-lg bg-tertiary text-tertiary text-[10px] font-black">7D_HIST</span>
               </div>
            </div>
            
-           <div className="h-64 flex items-end gap-3 px-4">
-              {[40, 65, 45, 90, 75, 55, 80, 60, 95, 85, 40, 70].map((h, i) => (
-                <div key={i} className="flex-1 group relative">
+           <div className="h-[280px] flex items-end gap-2 px-2">
+              {[40, 65, 45, 90, 75, 55, 80, 60, 95, 85, 40, 70, 50, 80, 65].map((h, i) => (
+                <div key={i} className="flex-1 group relative h-full flex items-end">
                   <div 
-                    className="w-full bg-accent-primary/20 group-hover:bg-accent-primary/40 rounded-t-lg transition-all cursor-pointer" 
+                    className="w-full rounded-t-lg transition-all duration-500 gradient-bg opacity-70 group-hover:opacity-100 group-hover:scale-x-110 cursor-pointer"
                     style={{ height: `${h}%` }}
-                  >
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                      {h}ms • step {i+1}
-                    </div>
+                  />
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#1f2937] text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-xl">
+                    {h}% Efficiency
                   </div>
-                  <div className="h-1 bg-white/5 mt-2 rounded"></div>
                 </div>
               ))}
            </div>
-           <div className="flex justify-between mt-4 text-[10px] text-tertiary font-bold uppercase tracking-widest">
-              <span>00:00</span>
-              <span>12:00</span>
-              <span>23:59</span>
+           <div className="flex justify-between mt-6 text-[10px] font-black text-tertiary tracking-widest px-2">
+              <span>00:00_NODE</span>
+              <span>12:00_SYST</span>
+              <span>23:59_TERM</span>
            </div>
         </div>
 
-        {/* Task Distribution */}
-        <div className="ac-widget">
-           <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        {/* Cognitive Load */}
+        <div className="glass-card p-8 rounded-3xl border border-white/10 shadow-2xl">
+           <h2 className="text-lg font-black text-primary mb-8 flex items-center gap-3">
              <PieChart size={20} className="text-purple-400" />
-             Cognitive Load
+             Neural Distribution
            </h2>
            <div className="space-y-6">
-              <DistributionRow label="Data Synthesis" value={45} color="bg-accent-primary" />
-              <DistributionRow label="Code Generation" value={30} color="bg-purple-500" />
-              <DistributionRow label="Decision Logic" value={15} color="bg-yellow-500" />
-              <DistributionRow label="System Hooks" value={10} color="bg-green-500" />
+              <DistributionRow label="Data Synthesis" value={45} color="var(--accent-primary)" />
+              <DistributionRow label="Code Generation" value={30} color="#8B5CF6" />
+              <DistributionRow label="Decision Logic" value={15} color="#F59E0B" />
+              <DistributionRow label="System Hooks" value={10} color="#10B981" />
            </div>
-           <div className="mt-10 p-4 bg-white/5 rounded-xl border border-white/5">
-              <p className="text-xs text-secondary leading-relaxed">
-                Agent fleet is currently operating at <span className="text-white font-bold">Optimal Capacity</span>. No bottlenecks detected in AXON reasoning modules.
+           <div className="mt-10 p-5 bg-tertiary/20 rounded-2xl border border-white/5">
+              <p className="text-sm text-secondary leading-relaxed italic">
+                Agent fleet is currently operating at <span className="text-primary font-black not-italic">OPTIMAL_CAPACITY</span>. No bottlenecks detected in AXON reasoning modules.
               </p>
            </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
-function StatCard({ label, value, trend, subLabel, icon }: any) {
+function StatCard({ label, value, trend, subLabel, icon, color }: any) {
   return (
-    <div className="ac-card group hover:translate-y-[-4px] transition-all border border-white/5">
+    <div className="glass-card p-6 rounded-2xl stat-card group border border-white/10 shadow-xl">
       <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-white/5 rounded-xl border border-white/5 transition-colors group-hover:border-white/10">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: `${color}15`, color: color }}>
           {icon}
         </div>
         {trend && (
-          <span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-black text-green-500 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
             {trend}
           </span>
         )}
       </div>
-      <div className="text-secondary text-xs font-semibold mb-1">{label}</div>
-      <div className="text-3xl font-bold text-white">{value}</div>
-      {subLabel && <div className="text-[10px] text-tertiary mt-1 font-bold uppercase tracking-widest">{subLabel}</div>}
+      <div className="text-[10px] font-bold uppercase tracking-widest text-tertiary mb-1">{label}</div>
+      <div className="text-3xl font-black text-primary tracking-tight">{value}</div>
+      {subLabel && <div className="text-[10px] font-bold text-tertiary mt-2 uppercase tracking-tighter opacity-60">{subLabel}</div>}
     </div>
   );
 }
@@ -162,12 +167,12 @@ function StatCard({ label, value, trend, subLabel, icon }: any) {
 function DistributionRow({ label, value, color }: any) {
   return (
     <div>
-      <div className="flex justify-between text-xs mb-2">
-        <span className="text-secondary font-medium">{label}</span>
-        <span className="text-white font-bold">{value}%</span>
+      <div className="flex justify-between text-xs font-bold mb-2">
+        <span className="text-secondary">{label}</span>
+        <span className="text-primary">{value}%</span>
       </div>
-      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${value}%` }}></div>
+      <div className="h-2 w-full bg-tertiary rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,0,0,0.1)]" style={{ background: color, width: `${value}%` }}></div>
       </div>
     </div>
   );

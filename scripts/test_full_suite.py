@@ -69,7 +69,7 @@ class Tester:
         self.r = Results()
         self.uid = uuid.uuid4().hex[:8]
         self.email = f"test_{self.uid}@example.com"
-        self.password = "TestPass123!"
+        self.password = os.getenv("TEST_PASSWORD", "TestPass123!")
 
     def url(self, path: str) -> str:
         return f"{self.base}{path}"

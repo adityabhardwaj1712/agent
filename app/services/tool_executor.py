@@ -14,6 +14,7 @@ class ToolExecutor:
     """AXON Execution Engine — real implementations, real results."""
 
     _registry: Dict[str, Callable] = {}
+    SENSITIVE_TOOLS = ["shell_execute", "github_create_issue", "slack_message", "python_interpreter"]
 
     @classmethod
     def register(cls, name: str):
@@ -23,7 +24,11 @@ class ToolExecutor:
         return decorator
 
     @classmethod
-    async def execute(cls, tool_name: str, arguments_json: str) -> str:
+    async def execute(cls, tool_name: str, arguments_json: str, context: dict | None = None) -> str:
+        """
+        Executes a tool. If the tool is sensitive and a database context is provided,
+        it creates a pending approval request instead of executing.
+        """
         try:
             args = json.loads(arguments_json) if arguments_json else {}
         except json.JSONDecodeError:
@@ -32,6 +37,27 @@ class ToolExecutor:
         handler = cls._registry.get(tool_name)
         if not handler:
             return json.dumps({"error": f"Tool '{tool_name}' not registered. Available: {list(cls._registry)}"})
+
+        # HITL Integration: Check if tool requires approval
+        if tool_name in cls.SENSITIVE_TOOLS and context and "db" in context:
+            db = context["db"]
+            task_id = context.get("task_id")
+            agent_id = context.get("agent_id")
+            
+            from .approval_service import approval_service
+            logger.warning(f"HITL REQUIRED for sensitive tool: {tool_name}")
+            await approval_service.create_request(
+                db=db,
+                task_id=task_id,
+                agent_id=agent_id,
+                operation=tool_name,
+                payload=arguments_json
+            )
+            return json.dumps({
+                "status": "pending_approval",
+                "message": f"Tool '{tool_name}' requires human approval before execution.",
+                "request_id": task_id # Using task_id as a hint for the UI to find the request
+            })
 
         logger.info(f"Executing tool: {tool_name} args={list(args)[:5]}")
         try:
