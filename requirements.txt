@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-sqlalchemy[asyncio]
+sqlalchemy[asyncio]>=2.0.0
 asyncpg
 pydantic[email]
 pydantic-settings

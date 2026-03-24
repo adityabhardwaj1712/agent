@@ -33,7 +33,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    command: sh -c "PYTHONPATH=/app python -m app.workers.agent_worker"
+    command: sh -c "sleep 10 && PYTHONPATH=/app python -m app.workers.agent_worker"
     env_file:
       - .env
     environment:

@@ -5,6 +5,14 @@ from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import sys
+import io
+
+# Ensure sys.stdout and sys.stderr are not None to prevent uvicorn/logging crashes
+if sys.stdout is None:
+    sys.stdout = io.StringIO()
+if sys.stderr is None:
+    sys.stderr = io.StringIO()
 
 from .api.router import router as api_router
 from .api.task_ws import router as ws_router

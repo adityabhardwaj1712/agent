@@ -61,10 +61,19 @@ async def run_worker():
     asyncio.create_task(event_bus.start_consuming())
     logger.info("Event bus consumer started")
 
+    logger.info("Initializing worker resources...")
     # AXON Power-up: Load Dynamic Tools from DB
     from app.services.tool_service import load_dynamic_tools
-    async with AsyncSessionLocal() as db:
-        await load_dynamic_tools(db)
+    logger.info("Connecting to database for tool discovery...")
+    try:
+        async with AsyncSessionLocal() as db:
+            logger.info("Database session created")
+            await load_dynamic_tools(db)
+            logger.info("Dynamic tools loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load dynamic tools: {e}")
+
+    logger.info("Entering worker main loop")
 
     while True:
         try:
