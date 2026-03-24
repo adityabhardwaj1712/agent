@@ -13,13 +13,13 @@ type Task = {
 };
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType; label: string }> = {
-  completed:  { color: "#10B981", icon: CheckCircle2, label: "SUCCESS_OK" },
-  success:    { color: "#10B981", icon: CheckCircle2, label: "SUCCESS_OK" },
-  failed:     { color: "#EF4444", icon: XCircle, label: "FAILED_ERR" },
-  error:      { color: "#EF4444", icon: XCircle, label: "FAILED_ERR" },
-  processing: { color: "#6366F1", icon: Loader2, label: "EXECUTING" },
-  pending:    { color: "#F59E0B", icon: Clock, label: "QUEUED_WAIT" },
-  queued:     { color: "#8B5CF6", icon: Clock, label: "INITIALIZING" },
+  completed:  { color: "var(--accent-green)", icon: CheckCircle2, label: "SUCCESS_OK" },
+  success:    { color: "var(--accent-green)", icon: CheckCircle2, label: "SUCCESS_OK" },
+  failed:     { color: "var(--accent-red)", icon: XCircle, label: "FAILED_ERR" },
+  error:      { color: "var(--accent-red)", icon: XCircle, label: "FAILED_ERR" },
+  processing: { color: "var(--accent-primary)", icon: Loader2, label: "EXECUTING" },
+  pending:    { color: "var(--accent-yellow)", icon: Clock, label: "QUEUED_WAIT" },
+  queued:     { color: "var(--accent-cyan)", icon: Clock, label: "INITIALIZING" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -72,7 +72,7 @@ export default function TaskTable() {
     <div className="overflow-x-auto custom-scrollbar">
       <table className="w-full text-left border-separate border-spacing-y-4 px-2">
         <thead>
-          <tr className="text-tertiary text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
+          <tr className="text-tertiary text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mono">
             <th className="px-6 py-2">Mission_ID</th>
             <th className="px-6 py-2">Assigned_Entity</th>
             <th className="px-6 py-2">Execution_Status</th>
@@ -85,10 +85,10 @@ export default function TaskTable() {
             <tr key={task.task_id} className="group glass-card hover:bg-white/[0.03] transition-all duration-500 rounded-3xl overflow-hidden relative">
               <td className="px-6 py-5 first:rounded-l-[2rem] border-y border-l border-white/5 bg-white/[0.01]">
                 <div className="flex items-center gap-3">
-                   <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 opacity-40 group-hover:opacity-100 transition-opacity">
+                  <div className="p-2 rounded-lg bg-accent-primary/10 text-accent-primary opacity-60 group-hover:opacity-100 transition-opacity">
                       <Hash size={12} />
                    </div>
-                   <span className="font-mono text-[11px] font-black text-secondary group-hover:text-primary transition-colors tracking-tighter">
+                   <span className="font-mono text-[11px] font-semibold text-secondary group-hover:text-primary transition-colors tracking-tighter mono">
                     {task.task_id.substring(0, 12).toUpperCase()}
                    </span>
                 </div>
@@ -99,8 +99,8 @@ export default function TaskTable() {
                     <UserCircle size={20} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-black text-xs text-primary tracking-tight uppercase">{task.agent_id || "SYSTEM_DAEMON"}</span>
-                    <span className="text-[9px] font-black text-tertiary uppercase tracking-widest opacity-40 mt-1">ENTITY_CLASS_A</span>
+                    <span className="font-bold text-xs text-primary tracking-tight uppercase mono">{task.agent_id || "SYSTEM_DAEMON"}</span>
+                    <span className="text-[9px] font-semibold text-tertiary uppercase tracking-widest opacity-60 mt-1 mono">ENTITY_CLASS_A</span>
                   </div>
                 </div>
               </td>

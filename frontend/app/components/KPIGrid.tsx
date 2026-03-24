@@ -99,10 +99,10 @@ export default function KPIGrid() {
           </div>
 
           <div className="relative z-10">
-            <h3 className="text-[10px] font-black mb-1 uppercase tracking-[0.3em] text-tertiary opacity-40 group-hover:opacity-100 transition-opacity">{kpi.label}</h3>
-            <div className="flex items-baseline gap-3">
-               <p className="text-4xl font-black text-primary tracking-tighter">{kpi.value}</p>
-               <span className="text-[10px] font-black text-indigo-500/40 uppercase tracking-widest">{kpi.sublabel}</span>
+            <h3 className="text-[10px] font-bold mb-1 uppercase tracking-[0.2em] text-tertiary opacity-60 group-hover:opacity-100 transition-opacity mono">{kpi.label}</h3>
+            <div className="flex items-baseline gap-2">
+               <p className="text-4xl font-bold text-primary tracking-tighter mono">{kpi.value}</p>
+               <span className="text-[10px] font-semibold text-accent-secondary opacity-60 uppercase tracking-widest mono">{kpi.sublabel}</span>
             </div>
           </div>
           

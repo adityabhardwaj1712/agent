@@ -1,0 +1,266 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1rem 0}
+.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem}
+.top h2{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.top p{font-size:13px;color:var(--color-text-secondary);margin-top:3px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.fb{padding:4px 13px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:12px;cursor:pointer;font-family:var(--font-sans);transition:all .15s}
+.fb.on{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;cursor:pointer;transition:border-color .15s}
+.card:hover{border-color:var(--color-border-primary)}
+.card.top-pick{border:2px solid var(--color-border-info)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+.av{width:38px;height:38px;border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.av-p{background:var(--color-background-info)}
+.av-g{background:var(--color-background-success)}
+.av-w{background:var(--color-background-warning)}
+.av-d{background:var(--color-background-danger)}
+.av-n{background:var(--color-background-secondary)}
+.badges{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+.b-new{background:var(--color-background-info);color:var(--color-text-info)}
+.b-pow{background:var(--color-background-danger);color:var(--color-text-danger)}
+.b-free{background:var(--color-background-success);color:var(--color-text-success)}
+.b-ent{background:var(--color-background-warning);color:var(--color-text-warning)}
+.ct{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.cs{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-bottom:10px}
+.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tag{font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-tertiary);border:0.5px solid var(--color-border-tertiary)}
+.tools-row{margin-top:8px;display:flex;gap:4px;flex-wrap:wrap}
+.tool{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--color-background-tertiary);color:var(--color-text-tertiary);font-family:var(--font-mono)}
+.cnt{font-size:12px;color:var(--color-text-tertiary);margin-bottom:1rem}
+</style>
+
+<div class="wrap">
+<div class="top">
+  <div>
+    <h2>Agent gallery — 25 powerful agents to add</h2>
+    <p>All built on your existing tool_executor + LLM stack. Click any card to build it.</p>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="fb on" onclick="fil('all',this)">All 25</button>
+  <button class="fb" onclick="fil('productivity',this)">Productivity</button>
+  <button class="fb" onclick="fil('devops',this)">DevOps</button>
+  <button class="fb" onclick="fil('data',this)">Data & research</button>
+  <button class="fb" onclick="fil('ops',this)">Operations</button>
+  <button class="fb" onclick="fil('security',this)">Security</button>
+</div>
+<div class="cnt" id="cnt">Showing all 25 agents</div>
+<div class="grid" id="grid"></div>
+</div>
+
+<script>
+const A=[
+  {cat:'productivity',av:'av-p',icon:'📝',top:true,
+   name:'MeetingScribe',role:'Meeting Intelligence',
+   desc:'Joins your calendar, transcribes meetings via webhook, extracts action items, assigns owners, and posts a summary to Slack with a follow-up task list.',
+   tools:['web_fetch','slack_message','calculate'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'Meetings',
+   prompt:'Help me build a MeetingScribe agent for AgentCloud that reads calendar webhooks, summarises transcripts with Claude, and posts action items to Slack.'},
+
+  {cat:'productivity',av:'av-p',icon:'✉️',top:false,
+   name:'EmailDrafter',role:'Comms Specialist',
+   desc:'Takes bullet points or rough notes and writes polished, professional emails. Supports tone selection (formal / friendly / assertive) and reply generation.',
+   tools:['python_interpreter'],model:'claude-sonnet',
+   badge:'b-free',blabel:'Free tier',tag:'Writing',
+   prompt:'Build an EmailDrafter agent that takes rough notes and tone preferences and writes professional emails. Include tone options: formal, friendly, assertive.'},
+
+  {cat:'productivity',av:'av-p',icon:'📅',top:false,
+   name:'SchedulerAgent',role:'Calendar Manager',
+   desc:'Finds open slots across multiple calendars, proposes meeting times, sends calendar invites, and handles rescheduling requests automatically.',
+   tools:['web_fetch','calculate'],model:'gpt-4o-mini',
+   badge:'b-new',blabel:'New idea',tag:'Scheduling',
+   prompt:'Design a SchedulerAgent for AgentCloud that reads calendar availability and proposes meeting slots, handling rescheduling automatically.'},
+
+  {cat:'productivity',av:'av-p',icon:'📋',top:false,
+   name:'ProjectPlannerAgent',role:'Project Manager',
+   desc:'Takes a goal like "launch a website in 30 days" and breaks it into a full WBS with milestones, dependencies, time estimates, and assignees in JSON.',
+   tools:['python_interpreter','calculate'],model:'gpt-4o',
+   badge:'b-new',blabel:'New idea',tag:'Planning',
+   prompt:'Build a ProjectPlannerAgent that takes a goal and deadline and returns a full work breakdown structure with milestones, dependencies, and time estimates.'},
+
+  {cat:'devops',av:'av-g',icon:'🔁',top:true,
+   name:'CIPipelineAgent',role:'DevOps Engineer',
+   desc:'Monitors CI/CD runs, detects failures, reads error logs, identifies the root cause using LLM reasoning, and posts a fix suggestion to the failing PR.',
+   tools:['github_create_issue','github_search_code','web_fetch'],model:'claude-sonnet',
+   badge:'b-pow',blabel:'Powerful',tag:'CI/CD',
+   prompt:'Build a CIPipelineAgent that monitors GitHub Actions runs, reads failure logs, uses Claude to identify the root cause, and comments a fix on the PR.'},
+
+  {cat:'devops',av:'av-g',icon:'🔍',top:false,
+   name:'CodeReviewAgent',role:'Senior Engineer',
+   desc:'Reviews pull requests for bugs, security issues, code style violations, and performance problems. Adds inline comments via GitHub API. Configurable strictness.',
+   tools:['github_search_code','github_create_issue'],model:'claude-sonnet',
+   badge:'b-pow',blabel:'Powerful',tag:'Code review',
+   prompt:'Build a CodeReviewAgent that reviews pull requests using Claude, checking for bugs, security issues, and style violations, and posts inline GitHub comments.'},
+
+  {cat:'devops',av:'av-g',icon:'📦',top:false,
+   name:'DependencyAuditorAgent',role:'Security Engineer',
+   desc:'Scans package.json / requirements.txt for outdated or vulnerable dependencies, checks CVE databases, and opens a prioritised GitHub issue with fix commands.',
+   tools:['web_fetch','github_create_issue','python_interpreter'],model:'gpt-4o-mini',
+   badge:'b-free',blabel:'Free tier',tag:'Dependencies',
+   prompt:'Build a DependencyAuditorAgent that scans package files for vulnerabilities, checks CVE databases, and opens GitHub issues with fix commands.'},
+
+  {cat:'devops',av:'av-g',icon:'🚀',top:false,
+   name:'DeploymentAgent',role:'Release Manager',
+   desc:'Runs pre-deployment checks (tests passing, no open critical issues, changelog updated), executes the deploy script, monitors health checks, and rolls back on failure.',
+   tools:['shell_execute','web_fetch','slack_message'],model:'claude-haiku',
+   badge:'b-new',blabel:'New idea',tag:'Deployment',
+   prompt:'Design a DeploymentAgent that runs pre-deploy checks, triggers deployment, monitors health endpoints, and auto-rolls back if health checks fail.'},
+
+  {cat:'data',av:'av-n',icon:'📊',top:true,
+   name:'ReportGeneratorAgent',role:'Business Analyst',
+   desc:'Pulls data from your analytics API, computes trends, finds anomalies, and generates a full weekly business report in Markdown with charts described in plain English.',
+   tools:['web_fetch','python_interpreter','calculate'],model:'gpt-4o',
+   badge:'b-pow',blabel:'Powerful',tag:'Reporting',
+   prompt:'Build a ReportGeneratorAgent that pulls data from APIs, computes week-over-week trends, spots anomalies, and generates a Markdown business report.'},
+
+  {cat:'data',av:'av-n',icon:'🌐',top:false,
+   name:'CompetitorMonitorAgent',role:'Market Intelligence',
+   desc:'Daily scrapes competitor websites, pricing pages, and job postings. Detects changes since last run. Sends a digest: "Competitor X launched Y, raised price on Z."',
+   tools:['google_search','web_fetch','slack_message'],model:'gpt-4o-mini',
+   badge:'b-new',blabel:'New idea',tag:'Market intel',
+   prompt:'Build a CompetitorMonitorAgent that scrapes competitor sites daily, detects changes, and sends a plain-English digest of what changed and why it matters.'},
+
+  {cat:'data',av:'av-n',icon:'📰',top:false,
+   name:'NewsDigestAgent',role:'Research Analyst',
+   desc:'Monitors RSS feeds and news APIs for a set of keywords. Deduplicates, scores relevance, and sends a morning briefing email with the 5 most important stories.',
+   tools:['google_search','web_fetch','python_interpreter'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'News',
+   prompt:'Build a NewsDigestAgent that monitors news sources for keywords, scores relevance with Claude, and generates a morning briefing with the top 5 stories.'},
+
+  {cat:'data',av:'av-n',icon:'🔎',top:false,
+   name:'LeadResearchAgent',role:'Sales Intelligence',
+   desc:'Takes a company name, finds funding history, tech stack, recent news, key people, and pain points. Returns a 1-page sales brief ready for an outreach call.',
+   tools:['google_search','web_fetch','python_interpreter'],model:'gpt-4o',
+   badge:'b-pow',blabel:'Powerful',tag:'Sales',
+   prompt:'Build a LeadResearchAgent that researches a company — funding, tech stack, recent news, key people — and returns a 1-page sales brief.'},
+
+  {cat:'data',av:'av-n',icon:'📈',top:false,
+   name:'TrendSpotterAgent',role:'Data Scientist',
+   desc:'Scans Google Trends, Reddit, Twitter/X API, and Hacker News. Identifies emerging topics in your industry. Ranks by velocity and potential relevance to your product.',
+   tools:['google_search','web_fetch','calculate'],model:'gpt-4o-mini',
+   badge:'b-new',blabel:'New idea',tag:'Trends',
+   prompt:'Design a TrendSpotterAgent that scans multiple sources for emerging topics in a given industry and ranks them by velocity and relevance.'},
+
+  {cat:'ops',av:'av-w',icon:'🛡️',top:true,
+   name:'GuardianAgent',role:'Platform Monitor',
+   desc:'Watches all agents in real time. When reputation drops below 30 or error rate spikes 3x, auto-pauses the agent, fires a Slack alert, and creates an incident ticket.',
+   tools:['web_fetch','slack_message','calculate'],model:'claude-haiku',
+   badge:'b-pow',blabel:'Powerful',tag:'Monitoring',
+   prompt:'Build a GuardianAgent that monitors all agent reputation scores and error rates, auto-pauses unhealthy agents, and sends Slack alerts with incident details.'},
+
+  {cat:'ops',av:'av-w',icon:'💰',top:false,
+   name:'CostWatchAgent',role:'FinOps Specialist',
+   desc:'Tracks token spend per agent per hour. Alerts when an agent exceeds its budget. Automatically switches it to a cheaper model (e.g. Haiku) until the budget resets.',
+   tools:['web_fetch','slack_message','calculate'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'Cost control',
+   prompt:'Build a CostWatchAgent that tracks token spend per agent, alerts on budget overruns, and automatically downgrades the model to cut costs.'},
+
+  {cat:'ops',av:'av-w',icon:'📝',top:false,
+   name:'SummarizerAgent',role:'Digest Generator',
+   desc:'Runs hourly. Reads task history, finds top errors, cost spikes, and success patterns. Writes a plain-English digest and emails it to the team.',
+   tools:['web_fetch','python_interpreter'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'Digest',
+   prompt:'Build a SummarizerAgent that reads AgentCloud task history, identifies trends and anomalies, and emails a plain-English hourly digest to the team.'},
+
+  {cat:'ops',av:'av-w',icon:'🆕',top:false,
+   name:'OnboardingAgent',role:'User Success',
+   desc:'Greets new users with 3 smart questions about their use case. Registers the right agents, seeds example tasks, and walks them through the UI step by step.',
+   tools:['web_fetch','python_interpreter'],model:'claude-sonnet',
+   badge:'b-new',blabel:'New idea',tag:'Onboarding',
+   prompt:'Design an OnboardingAgent that asks 3 onboarding questions, registers the right built-in agents for the user, and guides them through their first task.'},
+
+  {cat:'ops',av:'av-w',icon:'📋',top:false,
+   name:'ComplianceAgent',role:'Compliance Officer',
+   desc:'Audits every agent action against your policy rules. Flags violations, generates a GDPR/SOC2 audit trail, and blocks actions that exceed defined risk thresholds.',
+   tools:['web_fetch','python_interpreter','calculate'],model:'gpt-4o',
+   badge:'b-ent',blabel:'Enterprise',tag:'Compliance',
+   prompt:'Build a ComplianceAgent that audits agent actions against policy rules, flags violations, and generates GDPR/SOC2 audit trail reports.'},
+
+  {cat:'ops',av:'av-w',icon:'🔔',top:false,
+   name:'AlertRouterAgent',role:'Incident Manager',
+   desc:'Receives all platform alerts. Classifies severity (P0-P3), determines the right person to notify, routes via Slack/email/PagerDuty, and tracks acknowledgement.',
+   tools:['slack_message','web_fetch','python_interpreter'],model:'claude-haiku',
+   badge:'b-ent',blabel:'Enterprise',tag:'Alerting',
+   prompt:'Build an AlertRouterAgent that classifies incoming alerts by severity, routes them to the right person via Slack or email, and tracks acknowledgement.'},
+
+  {cat:'security',av:'av-d',icon:'🔒',top:true,
+   name:'SecurityScannerAgent',role:'AppSec Engineer',
+   desc:'Scans your API endpoints for common vulnerabilities: exposed secrets, SQL injection patterns, missing auth headers, open CORS. Returns a severity-ranked report.',
+   tools:['web_fetch','python_interpreter','google_search'],model:'gpt-4o',
+   badge:'b-pow',blabel:'Powerful',tag:'AppSec',
+   prompt:'Build a SecurityScannerAgent that scans API endpoints for vulnerabilities — exposed secrets, missing auth, SQL injection — and returns a severity-ranked report.'},
+
+  {cat:'security',av:'av-d',icon:'🕵️',top:false,
+   name:'ThreatIntelAgent',role:'Security Analyst',
+   desc:'Monitors CVE feeds, HackerNews security posts, and vendor advisories for vulnerabilities in your tech stack. Sends a daily briefing with patching priority.',
+   tools:['google_search','web_fetch','slack_message'],model:'gpt-4o-mini',
+   badge:'b-new',blabel:'New idea',tag:'Threat intel',
+   prompt:'Build a ThreatIntelAgent that monitors CVE feeds and security news for vulnerabilities in a given tech stack and sends a prioritised daily patching briefing.'},
+
+  {cat:'security',av:'av-d',icon:'🗝️',top:false,
+   name:'SecretsAuditorAgent',role:'Security Engineer',
+   desc:'Scans your codebase for accidentally committed secrets: API keys, passwords, tokens, private keys. Uses regex + LLM heuristics to reduce false positives.',
+   tools:['github_search_code','python_interpreter'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'Secrets',
+   prompt:'Build a SecretsAuditorAgent that scans GitHub repos for accidentally committed API keys, passwords, and tokens using regex and LLM heuristics.'},
+
+  {cat:'security',av:'av-d',icon:'📜',top:false,
+   name:'PrivacyAgent',role:'Data Protection Officer',
+   desc:'Scans task outputs and memory entries for PII (emails, phone numbers, credit cards). Redacts or flags violations. Generates a GDPR right-to-erasure report on request.',
+   tools:['python_interpreter','calculate'],model:'claude-sonnet',
+   badge:'b-ent',blabel:'Enterprise',tag:'Privacy',
+   prompt:'Build a PrivacyAgent that scans agent outputs and memory for PII, auto-redacts violations, and generates GDPR right-to-erasure reports on demand.'},
+
+  {cat:'data',av:'av-n',icon:'🎓',top:false,
+   name:'KnowledgeAgent',role:'RAG Specialist',
+   desc:'Upload any PDF, doc, or URL. KnowledgeAgent chunks, embeds into pgvector, and answers questions. Other agents can query it via the memory protocol.',
+   tools:['web_fetch','python_interpreter'],model:'claude-sonnet',
+   badge:'b-pow',blabel:'Powerful',tag:'RAG',
+   prompt:'Build a KnowledgeAgent that ingests PDFs and URLs into pgvector and lets other agents query its knowledge base via the AgentCloud memory protocol.'},
+
+  {cat:'productivity',av:'av-p',icon:'🌍',top:false,
+   name:'TranslatorAgent',role:'Multilingual Specialist',
+   desc:'Translates content across 50+ languages with context awareness. Adapts tone for the target audience. Supports batch translation of entire documents.',
+   tools:['python_interpreter'],model:'claude-haiku',
+   badge:'b-free',blabel:'Free tier',tag:'Language',
+   prompt:'Build a TranslatorAgent that translates content across 50+ languages with tone adaptation and supports batch translation of full documents.'},
+];
+
+let cur='all';
+function fil(cat,btn){
+  cur=cat;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+function render(){
+  const items=cur==='all'?A:A.filter(a=>a.cat===cur);
+  document.getElementById('cnt').textContent=`Showing ${items.length} agent${items.length!==1?'s':''}`;
+  document.getElementById('grid').innerHTML=items.map(a=>`
+    <div class="card${a.top?' top-pick':''}" onclick="sendPrompt(${JSON.stringify(a.prompt)})">
+      <div class="ch">
+        <div class="av ${a.av}" style="font-size:18px">${a.icon}</div>
+        <div class="badges">
+          <span class="badge ${a.badge}">${a.blabel}</span>
+          ${a.top?'<span class="badge b-pow">Top pick</span>':''}
+        </div>
+      </div>
+      <div class="ct">${a.name}</div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px">${a.role}</div>
+      <div class="cs">${a.desc}</div>
+      <div class="meta">
+        <span class="tag">${a.tag}</span>
+        <span class="tag">${a.model}</span>
+      </div>
+      <div class="tools-row">${a.tools.map(t=>`<span class="tool">${t}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+render();
+</script>

@@ -6,11 +6,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/agentcloud"
     REDIS_URL: str = "redis://redis:6379/0"
     
-    # SECRET_KEY is used for non-JWT hashing if needed
-    SECRET_KEY: str = "secret-key-change-me"
-    JWT_ALGORITHM: str = "RS256"
-    JWT_PRIVATE_KEY_PATH: str = "app/core/private_key.pem"
-    JWT_PUBLIC_KEY_PATH: str = "app/core/public_key.pem"
+    # SECRET_KEY is used for JWT hashing
+    SECRET_KEY: str = "agentcloud-secret-key-2026"
+    JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 week
     
     # CORS Configuration

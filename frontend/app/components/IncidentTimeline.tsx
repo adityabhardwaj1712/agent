@@ -19,26 +19,26 @@ export default function IncidentTimeline() {
              <Radio size={24} className="animate-pulse" />
           </div>
           <div>
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">System_Hot_Log</h3>
-            <p className="text-[9px] font-black text-tertiary uppercase tracking-widest mt-1 opacity-40">Axon_Protocol_v4.2</p>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mono">System_Hot_Log</h3>
+            <p className="text-[9px] font-semibold text-tertiary uppercase tracking-widest mt-1 opacity-60 mono">Axon_Protocol_v4.2</p>
           </div>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-black/40 border border-white/10 rounded-xl">
-           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-           <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Live_Sync</span>
+           <div className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+           <span className="text-[9px] font-bold text-accent-green uppercase tracking-widest mono">Live_Sync</span>
         </div>
       </div>
       
       <div className="flex-1 overflow-y-auto p-8 space-y-10 relative custom-scrollbar">
         {/* Vertical Guide Line */}
-        <div className="absolute left-[51px] top-10 bottom-10 w-[1px] bg-gradient-to-b from-indigo-500/50 via-white/10 to-transparent" />
+        <div className="absolute left-[51px] top-10 bottom-10 w-[1px] bg-gradient-to-b from-accent-primary/50 via-white/10 to-transparent" />
 
         {INCIDENTS.map((item, i) => (
           <div key={i} className="relative flex items-start gap-8 group animate-slide-in" style={{ animationDelay: `${i * 0.1}s` }}>
             <div className={`relative z-10 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-lg ${
-              item.type === 'critical' ? 'bg-red-500/20 text-red-500 border border-red-500/20 group-hover:bg-red-500 group-hover:text-white' :
-              item.type === 'warning' ? 'bg-amber-500/20 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-white' :
-              'bg-indigo-500/20 text-indigo-500 border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white'
+              item.type === 'critical' ? 'bg-accent-red/20 text-accent-red border border-accent-red/20 group-hover:bg-accent-red group-hover:text-white' :
+              item.type === 'warning' ? 'bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/20 group-hover:bg-accent-yellow group-hover:text-white' :
+              'bg-accent-primary/20 text-accent-primary border border-accent-primary/20 group-hover:bg-accent-primary group-hover:text-white'
             }`}>
                {item.type === 'critical' ? <ShieldAlert size={18} /> : 
                 item.type === 'warning' ? <AlertTriangle size={18} /> : 
@@ -47,19 +47,19 @@ export default function IncidentTimeline() {
 
             <div className="flex-1 space-y-2 pt-1 transition-all group-hover:translate-x-1">
                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-tertiary uppercase tracking-widest opacity-40">
+                  <span className="text-[10px] font-semibold text-tertiary uppercase tracking-widest opacity-60 mono">
                      {item.time}_TIME_PROTOCOL
                   </span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest ${
-                    item.type === 'critical' ? 'text-red-500' :
-                    item.type === 'warning' ? 'text-amber-500' :
-                    'text-indigo-500'
+                  <span className={`text-[9px] font-bold uppercase tracking-widest mono ${
+                    item.type === 'critical' ? 'text-accent-red' :
+                    item.type === 'warning' ? 'text-accent-yellow' :
+                    'text-accent-primary'
                   }`}>
                     {item.status}
                   </span>
                </div>
                <div className="flex items-center justify-between gap-4">
-                 <p className="text-[14px] font-black text-primary tracking-tight leading-tight uppercase group-hover:text-indigo-400 transition-colors">
+                 <p className="text-[14px] font-bold text-primary tracking-tight leading-tight uppercase group-hover:text-accent-primary transition-colors mono">
                    {item.agent}
                  </p>
                  <ChevronRight size={14} className="text-tertiary opacity-0 group-hover:opacity-40 transition-all" />
@@ -77,7 +77,7 @@ export default function IncidentTimeline() {
             <Activity size={12} />
             <span className="text-[9px] font-black uppercase tracking-[0.2em]">Matrix_Analysis</span>
          </div>
-         <button className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] hover:text-indigo-400 transition-colors flex items-center gap-2 group">
+         <button className="text-[10px] font-bold text-accent-primary uppercase tracking-[0.2em] hover:text-accent-primary transition-colors flex items-center gap-2 group mono">
            Full_Diagnostic
            <Terminal size={12} className="group-hover:translate-x-1 transition-transform" />
          </button>

@@ -48,7 +48,8 @@ class Orchestrator:
         agent_id: Optional[str] = None, 
         priority: Priority = Priority.NORMAL,
         goal_id: Optional[str] = None, 
-        parent_task_id: Optional[str] = None
+        parent_task_id: Optional[str] = None,
+        task_hash: Optional[str] = None
     ) -> EnqueueResult:
         task_id = str(uuid.uuid4())
         
@@ -60,7 +61,9 @@ class Orchestrator:
             payload=payload,
             goal_id=goal_id,
             parent_task_id=parent_task_id,
-            status="queued"
+            status="queued",
+            task_hash=task_hash,
+            priority_level=int(priority)
         )
         db.add(task)
         await db.commit()
@@ -78,6 +81,7 @@ class Orchestrator:
             "priority": int(priority),
             "goal_id": goal_id,
             "parent_task_id": parent_task_id,
+            "task_hash": task_hash,
             "created_at": time.time()
         }
 
@@ -85,7 +89,7 @@ class Orchestrator:
         redis = await get_async_redis_client()
         await redis.zadd(QUEUE_KEY, {json.dumps(task_data): score})
         
-        logger.info(f"Enqueued task {task_id} with priority {priority.name}")
+        logger.info(f"Enqueued task {task_id} with priority {priority.name} (hash={task_hash})")
         return EnqueueResult(task_id=task_id)
 
 async def dequeue_next_task(redis_client: aioredis.Redis) -> Optional[Dict[str, Any]]:

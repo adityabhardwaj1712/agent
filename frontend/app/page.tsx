@@ -1,25 +1,50 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import ProtocolGraph from "./components/ProtocolGraph";
+import Sidebar from "./components/Sidebar";
 import KPIGrid from "./components/KPIGrid";
 import IncidentTimeline from "./components/IncidentTimeline";
 import TaskTable from "./components/TaskTable";
 import AgentTerminal from "./components/AgentTerminal";
 import DraggableWidget from "./components/DraggableWidget";
+import AgentGallery from "./components/AgentGallery";
+import WorkflowBuilder from "./components/WorkflowBuilder";
 import { apiJson } from "./lib/api";
+import { Plus, Activity, RefreshCw, Sparkles, Zap } from "lucide-react";
+import AISuggestions from "./components/AISuggestions";
+import AISummaryCard from "./components/AISummaryCard";
 
 export default function Home() {
-  const [widgets, setWidgets] = useState<string[]>(['kpi', 'graph', 'terminal', 'tasks']);
-  const [traces, setTraces] = useState<any[]>([]);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [widgets, setWidgets] = useState<string[]>(['kpi', 'terminal', 'tasks']);
+  const [autoMode, setAutoMode] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTraces() {
-      const r = await apiJson<any[]>("/traces");
-      if (r.ok) setTraces(r.data);
+    // Auth Check
+    const token = localStorage.getItem("token");
+    if (!token && window.location.pathname !== "/landing") {
+      window.location.href = "/landing";
+    } else {
+      setLoading(false);
     }
-    loadTraces();
   }, []);
+
+  const handleViewChange = (view: string) => {
+    setActiveView(view);
+  };
+
+  const toggleAutoMode = () => {
+    setAutoMode(!autoMode);
+    apiJson('/auto-mode/' + (autoMode ? 'off' : 'on'), { method: 'POST' });
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   const handleReorder = (draggedId: string, targetId: string) => {
     setWidgets((prev: string[]) => {
@@ -33,96 +58,155 @@ export default function Home() {
     });
   };
 
+  if (loading) return null;
+
   return (
-    <div className="flex flex-col gap-8 animate-slide-in">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h2 className="text-3xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>
-            Good morning, <span className="gradient-text">John 👋</span>
-          </h2>
-          <p className="mt-1 text-secondary" style={{ color: 'var(--text-secondary)' }}>
-            Here's what's happening with your agents today
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button className="glass-card px-4 py-2 rounded-xl hover:scale-105 transition flex items-center">
-            <div className="ac-status-dot-live mr-2"></div>
-            <span className="font-medium text-primary" style={{ color: 'var(--text-primary)' }}>System Optimal</span>
-          </button>
-          <button className="gradient-bg px-6 py-2 rounded-xl text-white font-medium hover:opacity-90 transition glow flex items-center shadow-lg">
-            <Plus size={18} className="mr-2" />
-            New Agent
-          </button>
-        </div>
-      </div>
+    <div className="ac-shell">
+      {/* Sidebar Component */}
+      <Sidebar 
+        activeView={activeView} 
+        onViewChange={handleViewChange} 
+        onRegisterAgent={() => setActiveView('agents')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
 
-      {/* KPI Grid Section */}
-      <KPIGrid />
+      {/* Main Content Area */}
+      <div className="ac-main">
+        
+        {/* Header Component */}
+        <header className="ac-header">
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold tracking-tight text-white uppercase italic">
+              {activeView === 'dashboard' ? 'Neural Analytics' : activeView.replace('-', ' ')}
+            </h1>
+            <p className="text-[10px] text-tertiary uppercase tracking-[0.2em]">
+              {activeView === 'dashboard' ? 'Real-time performance metrics and financial health monitoring for the autonomous AXON network.' : 'Fleet Management System v1.0'}
+            </p>
+          </div>
 
-      {/* Dynamic Widgets Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {widgets.map((widgetId: string) => {
-          if (widgetId === 'kpi') return null; // Already rendered above
-          
-          if (widgetId === 'terminal') {
-            return (
-              <div key="terminal" className="lg:col-span-2 flex flex-col gap-6">
-                <DraggableWidget id="terminal" onReorder={handleReorder}>
-                  <div className="glass-card rounded-2xl p-6 h-[500px] flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Neural Feed</h3>
-                      <button className="text-tertiary hover:text-primary transition" style={{ color: 'var(--text-tertiary)' }}><Activity size={18} /></button>
+          <div className="ac-header-actions">
+            {/* AUTO MODE TOGGLE */}
+            <button 
+              onClick={toggleAutoMode}
+              className={`ac-chip gap-2 transition-all ${autoMode ? 'border-g/30 text-g' : 'border-r/30 text-r'}`}
+            >
+              <Zap size={12} className={autoMode ? 'animate-pulse' : ''} />
+              AUTO MODE: {autoMode ? 'ON' : 'OFF'}
+            </button>
+
+            <div className="ac-chip hidden md:flex">
+              <span className="dot dot-g dot-pulse"></span>
+              99.9% Health
+            </div>
+            
+            <button className="btn btn-p btn-sm" onClick={() => setActiveView('agents')}>
+              <Plus size={16} className="mr-2" /> New Agent
+            </button>
+
+            <button className="ac-header-btn" onClick={toggleTheme}>
+              <Sparkles size={18} />
+            </button>
+          </div>
+        </header>
+
+        {/* View Switcher */}
+        <div className="ac-content-container">
+          {activeView === 'dashboard' && (
+            <div className="animate-slide-in">
+              {/* IMPACT METRICS */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 mt-8">
+                <MetricSmall label="Execution Success" value="+2.1%" color="text-g" />
+                <MetricSmall label="Active Pulse" value="1" color="text-a" />
+                <MetricSmall label="Operational Flux" value="$42.12" color="text-y" />
+                <MetricSmall label="Audit Integrity" value="100%" color="text-c" />
+              </div>
+
+              <KPIGrid />
+              
+              <div className="ac-dashboard-row mt-12">
+                <div className="flex flex-col gap-6">
+                  <div className="ac-widget h-[500px] flex flex-col">
+                    <div className="ac-widget-title">
+                      <span>Decision Stream</span>
+                      <Activity size={16} className="text-tertiary" />
                     </div>
                     <div className="flex-1 overflow-hidden">
                       <AgentTerminal />
                     </div>
                   </div>
-                </DraggableWidget>
-                <DraggableWidget id="timeline" onReorder={handleReorder}>
-                   <div className="glass-card rounded-2xl p-6">
-                     <h3 className="text-xl font-bold mb-4 text-primary" style={{ color: 'var(--text-primary)' }}>Recent Activity</h3>
-                     <IncidentTimeline />
-                   </div>
-                </DraggableWidget>
-              </div>
-            )
-          }
-          
-          if (widgetId === 'graph') {
-            return (
-              <DraggableWidget key="graph" id="graph" onReorder={handleReorder}>
-                <div className="glass-card rounded-2xl p-6 h-full flex flex-col">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Architecture Pulse</h3>
-                    <div className="badge badge-info bg-indigo-500/10 text-indigo-500 px-2 py-1 rounded text-[10px] font-bold">LIVE</div>
-                  </div>
-                  <div className="flex-1 relative min-h-[300px]">
-                    <ProtocolGraph events={traces} />
+                  
+                  <div className="ac-widget">
+                    <div className="ac-widget-title">
+                      <span>Recent Activity</span>
+                    </div>
+                    <div className="card-body">
+                      <IncidentTimeline />
+                    </div>
                   </div>
                 </div>
-              </DraggableWidget>
-            );
-          }
-          
-          if (widgetId === 'tasks') {
-            return (
-              <div key="tasks" className="lg:col-span-3">
-                <DraggableWidget id="tasks" onReorder={handleReorder}>
-                  <div className="glass-card rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-primary" style={{ color: 'var(--text-primary)' }}>Active Tasks</h3>
-                      <button className="text-sm font-medium gradient-text hover:opacity-80">View All Tasks</button>
+
+                <div className="flex flex-col gap-6">
+                  <div className="ac-widget h-full">
+                    <div className="ac-widget-title">
+                      <span className="flex items-center gap-2">
+                        AI DECISIONS
+                        <Sparkles size={14} className="text-a animate-pulse" />
+                      </span>
+                    </div>
+                    <div className="overflow-y-auto max-h-[800px]">
+                      <AISummaryCard />
+                      <div className="mt-8">
+                        <AISuggestions />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-3 mt-6">
+                  <div className="ac-widget p-0">
+                    <div className="ac-widget-title p-6 mb-0 border-b border-border">
+                      <span>Task Orchestration</span>
+                      <button 
+                         onClick={() => apiJson('/tasks/retry', { method: 'POST' })}
+                         className="btn btn-sm btn-p text-[10px] uppercase px-3"
+                      >
+                         <RefreshCw size={12} className="mr-2" /> Bulk Retry Failed
+                      </button>
                     </div>
                     <TaskTable />
                   </div>
-                </DraggableWidget>
+                </div>
               </div>
-            );
-          }
-          return null;
-        })}
+            </div>
+          )}
+
+          {activeView === 'workflow' && (
+            <div className="mt-8"><WorkflowBuilder /></div>
+          )}
+
+          {activeView === 'agents' && (
+            <div className="mt-8"><AgentGallery /></div>
+          )}
+
+          {/* Placeholder for other views */}
+          {!['dashboard', 'workflow', 'agents'].includes(activeView) && (
+            <div className="view-body p-8 flex items-center justify-center text-tertiary mono">
+              Section [{activeView.toUpperCase()}] is under development.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+function MetricSmall({ label, value, color }: { label: string, value: string, color: string }) {
+  return (
+    <div className="bg-[#161D2E] p-4 rounded-xl border border-[#2A3356]">
+      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</p>
+      <p className={`text-xl font-bold mt-1 ${color}`}>{value}</p>
+    </div>
+  );
+}
+

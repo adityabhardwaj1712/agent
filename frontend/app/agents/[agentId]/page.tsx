@@ -61,8 +61,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ agentId:
           apiFetch(`/agents/${agentId}/metrics`),
           apiFetch(`/agents/${agentId}/history`)
         ]);
-        setMetrics(mRes);
-        setHistory(hRes);
+        setMetrics(mRes as AgentMetrics);
+        setHistory(hRes as TaskHistory[]);
       } catch (err) {
         console.error("Failed to fetch agent details:", err);
       } finally {
@@ -295,7 +295,5 @@ export default function AgentDetailPage({ params }: { params: Promise<{ agentId:
          <div className="absolute bottom-[20%] right-[5%] w-[30rem] h-[30rem] bg-indigo-600 rounded-full filter blur-[120px]" />
       </div>
     </div>
-  );
-}
   );
 }

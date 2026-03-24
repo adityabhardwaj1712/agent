@@ -31,6 +31,15 @@ validate_or_exit()
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AgentCloud", version="1.0.0")
+
+@app.on_event("startup")
+async def startup_event():
+    from .services.automation_service import automation_service
+    from .services.auto_mode_service import auto_mode_service
+    await automation_service.start()
+    await auto_mode_service.start()
+    logger.info("AgentCloud Services Initialized Successfully")
+
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -57,7 +66,7 @@ app.add_middleware(
 
 app.add_middleware(MetricsMiddleware)
 
-app.include_router(api_router, prefix="/v1")
+app.include_router(api_router)
 app.include_router(ws_router)
 
 @app.get("/")

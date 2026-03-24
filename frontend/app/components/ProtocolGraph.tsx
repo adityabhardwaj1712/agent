@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Cpu, Zap, Layers, Activity, Database, Share2, Globe, Shield, Terminal, Boxes } from "lucide-react";
+import { Cpu, Zap, Layers, Activity, Database, Share2, Globe, Shield, Terminal, Boxes, Radio } from "lucide-react";
 
 interface ProtocolGraphProps {
   events: any[];
@@ -66,7 +66,7 @@ export default function ProtocolGraph({ events }: ProtocolGraphProps) {
       </div>
 
       {/* SVG Connections 1 */}
-      <svg className="absolute w-full h-full pointer-events-none" style={{ zRelative: 5 }}>
+      <svg className="absolute w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
         <defs>
           <linearGradient id="axon-grad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#6366f1" stopOpacity="0.1" />

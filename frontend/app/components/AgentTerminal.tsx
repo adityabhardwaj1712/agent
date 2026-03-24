@@ -57,8 +57,8 @@ export default function AgentTerminal() {
     <div className="flex flex-col h-full glass-card rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
       <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <Terminal size={16} className="text-indigo-500" />
-          <span className="text-[10px] font-black tracking-[0.2em] text-primary uppercase">Agent_Stream_Log</span>
+          <Terminal size={16} className="text-accent-primary" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mono">Agent_Stream_Log</span>
         </div>
         <div className="flex items-center gap-4">
           <Activity size={14} className="text-green-500 animate-pulse" />
@@ -76,17 +76,17 @@ export default function AgentTerminal() {
             
             <div className="flex flex-col gap-1 w-full translate-x-0 group-hover:translate-x-2 transition-transform duration-300">
               <div className="flex items-center gap-3">
-                 <span className="text-[9px] font-black text-tertiary uppercase tracking-tighter opacity-40">{log.timestamp}</span>
-                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-md border tracking-widest uppercase ${
-                   log.type === 'warning' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                 <span className="text-[9px] font-semibold text-tertiary uppercase tracking-tighter opacity-60 mono">{log.timestamp}</span>
+                 <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-md border tracking-widest uppercase mono ${
+                   log.type === 'warning' ? 'bg-accent-red/10 border-accent-red/20 text-accent-red' : 'bg-accent-primary/10 border-accent-primary/20 text-accent-primary'
                  }`}>
                    {log.agent}
                  </span>
               </div>
               <div className="flex items-start gap-2">
-                 <ChevronRight size={12} className="text-indigo-500/40 mt-1" />
-                 <span className={`text-[13px] font-black tracking-tight uppercase leading-relaxed ${
-                   log.type === 'warning' ? 'text-red-400 opacity-90' : 'text-secondary group-hover:text-primary'
+                 <ChevronRight size={12} className="text-accent-primary/40 mt-1" />
+                 <span className={`text-[13px] font-semibold tracking-tight uppercase leading-relaxed mono ${
+                   log.type === 'warning' ? 'text-accent-red opacity-90' : 'text-secondary group-hover:text-primary'
                  }`}>
                    {log.message}
                  </span>
