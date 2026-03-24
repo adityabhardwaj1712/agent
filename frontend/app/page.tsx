@@ -2,42 +2,33 @@
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
-import KPIGrid from "./components/KPIGrid";
-import IncidentTimeline from "./components/IncidentTimeline";
-import TaskTable from "./components/TaskTable";
-import AgentTerminal from "./components/AgentTerminal";
-import DraggableWidget from "./components/DraggableWidget";
-import AgentGallery from "./components/AgentGallery";
-import WorkflowBuilder from "./components/WorkflowBuilder";
 import { apiJson } from "./lib/api";
-import { Plus, Activity, RefreshCw, Sparkles, Zap } from "lucide-react";
-import AISuggestions from "./components/AISuggestions";
-import AISummaryCard from "./components/AISummaryCard";
+import { RefreshCw, Plus } from "lucide-react";
+
+// Components for the Pro UI
+import DashboardView from "./components/DashboardView";
+import AgentGallery from "./components/AgentGallery";
+import TaskTable from "./components/TaskTable";
+import WorkflowBuilder from "./components/WorkflowBuilder";
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [widgets, setWidgets] = useState<string[]>(['kpi', 'terminal', 'tasks']);
-  const [autoMode, setAutoMode] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Auth Check
     const token = localStorage.getItem("token");
     if (!token && window.location.pathname !== "/landing") {
       window.location.href = "/landing";
     } else {
       setLoading(false);
+      // Set initial theme
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
   }, []);
 
   const handleViewChange = (view: string) => {
     setActiveView(view);
-  };
-
-  const toggleAutoMode = () => {
-    setAutoMode(!autoMode);
-    apiJson('/auto-mode/' + (autoMode ? 'off' : 'on'), { method: 'POST' });
   };
 
   const toggleTheme = () => {
@@ -46,22 +37,26 @@ export default function Home() {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  const handleReorder = (draggedId: string, targetId: string) => {
-    setWidgets((prev: string[]) => {
-      const newWidgets = [...prev];
-      const draggedIndex = newWidgets.indexOf(draggedId);
-      const targetIndex = newWidgets.indexOf(targetId);
-      if (draggedIndex === -1 || targetIndex === -1) return prev;
-      newWidgets.splice(draggedIndex, 1);
-      newWidgets.splice(targetIndex, 0, draggedId);
-      return newWidgets;
-    });
-  };
-
   if (loading) return null;
 
+  const PAGE_META: Record<string, [string, string]> = {
+    dashboard: ['Fleet Dashboard', 'Real-time orchestration overview'],
+    agents: ['Agents', 'Manage your AI agent fleet'],
+    tasks: ['Tasks', 'Submit, monitor & stream task execution'],
+    workflow: ['Workflow Builder', 'Design & run multi-agent pipelines'],
+    memory: ['Memory', 'Agent memory & vector embeddings'],
+    protocol: ['Protocol', 'Agent-to-agent message bus'],
+    traces: ['Execution Traces', 'Full observability & flame graphs'],
+    approvals: ['Approvals', 'Human-in-the-loop checkpoints'],
+    analytics: ['Analytics', 'Performance metrics & cost insights'],
+    audit: ['Audit Logs', 'Full system activity trail'],
+    billing: ['Billing', 'Usage tracking & cost management'],
+  };
+
+  const [title, sub] = PAGE_META[activeView] || [activeView, ''];
+
   return (
-    <div className="ac-shell">
+    <div className="ac-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Sidebar Component */}
       <Sidebar 
         activeView={activeView} 
@@ -72,140 +67,48 @@ export default function Home() {
       />
 
       {/* Main Content Area */}
-      <div className="ac-main">
+      <div className="main flex-1 flex flex-col h-screen overflow-hidden">
         
-        {/* Header Component */}
-        <header className="ac-header">
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight text-white uppercase italic">
-              {activeView === 'dashboard' ? 'Neural Analytics' : activeView.replace('-', ' ')}
-            </h1>
-            <p className="text-[10px] text-tertiary uppercase tracking-[0.2em]">
-              {activeView === 'dashboard' ? 'Real-time performance metrics and financial health monitoring for the autonomous AXON network.' : 'Fleet Management System v1.0'}
-            </p>
+        {/* TOPBAR */}
+        <header className="topbar">
+          <div className="page-info">
+            <div className="page-title">{title}</div>
+            <div className="page-sub">{sub}</div>
           </div>
-
-          <div className="ac-header-actions">
-            {/* AUTO MODE TOGGLE */}
-            <button 
-              onClick={toggleAutoMode}
-              className={`ac-chip gap-2 transition-all ${autoMode ? 'border-g/30 text-g' : 'border-r/30 text-r'}`}
-            >
-              <Zap size={12} className={autoMode ? 'animate-pulse' : ''} />
-              AUTO MODE: {autoMode ? 'ON' : 'OFF'}
-            </button>
-
-            <div className="ac-chip hidden md:flex">
+          
+          <div className="topbar-right">
+            <div className="pill">
               <span className="dot dot-g dot-pulse"></span>
-              99.9% Health
+              All Systems Operational
             </div>
-            
-            <button className="btn btn-p btn-sm" onClick={() => setActiveView('agents')}>
-              <Plus size={16} className="mr-2" /> New Agent
+            <div className="pill">
+              <span className="dot dot-y"></span>
+              API: Demo Mode
+            </div>
+            <button className="btn btn-g btn-sm flex items-center gap-2">
+              <RefreshCw size={12} /> Refresh
             </button>
-
-            <button className="ac-header-btn" onClick={toggleTheme}>
-              <Sparkles size={18} />
+            <button className="btn btn-p btn-sm flex items-center gap-2" onClick={() => setActiveView('tasks')}>
+              <Plus size={12} /> Submit Task
             </button>
           </div>
         </header>
 
         {/* View Switcher */}
-        <div className="ac-content-container">
-          {activeView === 'dashboard' && (
-            <div className="animate-slide-in">
-              {/* IMPACT METRICS */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 mt-8">
-                <MetricSmall label="Execution Success" value="+2.1%" color="text-g" />
-                <MetricSmall label="Active Pulse" value="1" color="text-a" />
-                <MetricSmall label="Operational Flux" value="$42.12" color="text-y" />
-                <MetricSmall label="Audit Integrity" value="100%" color="text-c" />
-              </div>
-
-              <KPIGrid />
-              
-              <div className="ac-dashboard-row mt-12">
-                <div className="flex flex-col gap-6">
-                  <div className="ac-widget h-[500px] flex flex-col">
-                    <div className="ac-widget-title">
-                      <span>Decision Stream</span>
-                      <Activity size={16} className="text-tertiary" />
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <AgentTerminal />
-                    </div>
-                  </div>
-                  
-                  <div className="ac-widget">
-                    <div className="ac-widget-title">
-                      <span>Recent Activity</span>
-                    </div>
-                    <div className="card-body">
-                      <IncidentTimeline />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-6">
-                  <div className="ac-widget h-full">
-                    <div className="ac-widget-title">
-                      <span className="flex items-center gap-2">
-                        AI DECISIONS
-                        <Sparkles size={14} className="text-a animate-pulse" />
-                      </span>
-                    </div>
-                    <div className="overflow-y-auto max-h-[800px]">
-                      <AISummaryCard />
-                      <div className="mt-8">
-                        <AISuggestions />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-3 mt-6">
-                  <div className="ac-widget p-0">
-                    <div className="ac-widget-title p-6 mb-0 border-b border-border">
-                      <span>Task Orchestration</span>
-                      <button 
-                         onClick={() => apiJson('/tasks/retry', { method: 'POST' })}
-                         className="btn btn-sm btn-p text-[10px] uppercase px-3"
-                      >
-                         <RefreshCw size={12} className="mr-2" /> Bulk Retry Failed
-                      </button>
-                    </div>
-                    <TaskTable />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeView === 'workflow' && (
-            <div className="mt-8"><WorkflowBuilder /></div>
-          )}
-
-          {activeView === 'agents' && (
-            <div className="mt-8"><AgentGallery /></div>
-          )}
-
+        <div className="view-container flex-1 overflow-y-auto">
+          {activeView === 'dashboard' && <DashboardView />}
+          {activeView === 'agents' && <AgentGallery />}
+          {activeView === 'tasks' && <TaskTable />}
+          {activeView === 'workflow' && <WorkflowBuilder />}
+          
           {/* Placeholder for other views */}
-          {!['dashboard', 'workflow', 'agents'].includes(activeView) && (
-            <div className="view-body p-8 flex items-center justify-center text-tertiary mono">
-              Section [{activeView.toUpperCase()}] is under development.
+          {!['dashboard', 'agents', 'tasks', 'workflow'].includes(activeView) && (
+            <div className="view-body p-8 flex items-center justify-center text-t3 mono">
+              Section [{activeView.toUpperCase()}] connectivity in progress.
             </div>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function MetricSmall({ label, value, color }: { label: string, value: string, color: string }) {
-  return (
-    <div className="bg-[#161D2E] p-4 rounded-xl border border-[#2A3356]">
-      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</p>
-      <p className={`text-xl font-bold mt-1 ${color}`}>{value}</p>
     </div>
   );
 }

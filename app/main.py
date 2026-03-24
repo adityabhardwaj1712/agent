@@ -66,6 +66,17 @@ app.add_middleware(
 
 app.add_middleware(MetricsMiddleware)
 
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    import time
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    if process_time > 1.0:
+        logger.warning(f"High latency detected: {request.url.path} took {process_time:.2f}s")
+    return response
+
 app.include_router(api_router)
 app.include_router(ws_router)
 

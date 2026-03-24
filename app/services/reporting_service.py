@@ -3,7 +3,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from sqlalchemy.future import select
 from sqlalchemy import func
 from ..db.database import async_session_factory

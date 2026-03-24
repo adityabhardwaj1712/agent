@@ -12,7 +12,7 @@ from ..db.redis_client import get_async_redis_client
 from ..models.task import Task
 from ..models.agent import Agent
 from ..core.logging_config import setup_logging
-from ..services.task_service import task_service
+from ..services.task_service import retry_failed_tasks
 from ..services.reporting_service import reporting_service
 from ..config import settings
 
@@ -49,7 +49,7 @@ class AutoModeService:
 
     async def stop(self):
         self.is_running = False
-        if self._loop_task:
+        if self._loop_task and not self._loop_task.done():
             self._loop_task.cancel()
         logger.info("Auto Mode Service Stopped")
 
@@ -86,11 +86,11 @@ class AutoModeService:
                 action = await self._decide_action(task)
                 
                 if action == "retry":
-                    await task_service.retry_failed_tasks(db, [task.task_id])
+                    await retry_failed_tasks(db, user_id=task.user_id) # The signature in task_service is (db, user_id)
                     self._log_decision(task.task_id, "retry", "Task failed, auto-retrying.")
                 elif action == "switch_agent":
                     # Logic to pick better agent would go here
-                    await task_service.retry_failed_tasks(db, [task.task_id])
+                    await retry_failed_tasks(db, user_id=task.user_id)
                     self._log_decision(task.task_id, "switch_agent", "Agent underperforming, switching to redundant peer.")
 
     async def _decide_action(self, task: Task) -> str:

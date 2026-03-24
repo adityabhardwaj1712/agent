@@ -20,6 +20,9 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
+# Alias for compatibility with services
+async_session_factory = AsyncSessionLocal
+
 async def get_db():
     """FastAPI dependency for database sessions."""
     async with AsyncSessionLocal() as session:

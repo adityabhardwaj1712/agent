@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     # SECRET_KEY is used for JWT hashing
     SECRET_KEY: str = "agentcloud-secret-key-2026"
     JWT_ALGORITHM: str = "HS256"
+    JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
+    JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 week
     
     # CORS Configuration

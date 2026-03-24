@@ -36,6 +36,10 @@ _FALLBACK_CHAINS: dict[str, list[ModelChoice]] = {
         ModelChoice("gpt-4o-mini", "cost-optimised", "OpenAI"),
         ModelChoice("claude-haiku-4-5-20251001", "anthropic cheap fallback", "Anthropic"),
     ],
+    "productivity": [
+        ModelChoice("claude-sonnet-4-5", "peak developer performance", "Anthropic"),
+        ModelChoice("gpt-4o", "openai dev fallback", "OpenAI"),
+    ],
     "default": [
         ModelChoice("claude-haiku-4-5-20251001", "fast and capable", "Anthropic"),
         ModelChoice("gpt-4o-mini", "openai cheap fallback", "OpenAI"),
@@ -60,8 +64,8 @@ def _detect_task_type(payload: str) -> str:
         return "bulk"
     if any(k in text for k in ("image", "screenshot", "photo", "vision", "look at")):
         return "vision"
-    if any(k in text for k in ("code", "bug", "refactor", "function", "class", "debug", "implement", "script")):
-        return "code"
+    if any(k in text for k in ("code", "bug", "refactor", "function", "class", "debug", "implement", "script", "test", "unittest", "pytest", "docstring", "documentation")):
+        return "productivity"
     if any(k in text for k in ("analyze", "analyse", "research", "summarize", "review", "explain", "reason", "compare")):
         return "analysis"
     return "default"

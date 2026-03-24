@@ -16,8 +16,10 @@ from .orchestrator import orchestrator, Priority
 # ─── Productivity Engine ──────────────────────────────────────────────────────
 
 def _compute_task_hash(payload: str, agent_id: str = None) -> str:
-    """Generate a deterministic hash for deduplication."""
-    content = f"{payload or ''}|{agent_id or 'any'}"
+    """Generate a deterministic hash for deduplication. Normalizes input for better hits."""
+    # Normalize: strip, lowercase, and handle None
+    clean_payload = (payload or "").strip().lower()
+    content = f"{clean_payload}|{agent_id or 'any'}"
     return hashlib.md5(content.encode()).hexdigest()
 
 
@@ -37,11 +39,12 @@ async def _check_dedup(db: AsyncSession, task_hash: str) -> Task | None:
 
 
 async def _check_result_cache(payload: str) -> str | None:
-    """Check Redis for cached task results."""
+    """Check Redis for cached task results. Uses normalized payload."""
     try:
         from ..db.redis_client import get_async_redis_client
         redis = await get_async_redis_client()
-        cache_key = f"task_cache:{hashlib.md5(payload.encode()).hexdigest()}"
+        clean_payload = (payload or "").strip().lower()
+        cache_key = f"task_cache:{hashlib.md5(clean_payload.encode()).hexdigest()}"
         cached = await redis.get(cache_key)
         if cached:
             logger.info(f"Cache HIT for task payload")

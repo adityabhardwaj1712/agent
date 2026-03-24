@@ -68,7 +68,7 @@ def main() -> None:
     
     code, reg = request_json(
         "POST",
-        "/v1/agents/register",
+        "/v1/agents/",
         token=user_token,
         json={"name": "smoke-agent", "owner_id": owner_id},
     )
@@ -99,8 +99,8 @@ def main() -> None:
     # 6) Run task + status (will pass once we wire Celery correctly)
     code, task = request_json(
         "POST",
-        "/v1/tasks/run",
-        token=token,
+        "/v1/tasks/",
+        token=user_token,
         json={"agent_id": agent_id, "payload": "do a simple task"},
     )
     if code != 200 or "task_id" not in task:

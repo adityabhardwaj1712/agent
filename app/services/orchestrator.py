@@ -7,8 +7,8 @@ import uuid
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, Dict, Optional
-
 import redis.asyncio as aioredis
+from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
 from ..config import settings
@@ -42,7 +42,7 @@ class Orchestrator:
 
     async def enqueue_task(
         self, 
-        db: AsyncSessionLocal,
+        db: AsyncSession,
         payload: str, 
         user_id: str,
         agent_id: Optional[str] = None, 
