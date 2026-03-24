@@ -2,61 +2,104 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
+import { useToast } from './Toast';
+import AddTaskModal from './AddTaskModal';
 
 export default function TaskTable() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = await apiFetch<any[]>('/tasks');
-        setTasks(data || []);
-      } catch (err) {
-        console.error("Failed to fetch tasks:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTasks();
   }, []);
 
-  if (loading) return <div className="p-8 mono text-t3 animate-pulse">Syncing Task Registry...</div>;
+  const fetchTasks = async () => {
+    try {
+      const data = await apiFetch<any[]>('/tasks');
+      setTasks(data);
+    } catch (err: any) {
+      toast(err.message || 'Failed to fetch tasks', 'err');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed': return <span className="ms-badge ms-b-g">Completed</span>;
+      case 'failed': return <span className="ms-badge ms-b-r">Failed</span>;
+      case 'pending': return <span className="ms-badge ms-b-y">Pending</span>;
+      case 'in_progress': return <span className="ms-badge ms-b-b">In Progress</span>;
+      default: return <span className="ms-badge ms-b-c">{status}</span>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="ms-content" style={{ alignItems: 'center', justifyContent: 'center' }}>
+         <div className="ms-dot ms-dot-y ms-dot-pulse" style={{ transform: 'scale(2)' }}></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="tbl-wrap">
-      <table className="w-full text-left">
-        <thead>
-          <tr>
-            <th>Task ID</th>
-            <th>Description</th>
-            <th>Agent</th>
-            <th>Priority</th>
-            <th>Status</th>
-            <th className="text-right">Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-t3 mono">No tasks recorded in history.</td></tr>}
-          {tasks.map((t, i) => {
-            const status = t.status || 'pending';
-            const priority = (t.priority_level > 7 ? 'high' : t.priority_level > 4 ? 'medium' : 'low');
-            const sbc = {completed:'b-g',running:'b-a',pending:'b-y',queued:'b-y',failed:'b-r'}[status as string] || 'b-t3';
-            const pbc = {high:'b-r',medium:'b-y',low:'b-g',critical:'b-p'}[priority as string] || 'b-t2';
-            
-            return (
-              <tr key={i}>
-                <td className="mono-sm text-t1 font-bold">{t.task_id.split('-')[0]}...</td>
-                <td className="max-w-[200px] truncate text-[12px]">{t.payload}</td>
-                <td className="text-[11.5px] text-t2">{t.agent_id || 'Auto'}</td>
-                <td><span className={`badge ${pbc}`}>{priority.toUpperCase()}</span></td>
-                <td><span className={`badge ${sbc}`}>{status.toUpperCase()}</span></td>
-                <td className="mono-sm text-right text-t3">{new Date(t.created_at).toLocaleTimeString()}</td>
+    <div className="ms-content">
+      <div className="ms-card">
+        <div className="ms-card-hd">
+          <div className="ms-card-title">Task Execution History</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="ms-btn ms-btn-g ms-btn-sm" onClick={fetchTasks}>↻ Refresh</button>
+            <button className="ms-btn ms-btn-p ms-btn-sm" onClick={() => setIsModalOpen(true)}>+ New Task</button>
+          </div>
+        </div>
+        <div className="ms-card-body" style={{ padding: 0 }}>
+          <table className="ms-tbl">
+            <thead>
+              <tr>
+                <th>Task ID</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Result</th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {tasks.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--s-t3)' }}>
+                    No tasks found.
+                  </td>
+                </tr>
+              ) : (
+                tasks.map(task => (
+                  <tr key={task.task_id}>
+                    <td className="p" style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>
+                      {task.task_id.substring(0, 8)}...
+                    </td>
+                    <td style={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {task.description}
+                    </td>
+                    <td>{getStatusBadge(task.status)}</td>
+                    <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>
+                      {new Date(task.created_at).toLocaleString()}
+                    </td>
+                    <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {task.result || '-'}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <AddTaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAdded={fetchTasks} 
+      />
     </div>
   );
 }

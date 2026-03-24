@@ -4,6 +4,18 @@ from app.db.base import Base
 import datetime
 import uuid
 
+class WorkflowDefinition(Base):
+    __tablename__ = "workflow_definitions"
+    
+    id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, index=True, unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    definition = Column(JSON, nullable=False) # Nodes and edges
+    user_id = Column(String, index=True, nullable=False)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 class WorkflowRun(Base):
     __tablename__ = "workflow_runs"
     

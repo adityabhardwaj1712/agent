@@ -1,7 +1,17 @@
 from fastapi import APIRouter
 
 router = APIRouter()
+from typing import Any
+from pydantic import BaseModel
+
+class DummyReq(BaseModel):
+    pass
+
+@router.get("/subscription")
+async def subscription():
+    return []
 
 @router.get("/usage")
-async def get_usage():
-    return {"usage": 0, "limit": 1000}
+async def usage():
+    return []
+

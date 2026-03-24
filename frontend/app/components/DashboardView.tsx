@@ -1,158 +1,160 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Activity, AlertCircle, DollarSign, Clock, ArrowUp, ArrowDown } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 
 export default function DashboardView() {
   const [metrics, setMetrics] = useState({
-    active_agents: 7,
-    tasks_completed: 1847,
-    error_rate: 0.021,
-    api_cost: 14.82,
-    avg_latency: 1400
+    active_agents: 0,
+    tasks_completed: 0,
+    success_rate: '0%',
+    latency: '0ms',
+    active_events: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    async function fetchData() {
       try {
         const data = await apiFetch<any>('/analytics/summary');
-        if (data) setMetrics(data);
+        setMetrics({
+          active_agents: data.active_agents,
+          tasks_completed: data.tasks_completed,
+          success_rate: `${((1 - data.error_rate) * 100).toFixed(1)}%`,
+          latency: `${data.avg_latency}ms`,
+          active_events: data.active_events
+        });
+        
+        const tasks = await apiFetch<any[]>('/tasks');
+        setRecentTasks(tasks.slice(0, 5));
       } catch (err) {
-        console.error("Failed to fetch dashboard metrics:", err);
-      } finally {
-        setLoading(false);
+        console.error('Failed to load dashboard data:', err);
       }
-    };
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000);
+    }
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // 30s polling
     return () => clearInterval(interval);
   }, []);
 
-  const KPI_DATA = [
-    { label: 'Active Agents', val: metrics.active_agents, ic: <Users size={20} />, col: '#5b8cff', up: true, d: '+2' },
-    { label: 'Tasks Completed', val: metrics.tasks_completed.toLocaleString(), ic: <Activity size={20} />, col: '#22d3a0', up: true, d: '18.4%' },
-    { label: 'Error Rate', val: `${(metrics.error_rate * 100).toFixed(1)}%`, ic: <AlertCircle size={20} />, col: '#f94f6a', up: false, d: '0.6%' },
-    { label: 'API Cost (7d)', val: `$${metrics.api_cost.toFixed(2)}`, ic: <DollarSign size={20} />, col: '#f59e0b', up: true, d: '+$2.40' },
-    { label: 'Avg Latency', val: `${metrics.avg_latency}ms`, ic: <Clock size={20} />, col: '#22d3ee', up: false, d: '0.2s' },
-  ];
-
-  const events = [
-    { msg: 'Task tsk-8841 completed — quality score 0.94', agent: 'DataAnalyst', t: '2m ago', type: 'ok', dot: 'dot-g' },
-    { msg: 'Circuit breaker OPEN for ag-006 (3 failures)', agent: 'SecurityGuardian', t: '3m ago', type: 'warn', dot: 'dot-y' },
-    { msg: 'Agent WebResearcher seeded to DB', agent: 'System', t: '4m ago', type: 'info', dot: 'dot-b' },
-    { msg: 'Task tsk-8846 failed — sent to DLQ', agent: 'SecurityGuardian', t: '8m ago', type: 'err', dot: 'dot-r' },
-    { msg: 'Reputation decay cycle ran — 7 agents updated', agent: 'Orchestrator', t: '10m ago', type: 'info', dot: 'dot-b' },
-  ];
-
-  const recentTasks = [
-    { id: 'tsk-8841', desc: 'Analyze Q1 sales data...', agent: 'DataAnalyst', status: 'completed', dur: '8.4s' },
-    { id: 'tsk-8842', desc: 'Write blog post about AI...', agent: 'ContentWriter', status: 'running', dur: '—' },
-    { id: 'tsk-8843', desc: 'Debug JWT authentication...', agent: 'CodeHelper', status: 'running', dur: '—' },
-    { id: 'tsk-8844', desc: 'Research competitor pricing...', agent: 'WebResearcher', status: 'pending', dur: '—' },
-  ];
-
-  if (loading) return <div className="view-body p-8 mono text-t3 animate-pulse">Synchronizing with Orchestrator...</div>;
-
   return (
-    <div className="view-body" style={{ padding: '24px 28px' }}>
-      <div className="kpi-row">
-        {KPI_DATA.map((k, i) => (
-          <div className="kpi" key={i} style={{ '--kc': k.col } as any}>
-            <div className="kpi-ico" style={{ color: k.col }}>{k.ic}</div>
-            <div className="kpi-lbl">{k.label}</div>
-            <div className="kpi-val">{k.val}</div>
-            <div className={`kpi-delta ${k.up ? 'up' : 'dn'}`}>
-              {k.up ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
-              {k.d}
-            </div>
-          </div>
-        ))}
+    <div className="ms-content">
+      {/* KPI Grid */}
+      <div className="ms-kpi-grid">
+        <div className="ms-kpi" style={{ '--kc': 'var(--s-blue)' } as any}>
+          <div className="ms-kpi-lbl">Active Agents</div>
+          <div className="ms-kpi-val" style={{ color: 'var(--s-blue)' }}>{metrics.active_agents}</div>
+          <div className="ms-kpi-delta ms-up">↑ LIVE</div>
+          <div className="ms-kpi-ico">🤖</div>
+        </div>
+        <div className="ms-kpi" style={{ '--kc': 'var(--s-purple)' } as any}>
+          <div className="ms-kpi-lbl">Total Tasks</div>
+          <div className="ms-kpi-val" style={{ color: 'var(--s-purple)' }}>{metrics.tasks_completed}</div>
+          <div className="ms-kpi-delta ms-up">↑ ALL TIME</div>
+          <div className="ms-kpi-ico">⚡</div>
+        </div>
+        <div className="ms-kpi" style={{ '--kc': 'var(--s-green)' } as any}>
+          <div className="ms-kpi-lbl">Success Rate</div>
+          <div className="ms-kpi-val" style={{ color: 'var(--s-green)' }}>{metrics.success_rate}</div>
+          <div className="ms-kpi-delta ms-up">↑ NOMINAL</div>
+          <div className="ms-kpi-ico">✅</div>
+        </div>
+        <div className="ms-kpi" style={{ '--kc': 'var(--s-cyan)' } as any}>
+          <div className="ms-kpi-lbl">Avg Latency</div>
+          <div className="ms-kpi-val" style={{ color: 'var(--s-cyan)' }}>{metrics.latency}</div>
+          <div className="ms-kpi-delta ms-dn">↓ OPTIMIZED</div>
+          <div className="ms-kpi-ico">⏱</div>
+        </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        
-        {/* THROUGHPUT CHART */}
-        <div className="card lg:col-span-2">
-          <div className="card-hd">
-            <div>
-              <div className="card-hd-title capitalize">Task Throughput</div>
-              <div className="card-hd-sub">Completions per hour · last 24h</div>
-            </div>
-            <div className="pill"><span className="dot dot-g"></span>Live</div>
+
+      {/* Two Column Layout (ACP Flow / Incident) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
+        <div className="ms-card">
+          <div className="ms-card-hd">
+            <div className="ms-card-title">Live Agent Collaboration</div>
+            <div className="ms-badge ms-b-b">Telemetry · {metrics.active_events} events</div>
           </div>
-          <div className="card-body">
-            <div className="spark-row flex items-end gap-[3px] h-[60px]">
-              {[8,14,7,22,28,31,18,42,40,45,38,52,50,33,27,36,46,54,40,30,20,24,16,10].map((v, i) => (
-                <div 
-                  key={i} 
-                  className="spark-bar flex-1 bg-gradient-to-t from-[var(--a2)] to-[var(--a)] rounded-t-sm"
-                  style={{ height: `${(v / 54) * 100}%` }}
-                />
+          <div className="ms-card-body" style={{ padding: 0 }}>
+            {/* Real-time Telemetry Visual */}
+            <div style={{ height: 180, background: 'var(--s-bg)', borderBottom: '1px solid var(--s-border)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, var(--s-border) 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.5 }}></div>
+              <div style={{ position: 'absolute', padding: '6px 12px', background: 'var(--s-bg2)', border: '1px solid var(--s-border2)', borderRadius: 6, fontSize: 13, color: 'var(--s-text)', top: 20, left: 40, borderLeft: '3px solid var(--s-green)' }}>Axon.Relay</div>
+              <div style={{ position: 'absolute', padding: '6px 12px', background: 'var(--s-bg2)', border: '1px solid var(--s-border2)', borderRadius: 6, fontSize: 13, color: 'var(--s-text)', top: 20, left: 220, borderLeft: '3px solid var(--s-blue)' }}>Orchestrator</div>
+              
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                <line x1="165" y1="35" x2="210" y2="35" stroke="var(--s-border3)" strokeWidth="2" strokeDasharray="4 4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="ms-card">
+          <div className="ms-card-hd">
+            <div className="ms-card-title">Incident Timeline</div>
+            <div className="ms-badge ms-b-r">{recentTasks.filter(t => t.status === 'failed').length} errors</div>
+          </div>
+          <div className="ms-card-body">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {recentTasks.length === 0 && <div style={{ color: 'var(--s-t3)', fontSize: 12 }}>No recent activity.</div>}
+              {recentTasks.map((t, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingBottom: 10, borderBottom: i < recentTasks.length - 1 ? '1px solid var(--s-border)' : 'none' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 6, background: t.status === 'failed' ? 'rgba(255,77,106,.15)' : 'rgba(0,229,160,.15)', color: t.status === 'failed' ? 'var(--s-red)' : 'var(--s-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>
+                    {t.status === 'failed' ? '✕' : '✓'}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, color: 'var(--s-t2)' }}>
+                      <strong>{t.agent_id}</strong>: {t.status}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--s-t3)', marginTop: 4 }}>
+                      {new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-            <div className="flex justify-between mt-3 text-[10px] mono text-t3 uppercase font-bold tracking-widest px-1">
-               <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>24h</span>
-            </div>
           </div>
         </div>
-
-        {/* EVENT STREAM */}
-        <div className="card">
-          <div className="card-hd">
-            <div className="card-hd-title uppercase">Event Stream</div>
-            <div className="pill"><span className="dot dot-b dot-pulse"></span>Live</div>
-          </div>
-          <div className="max-h-[220px] overflow-y-auto">
-            {events.map((e, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 px-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                <div className={`dot ${e.dot} mt-1.5 shrink-0`}></div>
-                <div className="flex-1">
-                  <div className="text-[12px] leading-snug">{e.msg}</div>
-                  <div className="text-[10px] text-t3 mono mt-1">{e.agent}</div>
-                </div>
-                <div className="text-[10px] text-t3 mono shrink-0">{e.t}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
 
-      {/* RECENT TASKS */}
-      <div className="card tbl-wrap">
-        <div className="card-hd">
-          <div className="card-hd-title uppercase">Recent Tasks</div>
-          <button className="btn btn-g btn-sm text-[10px] uppercase font-bold tracking-widest px-3">View All →</button>
+      {/* Active Tasks Table */}
+      <div className="ms-card">
+        <div className="ms-card-hd">
+          <div className="ms-card-title">Active Agent Tasks</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="ms-btn ms-btn-g ms-btn-sm">Sort by ↕</button>
+            <button className="ms-btn ms-btn-g ms-btn-sm">⊞ View All</button>
+          </div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Task ID</th>
-              <th>Description</th>
-              <th>Agent</th>
-              <th>Status</th>
-              <th className="text-right">Duration</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentTasks.map((t, i) => (
-              <tr key={i}>
-                <td className="mono-sm">{t.id}</td>
-                <td className="text-[12px]">{t.desc}</td>
-                <td className="text-[12px] text-t2">{t.agent}</td>
-                <td>
-                  <span className={`badge ${t.status === 'completed' ? 'b-g' : 'b-a'}`}>
-                    {t.status.toUpperCase()}
-                  </span>
-                </td>
-                <td className="mono-sm text-right">{t.dur}</td>
+        <div className="ms-card-body" style={{ padding: 0 }}>
+          <table className="ms-tbl">
+            <thead>
+              <tr><th>Task ID</th><th>Agent</th><th>Status</th><th>Duration</th><th>Last Event</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="p" style={{ fontFamily: 'var(--mono)' }}>1234572060</td>
+                <td>Research Agent</td>
+                <td><span className="ms-badge ms-b-b">Status</span></td>
+                <td>32 min</td>
+                <td style={{ color: 'var(--s-t3)' }}>Jan 7, 3:32 PM</td>
               </tr>
-            ))}
-          </tbody>
-        </table>
+              <tr>
+                <td className="p" style={{ fontFamily: 'var(--mono)' }}>1234572002</td>
+                <td>Data Analyst</td>
+                <td><span className="ms-badge ms-b-y">Warning</span></td>
+                <td>35 min</td>
+                <td style={{ color: 'var(--s-t3)' }}>Sep 7, 3:32 PM</td>
+              </tr>
+              <tr>
+                <td className="p" style={{ fontFamily: 'var(--mono)' }}>1234572063</td>
+                <td>Editor</td>
+                <td><span className="ms-badge ms-b-r">Critical</span></td>
+                <td>55m ago</td>
+                <td style={{ color: 'var(--s-t3)' }}>Jan 7, 3:25 PM</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-
     </div>
   );
 }

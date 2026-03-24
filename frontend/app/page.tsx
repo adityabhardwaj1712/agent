@@ -2,114 +2,175 @@
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
-import { apiJson } from "./lib/api";
-import { RefreshCw, Plus } from "lucide-react";
+import { ToastProvider, useToast } from "./components/Toast";
 
-// Components for the Pro UI
+// Views
 import DashboardView from "./components/DashboardView";
 import AgentGallery from "./components/AgentGallery";
 import TaskTable from "./components/TaskTable";
 import WorkflowBuilder from "./components/WorkflowBuilder";
+import MemoryView from "./components/MemoryView";
+import ProtocolView from "./components/ProtocolView";
+import TracesView from "./components/TracesView";
+import ApprovalsView from "./components/ApprovalsView";
+import AnalyticsView from "./components/AnalyticsView";
+import AuditView from "./components/AuditView";
+import BillingView from "./components/BillingView";
+import UnifiedDashboard from "./components/UnifiedDashboard";
+import AddAgentModal from "./components/AddAgentModal";
+import AddTaskModal from "./components/AddTaskModal";
 
-export default function Home() {
-  const [activeView, setActiveView] = useState('dashboard');
+function AppContent() {
+  const [activeView, setActiveView] = useState('unified');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [loading, setLoading] = useState(true);
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token && window.location.pathname !== "/landing") {
-      window.location.href = "/landing";
-    } else {
-      setLoading(false);
-      // Set initial theme
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
+    document.documentElement.setAttribute('data-theme', 'dark');
   }, []);
 
-  const handleViewChange = (view: string) => {
-    setActiveView(view);
-  };
-
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
   };
 
-  if (loading) return null;
-
-  const PAGE_META: Record<string, [string, string]> = {
-    dashboard: ['Fleet Dashboard', 'Real-time orchestration overview'],
-    agents: ['Agents', 'Manage your AI agent fleet'],
-    tasks: ['Tasks', 'Submit, monitor & stream task execution'],
-    workflow: ['Workflow Builder', 'Design & run multi-agent pipelines'],
-    memory: ['Memory', 'Agent memory & vector embeddings'],
-    protocol: ['Protocol', 'Agent-to-agent message bus'],
-    traces: ['Execution Traces', 'Full observability & flame graphs'],
-    approvals: ['Approvals', 'Human-in-the-loop checkpoints'],
-    analytics: ['Analytics', 'Performance metrics & cost insights'],
-    audit: ['Audit Logs', 'Full system activity trail'],
-    billing: ['Billing', 'Usage tracking & cost management'],
+  const getTitle = () => {
+    switch (activeView) {
+      case 'dashboard': return 'Fleet Overview';
+      case 'agents': return 'Agent Registry';
+      case 'workflow': return 'Workflow Builder';
+      case 'marketplace': return 'Marketplace';
+      case 'analytics': return 'Analytics · 30 Days';
+      case 'memory': return 'Memory Store';
+      case 'settings': return 'Settings & Configuration';
+      case 'unified': return 'Unified Command Center';
+      default: return 'AgentCloud Platform';
+    }
   };
 
-  const [title, sub] = PAGE_META[activeView] || [activeView, ''];
+  const getSub = () => {
+    if (activeView === 'dashboard') return 'Real-time agent orchestration dashboard';
+    return '';
+  };
 
   return (
-    <div className="ac-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Sidebar Component */}
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={handleViewChange} 
-        onRegisterAgent={() => setActiveView('agents')}
+    <div className="ms">
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
 
-      {/* Main Content Area */}
-      <div className="main flex-1 flex flex-col h-screen overflow-hidden">
-        
-        {/* TOPBAR */}
-        <header className="topbar">
-          <div className="page-info">
-            <div className="page-title">{title}</div>
-            <div className="page-sub">{sub}</div>
+      <div className="ms-body">
+        {/* Topbar */}
+        <header className="ms-topbar">
+          <div>
+            <div className="ms-topbar-title">{getTitle()}</div>
+            <div style={{ fontSize: 11, color: 'var(--s-t3)' }}>{getSub()}</div>
           </div>
           
-          <div className="topbar-right">
-            <div className="pill">
-              <span className="dot dot-g dot-pulse"></span>
-              All Systems Operational
-            </div>
-            <div className="pill">
-              <span className="dot dot-y"></span>
-              API: Demo Mode
-            </div>
-            <button className="btn btn-g btn-sm flex items-center gap-2">
-              <RefreshCw size={12} /> Refresh
-            </button>
-            <button className="btn btn-p btn-sm flex items-center gap-2" onClick={() => setActiveView('tasks')}>
-              <Plus size={12} /> Submit Task
-            </button>
+          <div className="ms-tb-right">
+            {activeView === 'dashboard' && (
+              <>
+                <div className="ms-pill">
+                  <span className="ms-dot ms-dot-g ms-dot-pulse"></span>
+                  Live · 42 events
+                </div>
+                <div style={{ background: 'var(--s-bg3)', border: '1px solid var(--s-border)', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'var(--s-t2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Search agents…
+                </div>
+                <button className="ms-btn ms-btn-p ms-btn-sm" onClick={() => setIsAgentModalOpen(true)}>+ New Agent</button>
+                <button className="ms-btn ms-btn-b ms-btn-sm" onClick={() => setIsTaskModalOpen(true)}>+ New Task</button>
+              </>
+            )}
+            {activeView === 'agents' && (
+              <>
+                <div className="ms-badge ms-b-b">PRO</div>
+                <button className="ms-btn ms-btn-p ms-btn-sm" onClick={() => setIsAgentModalOpen(true)}>+ Register Agent</button>
+              </>
+            )}
+            {activeView === 'tasks' && (
+              <>
+                <button className="ms-btn ms-btn-p ms-btn-sm" onClick={() => setIsTaskModalOpen(true)}>+ New Task</button>
+              </>
+            )}
           </div>
         </header>
 
-        {/* View Switcher */}
-        <div className="view-container flex-1 overflow-y-auto">
-          {activeView === 'dashboard' && <DashboardView />}
-          {activeView === 'agents' && <AgentGallery />}
-          {activeView === 'tasks' && <TaskTable />}
-          {activeView === 'workflow' && <WorkflowBuilder />}
-          
-          {/* Placeholder for other views */}
-          {!['dashboard', 'agents', 'tasks', 'workflow'].includes(activeView) && (
-            <div className="view-body p-8 flex items-center justify-center text-t3 mono">
-              Section [{activeView.toUpperCase()}] connectivity in progress.
+        {/* Global Cost Ticker */}
+        {activeView === 'dashboard' && (
+          <div style={{ background: 'rgba(79,142,255,.06)', borderBottom: '1px solid var(--s-border)', padding: '6px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--s-blue)', fontFamily: 'var(--mono)' }}>⚡ Live Cost Ticker</div>
+            <div style={{ fontSize: 11, color: 'var(--s-t2)' }}>
+              Token Cost Today: <strong style={{ color: 'var(--s-amber)' }}>$2.47</strong> ↑
             </div>
-          )}
-        </div>
+            <div style={{ fontSize: 10, color: 'var(--s-t3)' }}>(updates 10s)</div>
+          </div>
+        )}
+
+        {/* Main content */}
+        {activeView === 'unified' && (
+          <UnifiedDashboard 
+            onOpenAgentModal={() => setIsAgentModalOpen(true)} 
+            onOpenTaskModal={() => setIsTaskModalOpen(true)} 
+          />
+        )}
+        {activeView === 'dashboard' && <DashboardView />}
+        {activeView === 'agents' && <AgentGallery />}
+        {activeView === 'tasks' && <TaskTable />}
+        {activeView === 'workflow' && <WorkflowBuilder />}
+        {activeView === 'memory' && <MemoryView />}
+        {activeView === 'protocol' && <ProtocolView />}
+        {activeView === 'traces' && <TracesView />}
+        {activeView === 'approvals' && <ApprovalsView />}
+        {activeView === 'analytics' && <AnalyticsView />}
+        {activeView === 'audit' && <AuditView />}
+        {activeView === 'billing' && <BillingView />}
+        
+        <AddAgentModal 
+          isOpen={isAgentModalOpen} 
+          onClose={() => setIsAgentModalOpen(false)} 
+          onAdded={() => { /* Potential refresh logic here if needed beyond local view refetch */ }}
+        />
+        <AddTaskModal 
+          isOpen={isTaskModalOpen} 
+          onClose={() => setIsTaskModalOpen(false)} 
+          onAdded={() => {}}
+        />
+        
+        {/* Marketplace & Settings placehoder */}
+        {activeView === 'marketplace' && (
+          <div className="ms-content">
+             <div style={{ color: 'var(--s-t2)' }}>Agent Marketplace view coming soon.</div>
+          </div>
+        )}
+        {activeView === 'settings' && (
+          <div className="ms-content">
+             <div className="ms-sg">
+                <div className="ms-sg-title">API Credentials</div>
+                <div className="ms-set-row"><span className="ms-sl">Anthropic Key</span><div style={{ fontSize: 11, color: 'var(--s-blue)', fontFamily: 'var(--mono)' }}>sk-ant-••••</div></div>
+                <div className="ms-set-row"><span className="ms-sl">OpenAI Key</span><div style={{ fontSize: 11, color: 'var(--s-t3)', fontFamily: 'var(--mono)' }}>not set</div></div>
+             </div>
+             <div className="ms-sg">
+                <div className="ms-sg-title">AXON Features</div>
+                <div className="ms-set-row"><span className="ms-sl">Advanced Reasoning</span><div className="ms-toggle on"></div></div>
+                <div className="ms-set-row"><span className="ms-sl">Circuit Breaker</span><div className="ms-toggle off"></div></div>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+export default function Home() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  );
+}

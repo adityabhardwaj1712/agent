@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   api:
@@ -7,13 +6,16 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - "8000:8000"
+    volumes:
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/agentcloud
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-secret-key-change-me}
-      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000,http://localhost:8000
       - RUN_MIGRATIONS=true
       - DEPLOYMENT_MODE=local
       - DEPLOYMENT_REGION=us-east-1
@@ -33,6 +35,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
     command: sh -c "sleep 10 && PYTHONPATH=/app python -m app.workers.agent_worker"
     env_file:
       - .env
@@ -82,7 +86,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://api:8000
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
     depends_on:
       api:
         condition: service_healthy

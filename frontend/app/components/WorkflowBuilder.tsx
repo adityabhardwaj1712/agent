@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Plus, Trash2, Activity, Terminal as TerminalIcon } from 'lucide-react';
+import { Play, Plus, Trash2, Activity, Terminal as TerminalIcon, Save, RefreshCw } from 'lucide-react';
+import { apiFetch } from '../lib/api';
+import { useToast } from './Toast';
 
 interface Node {
   nid: string;
@@ -19,21 +21,71 @@ interface Edge {
 }
 
 const WorkflowBuilder: React.FC = () => {
-  const [nodes, setNodes] = useState<Node[]>([
-    { nid: 'n1', name: 'Gather Data', agent: 'WebResearcher', prompt: 'Search for market trends', x: 60, y: 60, status: 'idle' },
-    { nid: 'n2', name: 'Analyze Results', agent: 'DataAnalyst', prompt: 'Analyze the gathered data', x: 280, y: 60, status: 'idle' },
-    { nid: 'n3', name: 'Write Report', agent: 'ContentWriter', prompt: 'Write a concise market report', x: 500, y: 60, status: 'idle' },
-  ]);
-  const [edges, setEdges] = useState<Edge[]>([
-    { from: 'n1', to: 'n2' },
-    { from: 'n2', to: 'n3' },
-  ]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [workflows, setWorkflows] = useState<any[]>([]);
+  const [selectedWfName, setSelectedWfName] = useState<string>('Market Research Pipeline');
   const [isDragging, setIsDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  const toast = useToast();
+
+  const fetchWorkflows = async () => {
+    try {
+      const data = await apiFetch<any[]>('/workflows');
+      setWorkflows(data);
+    } catch (err) {
+      console.error('Failed to fetch workflows:', err);
+    }
+  };
+
+  const loadWorkflow = async (name: string) => {
+    try {
+      const data = await apiFetch<any>(`/workflows/${name}`);
+      setNodes(data.definition.nodes || []);
+      setEdges(data.definition.edges || []);
+      setSelectedWfName(name);
+      toast(`Loaded ${name}`, 'ok');
+    } catch (err) {
+      // If not found, use default or empty
+      if (name === 'Market Research Pipeline' && nodes.length === 0) {
+        setNodes([
+          { nid: 'n1', name: 'Gather Data', agent: 'WebResearcher', prompt: 'Search for market trends', x: 60, y: 100, status: 'idle' },
+          { nid: 'n2', name: 'Analyze Results', agent: 'DataAnalyst', prompt: 'Analyze the gathered data', x: 300, y: 100, status: 'idle' },
+          { nid: 'n3', name: 'Write Report', agent: 'ContentWriter', prompt: 'Write a concise market report', x: 540, y: 100, status: 'idle' },
+        ]);
+        setEdges([
+          { from: 'n1', to: 'n2' },
+          { from: 'n2', to: 'n3' },
+        ]);
+      }
+    }
+  };
+
+  const saveWorkflow = async () => {
+    try {
+      await apiFetch('/workflows', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: selectedWfName,
+          description: 'Custom Workflow',
+          definition: { nodes, edges }
+        })
+      });
+      toast(`Saved ${selectedWfName}`, 'ok');
+      fetchWorkflows();
+    } catch (err) {
+      toast('Failed to save workflow', 'err');
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkflows();
+    loadWorkflow(selectedWfName);
+  }, []);
 
   const handleMouseDown = (nid: string, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).classList.contains('port')) return;
+    if ((e.target as HTMLElement).classList.contains('ms-port')) return;
     setIsDragging(nid);
     const node = nodes.find(n => n.nid === nid);
     if (node) {
@@ -65,9 +117,9 @@ const WorkflowBuilder: React.FC = () => {
       if (!fromNode || !toNode) return null;
 
       const x1 = fromNode.x + 180; // Node width
-      const y1 = fromNode.y + 50;  // Center Y
+      const y1 = fromNode.y + 40;  // Center Y
       const x2 = toNode.x;
-      const y2 = toNode.y + 50;
+      const y2 = toNode.y + 40;
 
       const mx = (x1 + x2) / 2;
 
@@ -76,8 +128,8 @@ const WorkflowBuilder: React.FC = () => {
           key={i}
           d={`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
           fill="none"
-          stroke="var(--border2)"
-          strokeWidth="1.5"
+          stroke="var(--s-border2)"
+          strokeWidth="2"
           markerEnd="url(#arrowhead)"
         />
       );
@@ -85,84 +137,105 @@ const WorkflowBuilder: React.FC = () => {
   };
 
   return (
-    <div className="view-body">
-      <div className="row gap-8">
-        <select className="fs" style={{ width: '220px' }}>
-          <option>Market Research Pipeline</option>
-          <option>Code Review Pipeline</option>
+    <div className="ms-content">
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center' }}>
+        <select 
+          className="fi" 
+          style={{ width: '220px' }}
+          value={selectedWfName}
+          onChange={(e) => loadWorkflow(e.target.value)}
+        >
+          {workflows.map(wf => <option key={wf.id} value={wf.name}>{wf.name}</option>)}
+          {!workflows.find(w => w.name === 'Market Research Pipeline') && <option value="Market Research Pipeline">Market Research Pipeline</option>}
         </select>
-        <button className="btn btn-g btn-sm"><Plus size={14} /> New Workflow</button>
+        <button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => {
+          const name = prompt('Workflow Name?');
+          if (name) setSelectedWfName(name);
+        }}><Plus size={14} /> New</button>
+        <button className="ms-btn ms-btn-b ms-btn-sm" onClick={saveWorkflow}><Save size={14} /> Save</button>
+        
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-          <button className="btn btn-g btn-sm"><Plus size={14} /> Add Step</button>
-          <button className="btn btn-p btn-sm"><Play size={14} /> Run Workflow</button>
+          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => {
+             const nid = `n${nodes.length + 1}`;
+             setNodes([...nodes, { nid, name: 'New Step', agent: 'Orchestrator', prompt: 'Task details here', x: 100, y: 100, status: 'idle' }]);
+          }}><Plus size={14} /> Add Step</button>
+          <button className="ms-btn ms-btn-p ms-btn-sm"><Play size={14} /> Run Workflow</button>
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
-        <div className="wf-toolbar">
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--t3)' }}>NODES: <span className="text-a">{nodes.length}</span></span>
-          <div className="wf-toolbar-sep"></div>
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--t3)' }}>STATUS: <span className="text-g">Ready</span></span>
-          <div className="wf-toolbar-sep"></div>
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--t3)' }}>LAST RUN: 2m ago</span>
+      <div className="ms-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+        <div className="ms-card-hd">
+          <div className="ms-card-title" style={{ display: 'flex', gap: '16px' }}>
+            <span>NODES: <span className="text-a">{nodes.length}</span></span>
+            <div style={{ width: 1, height: 14, background: 'var(--s-border)' }}></div>
+            <span>STATUS: <span className="text-g">Ready</span></span>
+          </div>
+          <div className="ms-pill">
+             <Activity size={12} className="ms-dot-pulse text-g" />
+             Last sync: Just now
+          </div>
         </div>
         
         <div 
-          className="workflow-canvas" 
+          className="ms-wf-canvas" 
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           ref={canvasRef}
         >
-          <svg className="wf-svg">
+          <div className="ms-wf-grid"></div>
+          
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
             <defs>
               <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                <polygon points="0 0, 10 3.5, 0 7" fill="var(--border2)" />
+                <polygon points="0 0, 10 3.5, 0 7" fill="var(--s-border2)" />
               </marker>
             </defs>
             {renderEdges()}
           </svg>
           
-          <div className="wf-canvas-inner">
+          <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 2 }}>
             {nodes.map(node => (
               <div 
                 key={node.nid}
-                className={`wf-node ${isDragging === node.nid ? 'dragging' : ''}`}
+                className={`ms-node ${isDragging === node.nid ? 'act' : ''}`}
                 style={{ left: node.x, top: node.y }}
                 onMouseDown={(e) => handleMouseDown(node.nid, e)}
               >
-                <div className="wf-node-title">
-                  <span className={`wf-node-status ${node.status}`} style={{ background: `var(--${node.status === 'completed' ? 'g' : node.status === 'running' ? 'a' : 't3'})` }}></span>
+                <div className="ms-node-title">
+                  <div className={`ms-dot ms-dot-${node.status === 'completed' ? 'g' : node.status === 'running' ? 'b' : 'y'}`}></div>
                   {node.name}
                 </div>
-                <div className="wf-node-agent mono">{node.agent}</div>
-                <div className="wf-node-prompt">{node.prompt}</div>
-                <div className="wf-node-ports">
-                  <div className="port in"></div>
-                  <div className="port out"></div>
+                <div className="ms-node-sub">{node.agent}</div>
+                <div style={{ fontSize: '11px', color: 'var(--s-t2)', marginTop: '8px', lineHeight: '1.4' }}>
+                  {node.prompt}
                 </div>
+                
+                {/* Ports */}
+                <div className="ms-port" style={{ position: 'absolute', left: '-8px', top: 'calc(50% - 7px)' }}></div>
+                <div className="ms-port" style={{ position: 'absolute', right: '-8px', top: 'calc(50% - 7px)' }}></div>
+                
+                <button 
+                  style={{ position: 'absolute', top: 4, right: 4, background: 'transparent', border: 'none', color: 'var(--s-t4)', cursor: 'pointer' }}
+                  onClick={(e) => { e.stopPropagation(); setNodes(nodes.filter(n => n.nid !== node.nid)); }}
+                ><Trash2 size={12} /></button>
               </div>
             ))}
           </div>
         </div>
-
-        <div className="wf-status-bar">
-          <Activity size={12} className="text-g animate-pulse" />
-          <span>System Idle — Awaiting workflow execution</span>
-        </div>
       </div>
 
-      <div className="card">
-        <div className="card-hd">
-          <div className="card-hd-title">Execution Log</div>
-          <button className="btn btn-xs btn-g">Clear</button>
+      <div className="ms-card" style={{ marginTop: '20px' }}>
+        <div className="ms-card-hd">
+          <div className="ms-card-title">Execution Log</div>
+          <div className="ms-pill" style={{ color: 'var(--s-blue)' }}>
+            <TerminalIcon size={12} /> axon.relay
+          </div>
         </div>
-        <div className="card-body" style={{ padding: '12px' }}>
-          <div className="wf-run-log">
-            <div className="log-line info">[14:32:01] Initializing Market Research Pipeline...</div>
-            <div className="log-line ok">[14:32:05] Step 1: Gather Data completed successfully.</div>
-            <div className="log-line info">[14:32:06] Forwarding payload to DataAnalyst...</div>
-            <div className="log-line ok">[14:32:18] Step 2: Analyze Results completed.</div>
-            <div className="log-line ok">[14:32:22] Workflow execution finished.</div>
+        <div className="ms-card-body" style={{ padding: '0' }}>
+          <div className="ms-stream" style={{ height: '120px', border: 'none' }}>
+            <div className="info">[14:32:01] Initializing {selectedWfName}...</div>
+            <div className="ok">[14:32:05] Workflow loaded from database.</div>
+            <div className="info">[14:32:06] Monitoring active nodes...</div>
           </div>
         </div>
       </div>

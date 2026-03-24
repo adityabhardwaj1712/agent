@@ -1,0 +1,47 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from typing import List, Dict
+from ...db.database import get_db
+from ...models.trace import Trace
+from pydantic import BaseModel
+import datetime
+
+router = APIRouter()
+
+class TraceResponse(BaseModel):
+    trace_id: str
+    task_id: str
+    agent_id: str
+    step: str
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+
+@router.get("/", response_model=List[TraceResponse])
+async def list_traces(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Trace).order_by(Trace.created_at.desc()).limit(100))
+    return result.scalars().all()
+
+@router.get("/{task_id}/flame")
+async def get_flame_graph(task_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Trace).filter(Trace.task_id == task_id).order_by(Trace.created_at.asc()))
+    traces = result.scalars().all()
+    
+    # Simple logic to simulate flame graph stages from sequential traces
+    flame = []
+    if traces:
+        for i in range(len(traces)):
+            t = traces[i]
+            # Duration is time until next trace or some estimated value for the last one
+            dur = 0.1 # default
+            if i < len(traces) - 1:
+                 dur = (traces[i+1].created_at - t.created_at).total_seconds()
+            flame.append({
+                "name": t.step,
+                "dur": max(0.01, dur),
+                "col": "var(--g)" if "success" in (t.step or "").lower() else "var(--a)"
+            })
+    return flame
+

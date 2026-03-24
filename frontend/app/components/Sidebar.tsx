@@ -1,112 +1,131 @@
-'use client';
-
-import React from 'react';
-import { 
-  Zap, 
-  Bot, 
-  ClipboardList, 
-  GitBranch, 
-  Brain, 
-  Link2, 
-  Search, 
-  CheckCircle, 
-  BarChart3, 
-  FileText, 
-  CreditCard,
-  Plus,
-  Sun,
-  Moon,
-  LogOut,
-  Settings
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/api';
 
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
-  onRegisterAgent: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeView, 
-  onViewChange, 
-  onRegisterAgent,
-  theme,
-  onToggleTheme
-}) => {
-  const categories = [
-    {
-      title: 'Core',
-      items: [
-        { id: 'dashboard', label: 'Dashboard', icon: Zap },
-        { id: 'agents', label: 'Agents', icon: Bot },
-        { id: 'tasks', label: 'Tasks', icon: ClipboardList, badge: 3 },
-        { id: 'workflow', label: 'Workflows', icon: GitBranch },
-      ]
-    },
-    {
-      title: 'Intelligence',
-      items: [
-        { id: 'memory', label: 'Memory', icon: Brain },
-        { id: 'protocol', label: 'Protocol', icon: Link2 },
-        { id: 'traces', label: 'Traces', icon: Search },
-        { id: 'approvals', label: 'Approvals', icon: CheckCircle, badge: 2 },
-      ]
-    },
-    {
-      title: 'Platform',
-      items: [
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-        { id: 'audit', label: 'Audit Logs', icon: FileText },
-        { id: 'billing', label: 'Billing', icon: CreditCard },
-      ]
-    }
-  ];
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onToggleTheme }) => {
+  const [counts, setCounts] = useState({
+    agents: 0,
+    approvals: 0,
+    traces: 0
+  });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const data = await apiFetch<any>('/analytics/summary');
+        setCounts({
+          agents: data.active_agents,
+          approvals: data.pending_approvals,
+          traces: data.active_events
+        });
+      } catch (err) {
+        console.error('Sidebar fetch failed:', err);
+      }
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 15000); // 15s refetch
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <aside className="sidebar">
-      <div className="logo">
-        <div className="logo-mark" style={{ background: 'linear-gradient(135deg, var(--a), var(--a2))' }}>
-          <Settings size={16} color="white" />
-        </div>
-        <div className="flex flex-col">
-          <span className="logo-name">AgentCloud</span>
-          <span className="logo-ver">v1.0 · Orchestration</span>
+    <aside className="ms-sb-wide">
+      <div className="ms-logo-wide">
+        <div className="ms-logo-mark">AC</div>
+        <div>
+          <div className="ms-logo-name">AGENTCLOUD</div>
+          <div className="ms-logo-ver">v2.4 · pro</div>
         </div>
       </div>
-      
-      <nav className="nav">
-        {categories.map((cat, idx) => (
-          <React.Fragment key={idx}>
-            <div className="nav-grp">{cat.title}</div>
-            {cat.items.map(item => (
-              <div 
-                key={item.id}
-                className={`nav-item ${activeView === item.id ? 'act' : ''}`}
-                onClick={() => onViewChange(item.id)}
-              >
-                <item.icon className="ico" size={14} />
-                {item.label}
-                {item.badge && (
-                  <span className={`nav-badge ${item.id === 'approvals' ? 'amber' : ''}`}>
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            ))}
-          </React.Fragment>
-        ))}
+
+      <nav className="ms-nav-wide">
+        <div className="ms-nav-sec">Platform</div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'unified' ? 'act' : ''}`}
+          onClick={() => onViewChange('unified')}
+        >
+          <span>🏠</span> Unified Command
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'dashboard' ? 'act' : ''}`}
+          onClick={() => onViewChange('dashboard')}
+        >
+          <span>📊</span> Overview
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'agents' ? 'act' : ''}`}
+          onClick={() => onViewChange('agents')}
+        >
+          <span>🤖</span> Agents
+          {counts.agents > 0 && <span className="ms-nav-badge">{counts.agents}</span>}
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'tasks' ? 'act' : ''}`}
+          onClick={() => onViewChange('tasks')}
+        >
+          <span>📋</span> Tasks
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'workflow' ? 'act' : ''}`}
+          onClick={() => onViewChange('workflow')}
+        >
+          <span>🔀</span> Workflows
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'marketplace' ? 'act' : ''}`}
+          onClick={() => onViewChange('marketplace')}
+        >
+          <span>🛍</span> Marketplace
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'analytics' ? 'act' : ''}`}
+          onClick={() => onViewChange('analytics')}
+        >
+          <span>📈</span> Analytics
+        </div>
+
+        <div className="ms-nav-sec">System</div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'memory' ? 'act' : ''}`}
+          onClick={() => onViewChange('memory')}
+        >
+          <span>🧠</span> Memory
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'settings' ? 'act' : ''}`}
+          onClick={() => onViewChange('settings')}
+        >
+          <span>⚙️</span> Settings
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'traces' ? 'act' : ''}`}
+          onClick={() => onViewChange('traces')}
+        >
+          <span>🔬</span> Traces
+          {counts.traces > 0 && <span className="ms-nav-badge y">{counts.traces}</span>}
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'approvals' ? 'act' : ''}`}
+          onClick={() => onViewChange('approvals')}
+        >
+          <span>✅</span> Approvals
+          {counts.approvals > 0 && <span className="ms-nav-badge r">{counts.approvals}</span>}
+        </div>
       </nav>
 
-      <div className="sidebar-footer">
-        <button className="sidebar-btn" onClick={onRegisterAgent}>
-          + Register Agent
-        </button>
-        <button className="theme-btn" onClick={onToggleTheme}>
-          <span id="theme-ico">{theme === 'dark' ? '☀' : '🌙'}</span>
-          <span id="theme-lbl">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
+      <div className="ms-sb-footer">
+        <div className="ms-avatar">DU</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            demo@agentcloud.ai
+          </div>
+          <div style={{ fontSize: 9, color: 'var(--s-t3)', fontFamily: 'var(--mono)' }}>admin</div>
+        </div>
       </div>
     </aside>
   );

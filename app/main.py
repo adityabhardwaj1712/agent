@@ -45,10 +45,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error("Unhandled exception: {exc}", exc=exc, exc_info=True)
+    import traceback
+    tb = traceback.format_exc()
+    logger.error(f"Unhandled exception at {request.url.path}: {exc}\n{tb}")
     return JSONResponse(
         status_code=500,
-        content={"message": "An internal server error occurred. Please contact support."},
+        content={"message": f"Internal Error: {str(exc)}", "path": request.url.path},
     )
 
 origins = [o.strip() for o in (settings.CORS_ORIGINS or "").split(",") if o.strip()]

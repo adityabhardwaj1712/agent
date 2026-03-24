@@ -39,7 +39,7 @@ class ReportingService:
             avg_time = await db.scalar(select(func.avg(Task.execution_time_ms)).filter(Task.status == "completed", Task.created_at >= yesterday)) or 0
             
             # 2. Top Agents
-            stmt = select(Agent.name, func.count(Task.task_id).label("count")).join(Task).filter(Task.created_at >= yesterday).group_by(Agent.name).order_by(func.count(Task.task_id).desc()).limit(3)
+            stmt = select(Agent.name, func.count(Task.task_id).label("count")).select_from(Agent).join(Task).filter(Task.created_at >= yesterday).group_by(Agent.name).order_by(func.count(Task.task_id).desc()).limit(3)
             result = await db.execute(stmt)
             top_agents = result.all()
 

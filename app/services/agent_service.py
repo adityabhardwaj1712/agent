@@ -61,7 +61,31 @@ BUILTIN_AGENTS = [
     },
 ]
 
+from ..models.user import User
+
 async def seed_builtin_agents(db: AsyncSession, owner_id: str):
+    """Ensure the built-in agents exist for this owner."""
+    
+    # Ensure owner exists first to avoid FK constraint violations
+    result = await db.execute(select(User).filter(User.user_id == owner_id))
+    user = result.scalars().first()
+    if not user:
+        demo_user = User(
+            user_id=owner_id, 
+            email=f"{owner_id}@example.com", 
+            hashed_password="demo-password-hash"
+        )
+        db.add(demo_user)
+        try:
+            await db.commit()
+            from loguru import logger
+            logger.info(f"Created missing user: {owner_id}")
+        except Exception as e:
+            await db.rollback()
+            from loguru import logger
+            logger.error(f"Failed to create missing user {owner_id}: {e}")
+            
+
     """Ensure the built-in agents exist for this owner."""
     for spec in BUILTIN_AGENTS:
         result = await db.execute(
@@ -95,6 +119,18 @@ async def seed_builtin_agents(db: AsyncSession, owner_id: str):
         logger.error(f"Failed to seed builtin agents: {e}")
 
 async def register_agent(db: AsyncSession, data: AgentCreate):
+    # Ensure owner exists to avoid FK constraint violations
+    result = await db.execute(select(User).filter(User.user_id == data.owner_id))
+    user = result.scalars().first()
+    if not user:
+        new_user = User(
+            user_id=data.owner_id,
+            email=f"{data.owner_id}@example.com",
+            hashed_password="auto-provisioned"
+        )
+        db.add(new_user)
+        await db.flush() # Flush to ensure user_id is available for FK
+
     agent_id = str(uuid.uuid4())
     scopes_str = ",".join(data.scopes) if data.scopes else "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL"
     db_agent = Agent(

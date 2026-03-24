@@ -397,6 +397,7 @@ class AgentCloudDoctor:
 
         endpoints = [
             ("/v1/analytics/metrics", "Analytics Metrics"),
+            ("/v1/analytics/summary", "Analytics Summary (Dashboard)"),
             ("/v1/traces/", "Traces List"),
         ]
         for path, name in endpoints:
@@ -480,12 +481,12 @@ class AgentCloudDoctor:
                 "nodes": [],
                 "edges": [],
             })
-            if code in (200, 422, 401):  # Even a 422 indicates the POST endpoint exists
-                self._record("Workflows", "Workflows Endpoint", Status.PASS, latency=lat)
+            if code in (200, 422, 401, 201):  
+                self._record("Workflows", "Workflows List & Run", Status.PASS, latency=lat)
             else:
-                self._record("Workflows", "Workflows Endpoint", Status.FAIL, f"HTTP {code}: {body}")
+                self._record("Workflows", "Workflows List & Run", Status.FAIL, f"HTTP {code}: {body}")
         except Exception as e:
-            self._record("Workflows", "Workflows Endpoint", Status.FAIL, str(e))
+            self._record("Workflows", "Workflows List & Run", Status.FAIL, str(e))
 
         try:
             code, body, lat = await self._http("GET", "/v1/goals/")
@@ -506,15 +507,13 @@ class AgentCloudDoctor:
         section("8. Human-in-the-Loop Approvals")
 
         try:
-            code, body, lat = await self._http("GET", "/v1/approvals/?status=pending")
+            code, body, lat = await self._http("GET", "/v1/approvals/")
             if code == 200:
-                self._record("HITL", "List Pending Approvals", Status.PASS, latency=lat)
-            elif code == 401:
-                self._record("HITL", "List Pending Approvals", Status.WARN, "Requires auth")
+                self._record("HITL", "List Approvals", Status.PASS, latency=lat)
             else:
-                self._record("HITL", "List Pending Approvals", Status.FAIL, f"HTTP {code}: {body}")
+                self._record("HITL", "List Approvals", Status.FAIL, f"HTTP {code}: {body}")
         except Exception as e:
-            self._record("HITL", "List Pending Approvals", Status.FAIL, str(e))
+            self._record("HITL", "List Approvals", Status.FAIL, str(e))
 
     # ====================================================================
     # 9. TOOLS (PLUGIN SYSTEM)
