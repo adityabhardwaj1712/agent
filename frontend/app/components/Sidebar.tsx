@@ -39,45 +39,45 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onTo
         <div className="ms-logo-mark">AC</div>
         <div>
           <div className="ms-logo-name">AGENTCLOUD</div>
-          <div className="ms-logo-ver">v2.4 · pro</div>
+          <div className="ms-logo-ver">v3.0</div>
         </div>
       </div>
 
       <nav className="ms-nav-wide">
-        <div className="ms-nav-sec">Platform</div>
+        <div className="ms-nav-sec">Core</div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'fleet' ? 'act' : ''}`}
+          onClick={() => onViewChange('fleet')}
+        >
+          <span>⬡</span> Fleet Overview
+        </div>
         <div 
           className={`ms-nav-itm ${activeView === 'agents' ? 'act' : ''}`}
           onClick={() => onViewChange('agents')}
         >
           <span>🤖</span> Agents
-          {counts.agents > 0 && <span className="ms-nav-badge">{counts.agents}</span>}
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'tasks' ? 'act' : ''}`}
-          onClick={() => onViewChange('tasks')}
-        >
-          <span>📋</span> Tasks
+          {counts.agents > 0 && <span className="ms-nav-badge y">{counts.agents}</span>}
         </div>
         <div 
           className={`ms-nav-itm ${activeView === 'workflow' ? 'act' : ''}`}
           onClick={() => onViewChange('workflow')}
         >
-          <span>🔀</span> Workflows
+          <span>⚡</span> Workflows
         </div>
         <div 
           className={`ms-nav-itm ${activeView === 'marketplace' ? 'act' : ''}`}
           onClick={() => onViewChange('marketplace')}
         >
-          <span>🛍</span> Marketplace
+          <span>🛒</span> Marketplace
         </div>
+
+        <div className="ms-nav-sec">Insights</div>
         <div 
           className={`ms-nav-itm ${activeView === 'analytics' ? 'act' : ''}`}
           onClick={() => onViewChange('analytics')}
         >
           <span>📈</span> Analytics
         </div>
-
-        <div className="ms-nav-sec">System</div>
         <div 
           className={`ms-nav-itm ${activeView === 'memory' ? 'act' : ''}`}
           onClick={() => onViewChange('memory')}
@@ -85,34 +85,41 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onTo
           <span>🧠</span> Memory
         </div>
         <div 
-          className={`ms-nav-itm ${activeView === 'settings' ? 'act' : ''}`}
-          onClick={() => onViewChange('settings')}
-        >
-          <span>⚙️</span> Settings
-        </div>
-        <div 
           className={`ms-nav-itm ${activeView === 'traces' ? 'act' : ''}`}
           onClick={() => onViewChange('traces')}
         >
-          <span>🔬</span> Traces
-          {counts.traces > 0 && <span className="ms-nav-badge y">{counts.traces}</span>}
+          <span>🔗</span> Traces
         </div>
+
+        <div className="ms-nav-sec">Safety</div>
         <div 
           className={`ms-nav-itm ${activeView === 'approvals' ? 'act' : ''}`}
           onClick={() => onViewChange('approvals')}
         >
           <span>✅</span> Approvals
-          {counts.approvals > 0 && <span className="ms-nav-badge r">{counts.approvals}</span>}
+          {counts.approvals > 0 && <span className="ms-nav-badge">{counts.approvals}</span>}
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'audit' ? 'act' : ''}`}
+          onClick={() => onViewChange('audit')}
+        >
+          <span>📋</span> Audit Logs
+        </div>
+        <div 
+          className={`ms-nav-itm ${activeView === 'settings' ? 'act' : ''}`}
+          onClick={() => onViewChange('settings')}
+        >
+          <span>⚙️</span> Settings
         </div>
       </nav>
 
       <div className="ms-sb-footer">
-        <div className="ms-avatar">DU</div>
+        <div className="ms-avatar">AK</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            demo@agentcloud.ai
+          <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
+            Aryan K.
           </div>
-          <div style={{ fontSize: 9, color: 'var(--s-t3)', fontFamily: 'var(--mono)' }}>admin</div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)' }}>admin</div>
         </div>
       </div>
     </aside>

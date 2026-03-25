@@ -4,6 +4,8 @@ from sqlalchemy import select
 from typing import List, Dict
 from ...db.database import get_db
 from ...models.trace import Trace
+from ...models.user import User
+from ...api.deps import get_current_user
 from pydantic import BaseModel
 import datetime
 
@@ -20,7 +22,10 @@ class TraceResponse(BaseModel):
         from_attributes = True
 
 @router.get("/", response_model=List[TraceResponse])
-async def list_traces(db: AsyncSession = Depends(get_db)):
+async def list_traces(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(Trace).order_by(Trace.created_at.desc()).limit(100))
     return result.scalars().all()
 

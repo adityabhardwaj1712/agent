@@ -18,47 +18,76 @@ const MODELS = [
 
 export default function AnalyticsView() {
   const kpis = [
-    { val: '98.2%', lbl: 'Success Rate', col: 'var(--g)', pct: 98 },
-    { val: '1,847', lbl: 'Total Tasks', col: 'var(--a)', pct: 75 },
-    { val: '$14.82', lbl: 'Weekly Spend', col: 'var(--y)', pct: 35 },
-    { val: '2.1%', lbl: 'Error Rate', col: 'var(--r)', pct: 21 },
+    { val: '98.2%', lbl: 'Success Rate', col: 'var(--green)', pct: 98 },
+    { val: '1,847', lbl: 'Total Tasks', col: 'var(--blue)', pct: 75 },
+    { val: '$14.82', lbl: 'Weekly Spend', col: 'var(--amber)', pct: 35 },
+    { val: '2.1%', lbl: 'Error Rate', col: 'var(--red)', pct: 21 },
   ];
 
   return (
-    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+    <div className="ms-content">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         {kpis.map((k, i) => (
-          <div key={i} className="metric-card" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-            <div className="mc-val" style={{ color: k.col }}>{k.val}</div>
-            <div className="mc-lbl">{k.lbl}</div>
-            <div className="mc-bar"><div className="mc-fill" style={{ width: `${k.pct}%`, background: k.col }}></div></div>
+          <div key={i} className="ms-card" style={{ padding: '20px', borderLeft: `2px solid ${k.col}` }}>
+            <div className="ms-ac-sv" style={{ color: k.col, fontSize: 24 }}>{k.val}</div>
+            <div className="ms-ac-sl">{k.lbl}</div>
+            <div style={{ background: 'var(--bg3)', height: 4, borderRadius: 2, marginTop: 12, overflow: 'hidden' }}>
+              <div style={{ background: k.col, width: `${k.pct}%`, height: '100%', boxShadow: `0 0 8px ${k.col}` }}></div>
+            </div>
           </div>
         ))}
       </div>
-      <div className="card">
-        <div className="card-hd"><div className="card-hd-title">Agent Performance Comparison</div></div>
-        <div className="card-body">
-          {AGENTS_DATA.map((a, i) => {
-            const sr = a.total ? Math.round(a.ok / a.total * 100) : 0;
-            return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: 130, fontSize: 12, fontWeight: 500 }}>{a.name}</div>
-                <div style={{ flex: 1, height: 16, background: 'var(--bg3)', borderRadius: 100, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${sr}%`, background: a.col, borderRadius: 100, opacity: 0.8 }}></div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="ms-panel" style={{ padding: 0 }}>
+          <div className="ms-card-hd" style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg3)' }}>
+            <div className="ms-card-title">Agent Quality Index</div>
+            <div className="ms-badge ms-b-g">Live</div>
+          </div>
+          <div style={{ padding: '20px' }}>
+            {AGENTS_DATA.map((a, i) => {
+              const sr = a.total ? Math.round(a.ok / a.total * 100) : 0;
+              return (
+                <div key={i} style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: 'var(--t1)' }}>{a.name}</span>
+                    <span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: 'var(--mono)' }}>{sr}% Yield</span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--bg2)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${sr}%`, background: a.col, borderRadius: 3, opacity: 0.8, boxShadow: `0 0 4px ${a.col}` }}></div>
+                  </div>
                 </div>
-                <div style={{ width: 50, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--t2)' }}>{sr}%</div>
-                <div style={{ width: 60, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--t3)' }}>{a.total} tasks</div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-      <div className="card tbl-wrap">
-        <div className="card-hd"><div className="card-hd-title">Model Cost Breakdown</div></div>
-        <table><thead><tr><th>Model</th><th>Tasks</th><th>Tokens In</th><th>Tokens Out</th><th>Cost</th><th>Avg Quality</th></tr></thead>
-          <tbody>{MODELS.map((m, i) => (
-            <tr key={i}><td style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{m.model}</td><td className="mono-sm">{m.tasks}</td><td className="mono-sm">{m.tokIn}</td><td className="mono-sm">{m.tokOut}</td><td className="mono-sm" style={{ color: 'var(--y)' }}>{m.cost}</td><td className="mono-sm" style={{ color: 'var(--g)' }}>{m.quality}</td></tr>
-          ))}</tbody></table>
+
+        <div className="ms-panel" style={{ padding: 0 }}>
+          <div className="ms-card-hd" style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg3)' }}>
+            <div className="ms-card-title">Token Utilization</div>
+            <div className="ms-badge ms-b-p">JSON-L</div>
+          </div>
+          <div style={{ padding: '0px' }}>
+             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+               <thead>
+                 <tr style={{ background: 'var(--bg1)', borderBottom: '1px solid var(--bg3)' }}>
+                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, color: 'var(--t3)' }}>MODEL</th>
+                   <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 11, color: 'var(--t3)' }}>COST</th>
+                   <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: 11, color: 'var(--t3)' }}>THROUGHPUT</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {MODELS.map((m, i) => (
+                   <tr key={i} style={{ borderBottom: '1px solid var(--bg2)' }}>
+                     <td style={{ padding: '12px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--blue)' }}>{m.model}</td>
+                     <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--green)' }}>{m.cost}</td>
+                     <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--t2)' }}>{m.tasks} ops</td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
+        </div>
       </div>
     </div>
   );

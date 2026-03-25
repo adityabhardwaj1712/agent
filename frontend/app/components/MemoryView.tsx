@@ -12,7 +12,7 @@ const INIT_MEMORIES = [
   { id: 'mem-006', agent: 'SecurityGuardian', title: 'Security Incident Log', content: 'Detected 3 unauthorized tool calls from ag-004. Payload contained SQL injection pattern. Blocked and alerted.', sim: 0.98, created: '2d ago' },
 ];
 
-export default function MemoryView() {
+export default function MemoryView({ refreshKey }: { refreshKey?: number }) {
   const [memories, setMemories] = useState(INIT_MEMORIES);
   const [filter, setFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,32 +25,68 @@ export default function MemoryView() {
     if (!newContent.trim()) { toast('Memory content required', 'warn'); return; }
     setMemories(p => [{ id: `mem-${p.length + 1}`, agent: 'User', title: newContent.slice(0, 40), content: newContent, sim: +(Math.random() * 0.2 + 0.8).toFixed(2), created: 'just now' }, ...p]);
     setNewContent(''); setModalOpen(false);
-    toast('Memory stored', 'ok');
+    toast('Memory stored successfully', 'ok');
   };
 
   return (
-    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div className="row gap-8">
-        <input className="fi" style={{ maxWidth: 280 }} placeholder="Search memory..." onChange={e => setFilter(e.target.value.toLowerCase())} />
-        <span className="pill" style={{ marginLeft: 'auto' }}><span className="dot dot-g"></span>pgvector: active</span>
-        <button className="btn btn-g btn-sm" onClick={() => setModalOpen(true)}>+ Add Memory</button>
-      </div>
-      <div className="mem-grid">
-        {filtered.map(m => (
-          <div key={m.id} className="mem-card" onClick={() => toast(`Memory: ${m.id}`, 'info')}>
-            <div className="mem-card-title">{m.title}</div>
-            <div className="mem-card-text">{m.content.slice(0, 120)}{m.content.length > 120 ? '…' : ''}</div>
-            <div className="embed-bar" style={{ width: `${Math.round(m.sim * 100)}%` }}></div>
-            <div className="mem-card-meta">
-              <span className="badge b-a">{m.agent}</span>
-              <span>sim: {m.sim.toFixed(2)} · {m.created}</span>
+    <div className="ms-content">
+      <div className="ms-panel" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <input 
+              className="fi" 
+              style={{ width: 320 }} 
+              placeholder="Search neural vector space..." 
+              onChange={e => setFilter(e.target.value.toLowerCase())} 
+            />
+            <div className="ms-badge ms-b-p">
+               Vector Index: pgvector-v2
             </div>
           </div>
-        ))}
+          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => setModalOpen(true)}>
+             + Sync New Vector
+          </button>
+        </div>
+
+        <div className="ms-agent-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+          {filtered.map(m => (
+            <div key={m.id} className="ms-card" style={{ cursor: 'pointer', position: 'relative' }} onClick={() => toast(`Metadata: ${m.id}`, 'info')}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div className="ms-badge ms-b-p">{m.agent}</div>
+                <div style={{ color: 'var(--t3)', fontSize: '11px', fontFamily: 'var(--mono)' }}>{m.id}</div>
+              </div>
+              <div style={{ color: 'var(--t1)', fontWeight: 600, marginBottom: 8 }}>{m.title}</div>
+              <div style={{ color: 'var(--t2)', fontSize: '13px', lineHeight: 1.5, marginBottom: 16, minHeight: '60px' }}>
+                {m.content.slice(0, 140)}{m.content.length > 140 ? '…' : ''}
+              </div>
+              
+              <div style={{ background: 'rgba(255,255,255,0.05)', height: 2, borderRadius: 1, marginBottom: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--blue)', width: `${Math.round(m.sim * 100)}%`, height: '100%', boxShadow: '0 0 8px var(--blue)' }}></div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--t3)', fontSize: '11px' }}>{m.created}</span>
+                <span style={{ color: 'var(--blue)', fontSize: '11px', fontFamily: 'var(--mono)' }}>SIM {m.sim.toFixed(2)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Memory Entry"
-        footer={<><button className="btn btn-g" onClick={() => setModalOpen(false)}>Cancel</button><button className="btn btn-p" onClick={addMemory}>Store Memory</button></>}>
-        <div className="fg"><label className="fl">Content</label><textarea className="ft" value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Memory content to store..." style={{ minHeight: 100 }} /></div>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Manual Vector Injection"
+        footer={<><button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => setModalOpen(false)}>Abort</button><button className="ms-btn ms-btn-p ms-btn-sm" onClick={addMemory}>Inject Memory</button></>}>
+        <div style={{ padding: '20px 0' }}>
+          <div className="fg">
+            <label className="fl">Neural Content</label>
+            <textarea 
+               className="ft" 
+               value={newContent} 
+               onChange={e => setNewContent(e.target.value)} 
+               placeholder="Enter raw text for embedding..." 
+               style={{ minHeight: 120, background: 'var(--bg1)', color: 'var(--t1)', border: '1px solid var(--bg3)' }} 
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

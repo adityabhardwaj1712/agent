@@ -1,30 +1,37 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from ...core.auth_service import create_user_token
 import uuid
 
+from ...services.user_service import user_service
+from ...schemas.user_schema import UserCreate, UserResponse, Token
+from ...db.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+
 router = APIRouter()
 
-class RegisterRequest(BaseModel):
-    email: str
-    password: str
-    name: str | None = None
+@router.post("/register", response_model=UserResponse)
+async def register(req: UserCreate, db: AsyncSession = Depends(get_db)):
+    existing_user = await user_service.get_user_by_email(db, req.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user = await user_service.create_user(db, req)
+    return user
 
-@router.post("/register")
-async def register(req: RegisterRequest):
-    # Dummy user registration
-    user_id = str(uuid.uuid4())
-    return {
-        "user_id": user_id,
-        "email": req.email,
-        "name": req.name
-    }
-
-@router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # Dummy login for MVP integration
-    if form_data.username and form_data.password:
-        token = create_user_token("demo-user")
-        return {"access_token": token, "token_type": "bearer"}
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+@router.post("/login", response_model=Token)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    user = await user_service.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_user_token(user.user_id)
+    return {"access_token": access_token, "token_type": "bearer"}

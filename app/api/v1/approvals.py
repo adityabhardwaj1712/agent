@@ -34,7 +34,7 @@ async def approve_request(id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Approval request not found")
     
     request.status = "approved"
-    request.processed_at = datetime.datetime.utcnow()
+    request.processed_at = datetime.datetime.now(datetime.UTC)
     await db.commit()
     return {"status": "approved"}
 
@@ -46,7 +46,7 @@ async def reject_request(id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Approval request not found")
     
     request.status = "rejected"
-    request.processed_at = datetime.datetime.utcnow()
+    request.processed_at = datetime.datetime.now(datetime.UTC)
     await db.commit()
     return {"status": "rejected"}
 

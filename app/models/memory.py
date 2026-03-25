@@ -10,4 +10,4 @@ class Memory(Base):
     agent_id = Column(String)
     content = Column(Text)
     embedding = Column(Vector(1536), nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))

@@ -82,6 +82,32 @@ class WorkflowEngine:
         for edge in wf.edges:
             self._edge_map.setdefault(edge.from_node, []).append(edge)
 
+    def _validate_cycle(self, wf: WorkflowDef):
+        """Perform DFS to detect cycles in the workflow DAG."""
+        visited = set()
+        rec_stack = set()
+
+        def has_cycle(node_id: str):
+            visited.add(node_id)
+            rec_stack.add(node_id)
+
+            for edge in self._edge_map.get(node_id, []):
+                if edge.to_node == "__end__":
+                    continue
+                if edge.to_node not in visited:
+                    if has_cycle(edge.to_node):
+                        return True
+                elif edge.to_node in rec_stack:
+                    return True
+
+            rec_stack.remove(node_id)
+            return False
+
+        for node in wf.nodes:
+            if node.node_id not in visited:
+                if has_cycle(node.node_id):
+                    raise ValueError(f"Cycle detected in workflow DAG starting at node {node.node_id}")
+
     async def run(
         self,
         wf: WorkflowDef,
@@ -92,6 +118,7 @@ class WorkflowEngine:
         workflow_id = str(uuid.uuid4())
         start = time.monotonic()
         self._build_maps(wf)
+        self._validate_cycle(wf)
 
         state = dict(initial_state)
         node_results: List[NodeResult] = []

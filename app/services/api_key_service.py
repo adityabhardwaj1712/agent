@@ -19,7 +19,7 @@ class APIKeyService:
         
         expires_at = None
         if duration_days:
-            expires_at = datetime.datetime.utcnow() + datetime.timedelta(days=duration_days)
+            expires_at = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=duration_days)
             
         api_key = APIKey(
             user_id=user_id,
@@ -52,11 +52,11 @@ class APIKeyService:
         api_key = result.scalars().first()
         
         if api_key:
-            if api_key.expires_at and api_key.expires_at < datetime.datetime.utcnow():
+            if api_key.expires_at and api_key.expires_at < datetime.datetime.now(datetime.UTC):
                 return None
             
             # Update last used
-            api_key.last_used_at = datetime.datetime.utcnow()
+            api_key.last_used_at = datetime.datetime.now(datetime.UTC)
             await db.commit()
             return api_key
             

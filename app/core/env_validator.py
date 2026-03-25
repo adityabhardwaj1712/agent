@@ -28,10 +28,12 @@ class EnvironmentValidator:
             self.errors.append("DATABASE_URL contains default credentials in non-local mode.")
     
     def _validate_jwt_keys(self):
-        if not Path(settings.JWT_PRIVATE_KEY_PATH).exists():
-            self.errors.append(f"JWT private key missing at {settings.JWT_PRIVATE_KEY_PATH}")
-        if not Path(settings.JWT_PUBLIC_KEY_PATH).exists():
-            self.errors.append(f"JWT public key missing at {settings.JWT_PUBLIC_KEY_PATH}")
+        # Only validate keys if using asymmetric algorithm
+        if settings.JWT_ALGORITHM.startswith("RS"):
+            if not Path(settings.JWT_PRIVATE_KEY_PATH).exists():
+                self.errors.append(f"JWT private key missing at {settings.JWT_PRIVATE_KEY_PATH}")
+            if not Path(settings.JWT_PUBLIC_KEY_PATH).exists():
+                self.errors.append(f"JWT public key missing at {settings.JWT_PUBLIC_KEY_PATH}")
     
     def _validate_ai_providers(self):
         # Determine if at least one valid key exists

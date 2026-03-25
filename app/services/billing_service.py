@@ -15,7 +15,7 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 # Initialize Stripe
-stripe.api_key = settings.SECRET_KEY # In a real app, this would be a separate STRIPE_SECRET_KEY
+stripe.api_key = settings.STRIPE_SECRET_KEY or "sk_test_placeholder" # Use proper key from settings
 
 class BillingService:
     """
@@ -84,7 +84,7 @@ class BillingService:
         await db.execute(
             update(Subscription)
             .where(Subscription.user_id == user_id, Subscription.status == "active")
-            .values(status="cancelled", current_period_end=datetime.utcnow())
+            .values(status="cancelled", current_period_end=datetime.now(datetime.UTC))
         )
 
         # 5. Create new subscription record
@@ -93,8 +93,8 @@ class BillingService:
             user_id=user_id,
             plan=plan,
             status="active",
-            current_period_start=datetime.utcnow(),
-            current_period_end=datetime.utcnow() + timedelta(days=30)
+            current_period_start=datetime.now(datetime.UTC),
+            current_period_end=datetime.now(datetime.UTC) + timedelta(days=30)
         )
         
         db.add(subscription)
@@ -111,7 +111,7 @@ class BillingService:
         redis = await get_async_redis_client()
         
         # Get current billing period (YYYY-MM)
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         period = now.strftime("%Y-%m")
         
         # 1. Update Global Metric
@@ -134,7 +134,7 @@ class BillingService:
         If agent_id is provided, returns usage for that specific agent.
         """
         redis = await get_async_redis_client()
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         period = now.strftime("%Y-%m")
         
         usage = {}

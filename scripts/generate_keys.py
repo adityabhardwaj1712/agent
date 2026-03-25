@@ -35,4 +35,8 @@ def generate_keys(private_path, public_path):
 
 if __name__ == "__main__":
     from app.config import settings
-    generate_keys(settings.JWT_PRIVATE_KEY_PATH, settings.JWT_PUBLIC_KEY_PATH)
+    # Only generate if algorithm starts with RS (asymmetric)
+    if settings.JWT_ALGORITHM.startswith("RS"):
+        generate_keys(settings.JWT_PRIVATE_KEY_PATH, settings.JWT_PUBLIC_KEY_PATH)
+    else:
+        print(f"Skipping RSA key generation for {settings.JWT_ALGORITHM}")

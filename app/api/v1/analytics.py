@@ -1,16 +1,24 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from pydantic import BaseModel
+import datetime
 from ...db.database import get_db
 from ...models.agent import Agent
 from ...models.task import Task
 from ...models.approval import ApprovalRequest
 from ...models.trace import Trace
 
+from ...api.deps import get_current_user
+from ...models.user import User
+
 router = APIRouter()
 
 @router.get("/summary")
-async def get_summary(db: AsyncSession = Depends(get_db)):
+async def get_summary(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     # 1. Active Agents count
     agent_count = await db.scalar(select(func.count(Agent.agent_id)))
     
@@ -43,7 +51,7 @@ async def get_summary(db: AsyncSession = Depends(get_db)):
     }
 
 @router.get("/metrics")
-async def get_metrics():
+async def get_metrics(current_user: User = Depends(get_current_user)):
     # Placeholder for more detailed metrics if needed
     return {"status": "ok"}
 

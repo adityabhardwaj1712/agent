@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
     JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 week
+    STRIPE_SECRET_KEY: Optional[str] = None
     
     # CORS Configuration
     CORS_ORIGINS: str = "http://localhost:3000,http://frontend:3000"

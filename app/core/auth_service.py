@@ -6,7 +6,7 @@ def create_token(agent_id: str, scopes: list[str] | None = None):
     payload = {
         "agent": agent_id,
         "scopes": scopes or [],
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     }
     return jwt.encode(
         payload,
@@ -17,7 +17,7 @@ def create_token(agent_id: str, scopes: list[str] | None = None):
 def create_user_token(user_id: str):
     payload = {
         "user": user_id,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     }
     return jwt.encode(
         payload,
