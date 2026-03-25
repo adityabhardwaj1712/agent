@@ -141,6 +141,8 @@ async def register_agent(db: AsyncSession, data: AgentCreate):
         personality_config=data.personality_config,
         owner_id=data.owner_id,
         scopes=scopes_str,
+        model_name=data.model_name,
+        base_cost=data.base_cost,
     )
     db.add(db_agent)
     try:

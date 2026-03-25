@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import { ToastProvider, useToast } from "./components/Toast";
+import { apiFetch } from "./lib/api";
 
 // Views
-import DashboardView from "./components/DashboardView";
 import AgentGallery from "./components/AgentGallery";
 import TaskTable from "./components/TaskTable";
 import WorkflowBuilder from "./components/WorkflowBuilder";
@@ -16,19 +16,40 @@ import ApprovalsView from "./components/ApprovalsView";
 import AnalyticsView from "./components/AnalyticsView";
 import AuditView from "./components/AuditView";
 import BillingView from "./components/BillingView";
-import UnifiedDashboard from "./components/UnifiedDashboard";
 import AddAgentModal from "./components/AddAgentModal";
 import AddTaskModal from "./components/AddTaskModal";
 
 function AppContent() {
-  const [activeView, setActiveView] = useState('unified');
+  const [activeView, setActiveView] = useState('agents');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [stats, setStats] = useState<any>({ active_events: 0, total_cost: 0 });
+  const [refreshKey, setRefreshKey] = useState(0);
   const toast = useToast();
+
+  const handleAdded = () => {
+    setRefreshKey(prev => prev + 1);
+    const fetchGlobalStats = async () => {
+      try {
+        const data = await apiFetch<any>('/analytics/summary');
+        setStats(data);
+      } catch (e) {}
+    };
+    fetchGlobalStats();
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark');
+    const fetchGlobalStats = async () => {
+      try {
+        const data = await apiFetch<any>('/analytics/summary');
+        setStats(data);
+      } catch (e) {}
+    };
+    fetchGlobalStats();
+    const interval = setInterval(fetchGlobalStats, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleTheme = () => {
@@ -39,20 +60,17 @@ function AppContent() {
 
   const getTitle = () => {
     switch (activeView) {
-      case 'dashboard': return 'Fleet Overview';
       case 'agents': return 'Agent Registry';
       case 'workflow': return 'Workflow Builder';
       case 'marketplace': return 'Marketplace';
       case 'analytics': return 'Analytics · 30 Days';
       case 'memory': return 'Memory Store';
       case 'settings': return 'Settings & Configuration';
-      case 'unified': return 'Unified Command Center';
       default: return 'AgentCloud Platform';
     }
   };
 
   const getSub = () => {
-    if (activeView === 'dashboard') return 'Real-time agent orchestration dashboard';
     return '';
   };
 
@@ -74,19 +92,24 @@ function AppContent() {
           </div>
           
           <div className="ms-tb-right">
-            {activeView === 'dashboard' && (
-              <>
-                <div className="ms-pill">
-                  <span className="ms-dot ms-dot-g ms-dot-pulse"></span>
-                  Live · 42 events
-                </div>
-                <div style={{ background: 'var(--s-bg3)', border: '1px solid var(--s-border)', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'var(--s-t2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Search agents…
-                </div>
-                <button className="ms-btn ms-btn-p ms-btn-sm" onClick={() => setIsAgentModalOpen(true)}>+ New Agent</button>
-                <button className="ms-btn ms-btn-b ms-btn-sm" onClick={() => setIsTaskModalOpen(true)}>+ New Task</button>
-              </>
-            )}
+            <div 
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: stats.pending_approvals > 0 ? 1 : 0.5 }}
+              onClick={() => setActiveView('approvals')}
+            >
+              <div className={`ms-badge ${stats.pending_approvals > 0 ? 'ms-b-r' : 'ms-b-g'}`}>
+                {stats.pending_approvals > 0 ? '⚠️' : '✅'} Approvals: {stats.pending_approvals}
+              </div>
+            </div>
+            <div 
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: stats.active_events > 0 ? 1 : 0.5 }}
+              onClick={() => setActiveView('traces')}
+            >
+              <div className="ms-badge ms-b-b">
+                📡 Traces: {stats.active_events}
+              </div>
+            </div>
+            <div style={{ width: 1, height: 20, background: 'var(--s-border)', margin: '0 8px' }}></div>
+            
             {activeView === 'agents' && (
               <>
                 <div className="ms-badge ms-b-b">PRO</div>
@@ -101,25 +124,7 @@ function AppContent() {
           </div>
         </header>
 
-        {/* Global Cost Ticker */}
-        {activeView === 'dashboard' && (
-          <div style={{ background: 'rgba(79,142,255,.06)', borderBottom: '1px solid var(--s-border)', padding: '6px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--s-blue)', fontFamily: 'var(--mono)' }}>⚡ Live Cost Ticker</div>
-            <div style={{ fontSize: 11, color: 'var(--s-t2)' }}>
-              Token Cost Today: <strong style={{ color: 'var(--s-amber)' }}>$2.47</strong> ↑
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--s-t3)' }}>(updates 10s)</div>
-          </div>
-        )}
-
         {/* Main content */}
-        {activeView === 'unified' && (
-          <UnifiedDashboard 
-            onOpenAgentModal={() => setIsAgentModalOpen(true)} 
-            onOpenTaskModal={() => setIsTaskModalOpen(true)} 
-          />
-        )}
-        {activeView === 'dashboard' && <DashboardView />}
         {activeView === 'agents' && <AgentGallery />}
         {activeView === 'tasks' && <TaskTable />}
         {activeView === 'workflow' && <WorkflowBuilder />}
@@ -134,12 +139,12 @@ function AppContent() {
         <AddAgentModal 
           isOpen={isAgentModalOpen} 
           onClose={() => setIsAgentModalOpen(false)} 
-          onAdded={() => { /* Potential refresh logic here if needed beyond local view refetch */ }}
+          onAdded={handleAdded}
         />
         <AddTaskModal 
           isOpen={isTaskModalOpen} 
           onClose={() => setIsTaskModalOpen(false)} 
-          onAdded={() => {}}
+          onAdded={handleAdded}
         />
         
         {/* Marketplace & Settings placehoder */}

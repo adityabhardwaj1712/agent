@@ -7,6 +7,8 @@ class AgentBase(BaseModel):
     description: Optional[str] = None
     personality_config: Optional[str] = None
     owner_id: str
+    model_name: Optional[str] = "gpt-4o"
+    base_cost: Optional[float] = 0.01
 
 class AgentCreate(AgentBase):
     scopes: Optional[List[str]] = None

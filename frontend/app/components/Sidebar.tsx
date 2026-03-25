@@ -46,18 +46,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onTo
       <nav className="ms-nav-wide">
         <div className="ms-nav-sec">Platform</div>
         <div 
-          className={`ms-nav-itm ${activeView === 'unified' ? 'act' : ''}`}
-          onClick={() => onViewChange('unified')}
-        >
-          <span>🏠</span> Unified Command
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'dashboard' ? 'act' : ''}`}
-          onClick={() => onViewChange('dashboard')}
-        >
-          <span>📊</span> Overview
-        </div>
-        <div 
           className={`ms-nav-itm ${activeView === 'agents' ? 'act' : ''}`}
           onClick={() => onViewChange('agents')}
         >
