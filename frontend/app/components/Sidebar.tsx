@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
+import { 
+  LayoutDashboard, 
+  Bot, 
+  Zap, 
+  Layers, 
+  ShoppingBag, 
+  BarChart3, 
+  Brain, 
+  History, 
+  CheckCircle2, 
+  FileText, 
+  Settings,
+  Rocket,
+  ShieldCheck
+} from 'lucide-react';
 
 interface SidebarProps {
   activeView: string;
@@ -20,106 +35,75 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onTo
       try {
         const data = await apiFetch<any>('/analytics/summary');
         setCounts({
-          agents: data.active_agents,
-          approvals: data.pending_approvals,
-          traces: data.active_events
+          agents: data.active_agents || 0,
+          approvals: data.pending_approvals || 0,
+          traces: data.active_events || 0
         });
       } catch (err) {
         console.error('Sidebar fetch failed:', err);
       }
     };
     fetchCounts();
-    const interval = setInterval(fetchCounts, 15000); // 15s refetch
+    const interval = setInterval(fetchCounts, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const navItems = [
+    { id: 'fleet', label: 'Fleet Overview', icon: <LayoutDashboard size={18} />, section: 'Core' },
+    { id: 'agents', label: 'Neural Agents', icon: <Bot size={18} />, section: 'Core', badge: counts.agents, badgeColor: 'y' },
+    { id: 'autonomous', label: 'Auto Missions', icon: <Rocket size={18} />, section: 'Core' },
+    { id: 'workflow', label: 'Logic Flows', icon: <Zap size={18} />, section: 'Core' },
+    { id: 'marketplace', label: 'Marketplace', icon: <ShoppingBag size={18} />, section: 'Core' },
+    
+    { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} />, section: 'Insights' },
+    { id: 'memory', label: 'Neural Memory', icon: <Brain size={18} />, section: 'Insights' },
+    { id: 'traces', label: 'Execution Traces', icon: <History size={18} />, section: 'Insights' },
+    
+    { id: 'approvals', label: 'Guardrails', icon: <ShieldCheck size={18} />, section: 'Safety', badge: counts.approvals },
+    { id: 'audit', label: 'System Audit', icon: <FileText size={18} />, section: 'Safety' },
+    { id: 'settings', label: 'Node Settings', icon: <Settings size={18} />, section: 'Safety' },
+  ];
+
+  const sections = ['Core', 'Insights', 'Safety'];
 
   return (
     <aside className="ms-sb-wide">
       <div className="ms-logo-wide">
         <div className="ms-logo-mark">AC</div>
-        <div>
-          <div className="ms-logo-name">AGENTCLOUD</div>
-          <div className="ms-logo-ver">v3.0</div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="ms-logo-name">AGENTCLOUD <span className="text-[var(--blue)]">OPS</span></div>
+          <div className="ms-logo-ver">V3.1 ENTERPRISE</div>
         </div>
       </div>
 
       <nav className="ms-nav-wide">
-        <div className="ms-nav-sec">Core</div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'fleet' ? 'act' : ''}`}
-          onClick={() => onViewChange('fleet')}
-        >
-          <span>⬡</span> Fleet Overview
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'agents' ? 'act' : ''}`}
-          onClick={() => onViewChange('agents')}
-        >
-          <span>🤖</span> Agents
-          {counts.agents > 0 && <span className="ms-nav-badge y">{counts.agents}</span>}
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'workflow' ? 'act' : ''}`}
-          onClick={() => onViewChange('workflow')}
-        >
-          <span>⚡</span> Workflows
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'marketplace' ? 'act' : ''}`}
-          onClick={() => onViewChange('marketplace')}
-        >
-          <span>🛒</span> Marketplace
-        </div>
-
-        <div className="ms-nav-sec">Insights</div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'analytics' ? 'act' : ''}`}
-          onClick={() => onViewChange('analytics')}
-        >
-          <span>📈</span> Analytics
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'memory' ? 'act' : ''}`}
-          onClick={() => onViewChange('memory')}
-        >
-          <span>🧠</span> Memory
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'traces' ? 'act' : ''}`}
-          onClick={() => onViewChange('traces')}
-        >
-          <span>🔗</span> Traces
-        </div>
-
-        <div className="ms-nav-sec">Safety</div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'approvals' ? 'act' : ''}`}
-          onClick={() => onViewChange('approvals')}
-        >
-          <span>✅</span> Approvals
-          {counts.approvals > 0 && <span className="ms-nav-badge">{counts.approvals}</span>}
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'audit' ? 'act' : ''}`}
-          onClick={() => onViewChange('audit')}
-        >
-          <span>📋</span> Audit Logs
-        </div>
-        <div 
-          className={`ms-nav-itm ${activeView === 'settings' ? 'act' : ''}`}
-          onClick={() => onViewChange('settings')}
-        >
-          <span>⚙️</span> Settings
-        </div>
+        {sections.map(section => (
+          <React.Fragment key={section}>
+            <div className="ms-nav-sec">{section}</div>
+            {navItems.filter(item => item.section === section).map(item => (
+              <div 
+                key={item.id}
+                className={`ms-nav-itm ${activeView === item.id ? 'act' : ''}`}
+                onClick={() => onViewChange(item.id)}
+              >
+                <span className="opacity-70">{item.icon}</span>
+                <span className="flex-1">{item.label}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className={`ms-nav-badge ${item.badgeColor || ''}`}>{item.badge}</span>
+                )}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
       </nav>
 
       <div className="ms-sb-footer">
         <div className="ms-avatar">AK</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
-            Aryan K.
+          <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
+            Aryan Khanna
           </div>
-          <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)' }}>admin</div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)', letterSpacing: '1px' }}>SYSTEM_ROOT</div>
         </div>
       </div>
     </aside>

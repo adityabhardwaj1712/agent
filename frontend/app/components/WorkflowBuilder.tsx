@@ -1,7 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Plus, Trash2, Activity, Terminal as TerminalIcon, Save, RefreshCw } from 'lucide-react';
+import { 
+  Play, 
+  Plus, 
+  Trash2, 
+  Activity, 
+  Save, 
+  RefreshCw,
+  Cpu,
+  ArrowRight,
+  Database,
+  Layers,
+  Search,
+  Settings2,
+  Terminal as TerminalIcon
+} from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import { useToast } from './Toast';
 
@@ -33,7 +47,7 @@ const WorkflowBuilder: React.FC = () => {
   const fetchWorkflows = async () => {
     try {
       const data = await apiFetch<any[]>('/workflows');
-      setWorkflows(data);
+      setWorkflows(data || []);
     } catch (err) {
       console.error('Failed to fetch workflows:', err);
     }
@@ -45,14 +59,13 @@ const WorkflowBuilder: React.FC = () => {
       setNodes(data.definition.nodes || []);
       setEdges(data.definition.edges || []);
       setSelectedWfName(name);
-      toast(`Loaded ${name}`, 'ok');
+      toast(`Protocol Loaded: ${name}`, 'ok');
     } catch (err) {
-      // If not found, use default or empty
       if (name === 'Market Research Pipeline' && nodes.length === 0) {
         setNodes([
-          { nid: 'n1', name: 'Gather Data', agent: 'WebResearcher', prompt: 'Search for market trends', x: 60, y: 100, status: 'idle' },
-          { nid: 'n2', name: 'Analyze Results', agent: 'DataAnalyst', prompt: 'Analyze the gathered data', x: 300, y: 100, status: 'idle' },
-          { nid: 'n3', name: 'Write Report', agent: 'ContentWriter', prompt: 'Write a concise market report', x: 540, y: 100, status: 'idle' },
+          { nid: 'n1', name: 'Neural Retrieval', agent: 'WebResearcher', prompt: 'Harvesting latest global market trends...', x: 80, y: 150, status: 'idle' },
+          { nid: 'n2', name: 'Pattern Analysis', agent: 'DataAnalyst', prompt: 'Detecting alpha signals in dataset...', x: 380, y: 150, status: 'idle' },
+          { nid: 'n3', name: 'Synthesis Engine', agent: 'ContentWriter', prompt: 'Generating high-fidelity strategic report...', x: 680, y: 150, status: 'idle' },
         ]);
         setEdges([
           { from: 'n1', to: 'n2' },
@@ -68,14 +81,14 @@ const WorkflowBuilder: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({
           name: selectedWfName,
-          description: 'Custom Workflow',
+          description: 'Autonomous Intelligence Flow',
           definition: { nodes, edges }
         })
       });
-      toast(`Saved ${selectedWfName}`, 'ok');
+      toast(`Protocol Synchronized`, 'ok');
       fetchWorkflows();
     } catch (err) {
-      toast('Failed to save workflow', 'err');
+      toast('Sync Failed', 'err');
     }
   };
 
@@ -85,7 +98,7 @@ const WorkflowBuilder: React.FC = () => {
   }, []);
 
   const handleMouseDown = (nid: string, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).classList.contains('ms-port')) return;
+    if ((e.target as HTMLElement).closest('.ms-btn')) return;
     setIsDragging(nid);
     const node = nodes.find(n => n.nid === nid);
     if (node) {
@@ -110,41 +123,15 @@ const WorkflowBuilder: React.FC = () => {
     setIsDragging(null);
   };
 
-  const renderEdges = () => {
-    return edges.map((edge, i) => {
-      const fromNode = nodes.find(n => n.nid === edge.from);
-      const toNode = nodes.find(n => n.nid === edge.to);
-      if (!fromNode || !toNode) return null;
-
-      const x1 = fromNode.x + 180; // Node width
-      const y1 = fromNode.y + 40;  // Center Y
-      const x2 = toNode.x;
-      const y2 = toNode.y + 40;
-
-      const mx = (x1 + x2) / 2;
-
-      return (
-        <path 
-          key={i}
-          d={`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
-          fill="none"
-          stroke="var(--s-border2)"
-          strokeWidth="2"
-          markerEnd="url(#arrowhead)"
-        />
-      );
-    });
-  };
-
   return (
-    <div className="ms-content">
-      {/* Workflow Header */}
-      <div className="ms-panel" style={{ padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+    <div className="ms-content" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+      {/* Control Bar */}
+      <div className="ms-glass-panel" style={{ padding: '12px 20px', marginBottom: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ fontSize: '10px', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Active Sequence</label>
+          <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--blue)', fontWeight: 700, marginBottom: '2px' }}>Orchestration Target</span>
           <select 
             className="fi" 
-            style={{ width: '280px', fontWeight: 600 }}
+            style={{ width: '320px', background: 'transparent', border: '1px solid var(--bg3)', borderRadius: '4px', padding: '4px 8px', color: 'var(--text)', fontWeight: 600 }}
             value={selectedWfName}
             onChange={(e) => loadWorkflow(e.target.value)}
           >
@@ -153,50 +140,50 @@ const WorkflowBuilder: React.FC = () => {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => {
-            const name = prompt('Workflow Name?');
-            if (name) setSelectedWfName(name);
-          }}><Plus size={14} /> Initialize New</button>
-          <button className="ms-btn ms-btn-b ms-btn-sm" onClick={saveWorkflow}><Save size={14} /> Commit Changes</button>
-          <div style={{ width: 1, height: 32, background: 'var(--bg3)', margin: '0 8px' }}></div>
-          <button className="ms-btn ms-btn-p ms-btn-sm" style={{ padding: '0 24px' }}>
-            <Play size={14} style={{ marginRight: 8 }} /> Execute Protocol
+        <div style={{ display: 'flex', gap: '12px', marginLeft: 'auto' }}>
+          <button className="ms-btn ms-btn-sm" onClick={saveWorkflow} style={{ background: 'var(--bg2)', borderColor: 'var(--bg3)' }}>
+            <Save size={14} className="mr-2" /> Sync State
+          </button>
+          <button className="ms-btn ms-btn-p ms-btn-sm" style={{ padding: '0 24px', fontWeight: 700, letterSpacing: '0.5px' }}>
+            <Play size={14} className="mr-2 fill-current" /> EXECUTE PROTOCOL
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', flex: 1, minHeight: 0 }}>
-        {/* Main Canvas */}
-        <div className="ms-card" style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', flex: 1, minHeight: 0 }}>
+        {/* Workspace */}
+        <div className="ms-glass-panel" style={{ position: 'relative', padding: 0, overflow: 'hidden', background: 'rgba(5, 5, 8, 0.4)' }}>
           <div className="ms-card-hd" style={{ padding: '12px 20px', borderBottom: '1px solid var(--bg3)' }}>
-            <div className="ms-card-title" style={{ display: 'flex', gap: '20px' }}>
-              <span style={{ fontSize: '12px' }}>NODES: <span style={{ color: 'var(--cyan)' }}>{nodes.length}</span></span>
-              <span style={{ fontSize: '12px' }}>EDGES: <span style={{ color: 'var(--cyan)' }}>{edges.length}</span></span>
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--t3)' }}>ACTIVE_NODES: <span style={{ color: 'var(--blue)', fontWeight: 700 }}>{nodes.length}</span></div>
+              <div style={{ fontSize: '11px', color: 'var(--t3)' }}>RELATIONS: <span style={{ color: 'var(--blue)', fontWeight: 700 }}>{edges.length}</span></div>
             </div>
-            <div className="ms-badge ms-b-g">
-               Link: Stable
+            <div className="ms-badge ms-b-g" style={{ fontSize: '9px', fontWeight: 800 }}>
+              GRID_STABLE
             </div>
           </div>
-          
+
           <div 
             className="ms-wf-canvas" 
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
             ref={canvasRef}
-            style={{ background: 'var(--bg0)', backgroundImage: 'radial-gradient(circle, var(--bg2) 1px, transparent 1px)', backgroundSize: '30px 30px' }}
+            style={{ 
+              background: 'var(--bg0)', 
+              backgroundImage: 'radial-gradient(var(--bg2) 1px, transparent 0)', 
+              backgroundSize: '40px 40px',
+              height: '100%',
+              position: 'relative'
+            }}
           >
             <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
               <defs>
-                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                  <polygon points="0 0, 10 3.5, 0 7" fill="var(--blue)" fillOpacity="0.5" />
-                </marker>
-                <filter id="glow">
-                   <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-                   <feMerge>
-                       <feMergeNode in="coloredBlur"/>
-                       <feMergeNode in="SourceGraphic"/>
-                   </feMerge>
+                <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="var(--blue)" stopOpacity="0.2" />
+                  <stop offset="50%" stopColor="var(--blue)" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="var(--blue)" stopOpacity="0.2" />
+                </linearGradient>
+                <filter id="neonGlow">
+                  <feGaussianBlur stdDeviation="2" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
               </defs>
               {edges.map((edge, i) => {
@@ -204,92 +191,224 @@ const WorkflowBuilder: React.FC = () => {
                 const toNode = nodes.find(n => n.nid === edge.to);
                 if (!fromNode || !toNode) return null;
 
-                const x1 = fromNode.x + 200; 
-                const y1 = fromNode.y + 45;  
+                const x1 = fromNode.x + 220; 
+                const y1 = fromNode.y + 40;  
                 const x2 = toNode.x;
-                const y2 = toNode.y + 45;
+                const y2 = toNode.y + 40;
                 const mx = (x1 + x2) / 2;
 
                 return (
-                  <path 
-                    key={i}
-                    d={`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
-                    fill="none"
-                    stroke="var(--blue)"
-                    strokeWidth="2"
-                    strokeOpacity="0.3"
-                    markerEnd="url(#arrowhead)"
-                  />
+                  <g key={i}>
+                    <path 
+                      d={`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
+                      fill="none"
+                      stroke="url(#edgeGradient)"
+                      strokeWidth="2"
+                      className="ms-wf-edge-pulse"
+                      filter="url(#neonGlow)"
+                    />
+                    <circle cx={x2} cy={y2} r="3" fill="var(--blue)" />
+                  </g>
                 );
               })}
             </svg>
             
-            <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 2 }}>
+            <div>
               {nodes.map(node => (
                 <div 
                   key={node.nid}
-                  className={`ms-node ${isDragging === node.nid ? 'act' : ''}`}
+                  className={`ms-node-card ${isDragging === node.nid ? 'dragging' : ''}`}
                   style={{ 
                     left: node.x, 
                     top: node.y, 
-                    width: 200, 
+                    width: 220, 
                     position: 'absolute',
-                    cursor: isDragging ? 'grabbing' : 'grab'
+                    zIndex: isDragging === node.nid ? 100 : 2
                   }}
                   onMouseDown={(e) => handleMouseDown(node.nid, e)}
                 >
-                  <div className="ms-node-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div className={`ms-dot ms-dot-${node.status === 'completed' ? 'g' : node.status === 'running' ? 'b' : 'y'}`}></div>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name}</span>
-                  </div>
-                  <div className="ms-node-sub" style={{ color: 'var(--cyan)' }}>{node.agent}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--t2)', marginTop: '8px', lineHeight: '1.4', fontStyle: 'italic' }}>
-                    "{node.prompt.slice(0, 50)}{node.prompt.length > 50 ? '...' : ''}"
+                  <div className="ms-node-header">
+                    <div className={`ms-status-dot ${node.status}`}></div>
+                    <span className="ms-node-name">{node.name}</span>
+                    <button 
+                      className="ms-icon-btn red ml-auto"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); setNodes(nodes.filter(n => n.nid !== node.nid)); }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
                   </div>
                   
-                  {/* Ports */}
-                  <div className="ms-port" style={{ position: 'absolute', left: '-6px', top: '42px', border: '2px solid var(--bg3)' }}></div>
-                  <div className="ms-port" style={{ position: 'absolute', right: '-6px', top: '42px', border: '2px solid var(--bg3)' }}></div>
-                  
-                  <button 
-                    style={{ position: 'absolute', top: 4, right: 4, background: 'transparent', border: 'none', color: 'var(--t3)', cursor: 'pointer' }}
-                    onClick={(e) => { e.stopPropagation(); setNodes(nodes.filter(n => n.nid !== node.nid)); }}
-                  ><Trash2 size={12} /></button>
+                  <div className="ms-node-body">
+                    <div className="ms-agent-tag"><Cpu size={10} className="mr-1" /> {node.agent}</div>
+                    <p className="ms-node-prompt">“{node.prompt}”</p>
+                  </div>
+
+                  {/* IO Ports */}
+                  <div className="ms-node-port port-in"></div>
+                  <div className="ms-node-port port-out"></div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Sidebar Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="ms-card" style={{ padding: '16px' }}>
-            <div style={{ fontSize: '12px', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Sequencer Controls</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button className="ms-btn ms-btn-g ms-btn-sm" onClick={() => {
-                const nid = `n${nodes.length + 1}`;
-                setNodes([...nodes, { nid, name: 'New Intelligence', agent: 'Orchestrator', prompt: 'Define task requirements...', x: 50, y: 50, status: 'idle' }]);
-              }}><Plus size={14} style={{ marginRight: 8 }} /> Add Neural Node</button>
-              <button className="ms-btn ms-btn-sm" style={{ borderColor: 'var(--bg3)', background: 'var(--bg1)' }}>
-                <RefreshCw size={14} style={{ marginRight: 8 }} /> Reset Topology
+        {/* Intelligence Palette */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="ms-glass-panel" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <Layers size={18} style={{ color: 'var(--blue)' }} />
+              <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.5px' }}>NODE LIBRARY</span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button className="ms-btn-ghost active" onClick={() => {
+                const nid = `n${Date.now()}`;
+                setNodes([...nodes, { nid, name: 'Neural Instance', agent: 'Orchestrator', prompt: 'Define neural weights...', x: 50, y: 50, status: 'idle' }]);
+              }}>
+                <Plus size={14} className="mr-3" /> New Neural Node
+              </button>
+              <button className="ms-btn-ghost">
+                <Search size={14} className="mr-3" /> Template Registry
+              </button>
+              <button className="ms-btn-ghost">
+                <Settings2 size={14} className="mr-3" /> Logic Config
               </button>
             </div>
           </div>
 
-          <div className="ms-card" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column' }}>
-            <div className="ms-card-hd" style={{ padding: '12px 16px', borderBottom: '1px solid var(--bg3)' }}>
-              <div className="ms-card-title">Event Stream</div>
-              <Activity size={12} className="ms-dot-pulse" style={{ color: 'var(--green)' }} />
+          <div className="ms-glass-panel" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="ms-card-hd" style={{ padding: '12px 20px', borderBottom: '1px solid var(--bg3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TerminalIcon size={14} />
+                <span style={{ fontSize: '11px', fontWeight: 800 }}>TELEMETRY_STREAM</span>
+              </div>
+              <Activity size={12} className="ms-dot-pulse" style={{ color: 'var(--blue)' }} />
             </div>
-            <div className="ms-stream" style={{ flex: 1, padding: '12px', border: 'none', fontSize: '11px' }}>
-              <div className="info">SYS: Initializing link...</div>
-              <div className="ok">AUTH: Connection verified.</div>
-              <div className="info">WF: Buffer state: IDLE.</div>
-              <div style={{ color: 'var(--t3)', marginTop: 8 }}>Ready for protocol launch.</div>
+            
+            <div className="ms-log-container">
+              <div className="log-line info">[SYS] INITIALIZING CORE_OS...</div>
+              <div className="log-line ok">[OK] NEURAL_LINK ESTABLISHED</div>
+              <div className="log-line ok">[OK] REDIS_PUBSUB: ACTIVE</div>
+              <div className="log-line info">[WF] LOADED: {selectedWfName}</div>
+              <div className="log-line debug">Waiting for protocol trigger...</div>
+              <div className="log-cursor">_</div>
             </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .ms-node-card {
+          background: rgba(15, 15, 20, 0.8);
+          backdrop-filter: blur(12px);
+          border: 1px solid var(--bg3);
+          border-radius: 8px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .ms-node-card:hover {
+          border-color: var(--blue);
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        .ms-node-card.dragging {
+          border-color: var(--blue);
+          box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+        }
+        .ms-node-header {
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--bg3);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .ms-node-name {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--text);
+          text-transform: uppercase;
+        }
+        .ms-node-body {
+          padding: 12px;
+        }
+        .ms-node-prompt {
+          font-size: 10.5px;
+          color: var(--t2);
+          line-height: 1.5;
+          margin-top: 8px;
+          font-style: italic;
+        }
+        .ms-status-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+        }
+        .ms-status-dot.idle { background: var(--t3); }
+        .ms-status-dot.running { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+        .ms-status-dot.completed { background: var(--green); }
+        
+        .ms-agent-tag {
+          font-size: 9px;
+          font-family: var(--mono);
+          color: var(--blue);
+          background: rgba(59, 130, 246, 0.1);
+          padding: 2px 6px;
+          border-radius: 4px;
+          display: inline-flex;
+          align-items: center;
+        }
+        
+        .ms-node-port {
+          width: 8px;
+          height: 8px;
+          background: var(--bg2);
+          border: 1px solid var(--bg3);
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          border-radius: 1px;
+        }
+        .port-in { left: -4px; }
+        .port-out { right: -4px; border-radius: 50%; }
+
+        .ms-btn-ghost {
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--t2);
+          padding: 10px 16px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s;
+          cursor: pointer;
+        }
+        .ms-btn-ghost:hover {
+          background: var(--bg2);
+          color: var(--text);
+        }
+        .ms-btn-ghost.active {
+          border-color: var(--bg3);
+          background: rgba(255,255,255,0.03);
+          color: var(--blue);
+        }
+
+        .ms-log-container {
+          flex: 1;
+          padding: 16px;
+          font-family: var(--mono);
+          font-size: 10px;
+          line-height: 1.8;
+          overflow-y: auto;
+        }
+        .log-line { border-left: 2px solid transparent; padding-left: 8px; }
+        .log-line.info { color: var(--t3); }
+        .log-line.ok { color: var(--green); border-left-color: var(--green); }
+        .log-line.debug { color: var(--blue); }
+        .log-cursor { display: inline-block; width: 6px; height: 12px; background: var(--blue); animation: blink 1s infinite; margin-left: 4px; vertical-align: middle; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+      `}</style>
     </div>
   );
 };

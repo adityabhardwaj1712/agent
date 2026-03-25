@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import time
+import traceback
 from typing import Optional, List, Dict
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,7 +67,7 @@ class AutoModeService:
                         await reporting_service.generate_daily_report()
                         last_report_time = time.time()
             except Exception as e:
-                logger.error(f"Error in Auto Mode loop: {e}")
+                logger.error(f"Error in Auto Mode loop: {e}\\n{traceback.format_exc()}")
             
             await asyncio.sleep(30)
 

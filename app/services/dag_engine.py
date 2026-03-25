@@ -1,289 +1,139 @@
-"""
-UPGRADE 1: DAG Workflow Engine  (app/services/dag_engine.py)
-"""
-from __future__ import annotations
-
 import asyncio
-import json
+import logging
+from typing import Dict, List, Any, Optional, Set, Callable
+from datetime import datetime, timezone
 import uuid
-import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
-from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..db.database import AsyncSessionLocal
+# Remove circular import
+# from .autonomous_orchestrator import AutonomousOrchestrator
 from ..models.task import Task
-from ..services.model_router import select_model, call_provider
+from ..db.database import AsyncSessionLocal
+from sqlalchemy import select
 
+logger = logging.getLogger(__name__)
 
-# ─── Data classes ─────────────────────────────────────────────────────────────
+class DAGNode:
+    def __init__(self, id: str, description: str, agent_id: Optional[str] = None):
+        self.id = id
+        self.description = description
+        self.agent_id = agent_id
+        self.dependencies: Set[str] = set()
+        self.status = "pending" # pending, running, completed, failed
+        self.result: Optional[str] = None
+        self.error: Optional[str] = None
+        self.started_at: Optional[datetime] = None
+        self.finished_at: Optional[datetime] = None
 
-@dataclass
-class Node:
-    """A single step in the workflow."""
-    node_id: str
-    agent_id: str
-    instruction: str                        # May reference {state_key} for templating
-    timeout_seconds: int = 120
-    max_retries: int = 2
-    # If set, this node's output key is used to pick the next edge
-    condition: Optional[Callable[[dict], str]] = None
+class DAGEngine:
+    """
+    Manages the execution of Directed Acyclic Graph (DAG) workflows.
+    Supports parallel execution of independent nodes.
+    """
 
-
-@dataclass
-class Edge:
-    """A directed connection from one node to another."""
-    from_node: str
-    to_node: str
-    condition_value: Optional[str] = None   # Only follow if node's condition() == this
-
-
-@dataclass
-class WorkflowDef:
-    """Complete workflow definition."""
-    name: str
-    nodes: List[Node]
-    edges: List[Edge]
-    parallel_groups: List[List[str]] = field(default_factory=list)  # node_ids to run in parallel
-    entry_node: Optional[str] = None        # defaults to first node
-
-
-@dataclass
-class NodeResult:
-    node_id: str
-    status: str                             # "completed" | "failed" | "skipped"
-    output: str = ""
-    duration_ms: int = 0
-    error: Optional[str] = None
-
-
-@dataclass
-class WorkflowResult:
-    workflow_id: str
-    workflow_name: str
-    status: str                             # "completed" | "failed" | "partial"
-    final_state: Dict[str, Any]
-    node_results: List[NodeResult]
-    total_duration_ms: int
-    error: Optional[str] = None
-
-
-# ─── Engine ───────────────────────────────────────────────────────────────────
-
-class WorkflowEngine:
     def __init__(self):
-        self._node_map: Dict[str, Node] = {}
-        self._edge_map: Dict[str, List[Edge]] = {}
+        self.execute_fn: Optional[Callable] = None
 
-    def _build_maps(self, wf: WorkflowDef):
-        self._node_map = {n.node_id: n for n in wf.nodes}
-        self._edge_map = {}
-        for edge in wf.edges:
-            self._edge_map.setdefault(edge.from_node, []).append(edge)
+    async def execute_workflow(self, goal_id: str, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]], execute_fn: Callable):
+        """
+        Executes a workflow defined by nodes and edges.
+        """
+        self.execute_fn = execute_fn
+        # 1. Build the graph
+        graph: Dict[str, DAGNode] = {}
+        for n in nodes:
+            node = DAGNode(id=n["id"], description=n["description"], agent_id=n.get("agent_id"))
+            graph[n["id"]] = node
 
-    def _validate_cycle(self, wf: WorkflowDef):
-        """Perform DFS to detect cycles in the workflow DAG."""
-        visited = set()
-        rec_stack = set()
+        for e in edges:
+            source = e["source"]
+            target = e["target"]
+            if target in graph:
+                graph[target].dependencies.add(source)
 
-        def has_cycle(node_id: str):
-            visited.add(node_id)
-            rec_stack.add(node_id)
+        # 2. Execution Loop
+        completed_nodes: Set[str] = set()
+        running_tasks: Dict[str, asyncio.Task] = {}
 
-            for edge in self._edge_map.get(node_id, []):
-                if edge.to_node == "__end__":
-                    continue
-                if edge.to_node not in visited:
-                    if has_cycle(edge.to_node):
-                        return True
-                elif edge.to_node in rec_stack:
-                    return True
+        logger.info(f"Starting DAG workflow for goal {goal_id} with {len(nodes)} nodes")
 
-            rec_stack.remove(node_id)
-            return False
+        while len(completed_nodes) < len(graph):
+            # Find nodes ready to run (all dependencies completed)
+            ready_nodes = [
+                node_id for node_id, node in graph.items()
+                if node_id not in completed_nodes 
+                and node_id not in running_tasks
+                and all(dep in completed_nodes for dep in node.dependencies)
+                and node.status != "failed"
+            ]
 
-        for node in wf.nodes:
-            if node.node_id not in visited:
-                if has_cycle(node.node_id):
-                    raise ValueError(f"Cycle detected in workflow DAG starting at node {node.node_id}")
+            # Start ready nodes
+            for node_id in ready_nodes:
+                node = graph[node_id]
+                node.status = "running"
+                node.started_at = datetime.now(timezone.utc)
+                
+                # Start execution as a background task
+                task = asyncio.create_task(self._execute_node(goal_id, node))
+                running_tasks[node_id] = task
+                logger.debug(f"Started node {node_id}: {node.description}")
 
-    async def run(
-        self,
-        wf: WorkflowDef,
-        initial_state: Dict[str, Any],
-        user_id: str,
-        resume_from: Optional[str] = None,   # node_id to resume from after failure
-    ) -> WorkflowResult:
-        workflow_id = str(uuid.uuid4())
-        start = time.monotonic()
-        self._build_maps(wf)
-        self._validate_cycle(wf)
+            if not running_tasks:
+                if len(completed_nodes) < len(graph):
+                    # Check for deadlocks or failed dependencies
+                    failed_nodes = [id for id, n in graph.items() if n.status == "failed"]
+                    if failed_nodes:
+                        logger.error(f"Workflow {goal_id} aborted due to failed nodes: {failed_nodes}")
+                        break
+                    logger.error(f"Workflow {goal_id} deadlocked! Remaining: {[id for id in graph if id not in completed_nodes]}")
+                    break
+                break
 
-        state = dict(initial_state)
-        node_results: List[NodeResult] = []
-        
-        if not wf.nodes:
-            logger.warning(f"Workflow {wf.name} [{workflow_id}] has no nodes")
-            return WorkflowResult(
-                workflow_id=workflow_id,
-                workflow_name=wf.name,
-                status="failed",
-                final_state=state,
-                node_results=[],
-                total_duration_ms=int((time.monotonic() - start) * 1000),
-                error="Workflow definition contains no nodes",
-            )
+            # Wait for any task to complete
+            done, _ = await asyncio.wait(running_tasks.values(), return_when=asyncio.FIRST_COMPLETED)
+            
+            # Process completed tasks
+            for task in done:
+                # Find which node it was
+                finished_node_id = None
+                for node_id, t in running_tasks.items():
+                    if t == task:
+                        finished_node_id = node_id
+                        break
+                
+                if finished_node_id:
+                    del running_tasks[finished_node_id]
+                    completed_nodes.add(finished_node_id)
+                    logger.debug(f"Completed node {finished_node_id}")
 
-        current_node_id = resume_from or wf.entry_node or wf.nodes[0].node_id
+        logger.info(f"Workflow {goal_id} finished. {len(completed_nodes)}/{len(graph)} nodes completed.")
+        return {node_id: {"status": n.status, "result": n.result, "error": n.error} for node_id, n in graph.items()}
 
-        logger.info(f"Workflow {wf.name} [{workflow_id}] starting at node={current_node_id}")
-
-        parallel_set: set[str] = {nid for group in wf.parallel_groups for nid in group}
-
+    async def _execute_node(self, goal_id: str, node: DAGNode):
+        """
+        Executes a single node in the DAG.
+        """
         try:
-            while current_node_id and current_node_id != "__end__":
-                node = self._node_map.get(current_node_id)
-                if not node:
-                    raise ValueError(f"Node '{current_node_id}' not found in workflow '{wf.name}'")
+            # Use the orchestrator to execute the specific task
+            # In a real system, this would create a Task in the DB and wait for the worker
+            # For Phase 1, we call the executor logic directly or via the orchestrator
+            
+            logger.info(f"Executing node {node.id}: {node.description}")
+            
+            # Use the passed execution function
+            assert self.execute_fn is not None
+            result = await self.execute_fn(node.description)
+            
+            node.result = result
+            node.status = "completed"
+            node.finished_at = datetime.now(timezone.utc)
+            
+            # Update status in DB (Optional for now, but good practice)
+            # await self._update_node_status(goal_id, node)
+            
+        except Exception as e:
+            logger.error(f"Error executing node {node.id}: {e}")
+            node.error = str(e)
+            node.status = "failed"
+            node.finished_at = datetime.now(timezone.utc)
 
-                # ── Parallel group? ───────────────────────────────────────────
-                parallel_group = next(
-                    (g for g in wf.parallel_groups if current_node_id in g), None
-                )
-                if parallel_group:
-                    group_results = await self._run_parallel(parallel_group, state, user_id)
-                    node_results.extend(group_results)
-                    for r in group_results:
-                        state[f"{r.node_id}_result"] = r.output
-                    # Move past the group — find edge from last node in group
-                    last_node_id = parallel_group[-1]
-                    current_node_id = self._next_node(last_node_id, state)
-                else:
-                    # ── Single node ───────────────────────────────────────────
-                    result = await self._run_node(node, state, user_id)
-                    node_results.append(result)
-
-                    if result.status == "failed":
-                        return WorkflowResult(
-                            workflow_id=workflow_id,
-                            workflow_name=wf.name,
-                            status="failed",
-                            final_state=state,
-                            node_results=node_results,
-                            total_duration_ms=int((time.monotonic() - start) * 1000),
-                            error=result.error,
-                        )
-
-                    state[f"{node.node_id}_result"] = result.output
-                    current_node_id = self._next_node(current_node_id, state, node)
-
-            total_ms = int((time.monotonic() - start) * 1000)
-            logger.info(f"Workflow {wf.name} [{workflow_id}] completed in {total_ms}ms")
-
-            return WorkflowResult(
-                workflow_id=workflow_id,
-                workflow_name=wf.name,
-                status="completed",
-                final_state=state,
-                node_results=node_results,
-                total_duration_ms=total_ms,
-            )
-
-        except Exception as exc:
-            logger.error(f"Workflow {wf.name} [{workflow_id}] crashed: {exc}")
-            return WorkflowResult(
-                workflow_id=workflow_id,
-                workflow_name=wf.name,
-                status="failed",
-                final_state=state,
-                node_results=node_results,
-                total_duration_ms=int((time.monotonic() - start) * 1000),
-                error=str(exc),
-            )
-
-    async def _run_node(self, node: Node, state: dict, user_id: str) -> NodeResult:
-        """Execute a single node with retry logic."""
-        t0 = time.monotonic()
-        instruction = node.instruction.format_map(state)   # fill {state_key} references
-
-        for attempt in range(node.max_retries + 1):
-            try:
-                model = select_model(instruction)
-                messages = [
-                    {"role": "system", "content": (
-                        "You are an autonomous agent executing one step of a multi-step workflow. "
-                        "Complete only the task given. Be concise and structured."
-                    )},
-                    {"role": "user", "content": instruction},
-                ]
-                content, _, _usage = await asyncio.wait_for(
-                    call_provider(model, messages=messages),
-                    timeout=node.timeout_seconds,
-                )
-                duration_ms = int((time.monotonic() - t0) * 1000)
-                logger.info(f"Node '{node.node_id}' completed in {duration_ms}ms")
-                return NodeResult(
-                    node_id=node.node_id,
-                    status="completed",
-                    output=content or "",
-                    duration_ms=duration_ms,
-                )
-            except asyncio.TimeoutError:
-                logger.warning(f"Node '{node.node_id}' timed out (attempt {attempt+1})")
-                if attempt == node.max_retries:
-                    return NodeResult(
-                        node_id=node.node_id,
-                        status="failed",
-                        duration_ms=int((time.monotonic() - t0) * 1000),
-                        error=f"Timeout after {node.timeout_seconds}s",
-                    )
-                await asyncio.sleep(2 ** attempt * 3)
-            except Exception as exc:
-                logger.error(f"Node '{node.node_id}' error: {exc}")
-                if attempt == node.max_retries:
-                    return NodeResult(
-                        node_id=node.node_id,
-                        status="failed",
-                        duration_ms=int((time.monotonic() - t0) * 1000),
-                        error=str(exc),
-                    )
-                await asyncio.sleep(2 ** attempt * 3)
-
-    async def _run_parallel(
-        self, group: List[str], state: dict, user_id: str
-    ) -> List[NodeResult]:
-        """Run a group of nodes concurrently and collect results."""
-        tasks = [
-            self._run_node(self._node_map[nid], state, user_id)
-            for nid in group
-            if nid in self._node_map
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        out = []
-        for r in results:
-            if isinstance(r, Exception):
-                out.append(NodeResult(node_id="unknown", status="failed", error=str(r)))
-            else:
-                out.append(r)
-        return out
-
-    def _next_node(
-        self, current: str, state: dict, node: Optional[Node] = None
-    ) -> Optional[str]:
-        """Determine the next node based on edges and optional condition."""
-        edges = self._edge_map.get(current, [])
-        if not edges:
-            return "__end__"
-
-        # If node has a condition function, evaluate it
-        if node and node.condition:
-            condition_result = node.condition(state)
-            for edge in edges:
-                if edge.condition_value == condition_result:
-                    return edge.to_node
-            # No matching condition edge — end
-            return "__end__"
-
-        # Simple unconditional edge (take first)
-        return edges[0].to_node
+dag_engine = DAGEngine()

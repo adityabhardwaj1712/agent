@@ -40,12 +40,31 @@ async def get_summary(
     # 5. Recent Traces (for Dashboard Collaboration visual)
     recent_traces_count = await db.scalar(select(func.count(Trace.trace_id)))
 
+    # Success rate
+    success_rate = 0.0
+    if total_tasks > 0:
+        success_rate = round(((completed_tasks or 0) / total_tasks) * 100, 1)
+
+    # Total cost from Redis (if available)
+    total_cost = 0.0
+    try:
+        from ...db.redis_client import get_async_redis_client
+        import datetime as dt
+        redis = await get_async_redis_client()
+        period = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m")
+        cost_val = await redis.get(f"usage:{current_user.user_id}:{period}:cost:global")
+        total_cost = round(float(cost_val), 4) if cost_val else 0.0
+    except Exception:
+        pass
+
     return {
         "active_agents": agent_count or 0,
         "tasks_completed": completed_tasks or 0,
         "total_tasks": total_tasks or 0,
         "pending_approvals": pending_approvals or 0,
         "error_rate": error_rate,
+        "success_rate": success_rate,
+        "total_cost": total_cost,
         "avg_latency": round(float(avg_latency), 1),
         "active_events": recent_traces_count or 0
     }

@@ -15,5 +15,7 @@ class Goal(Base):
     description = Column(String, nullable=False)
     target_outcome = Column(Text)
     status = Column(String, default="active") # active, completed, failed
+    workflow_type = Column(String, default="linear") # linear, dag
+    workflow_json = Column(Text) # Stores nodes/edges for DAG
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

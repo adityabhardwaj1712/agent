@@ -44,6 +44,11 @@ _FALLBACK_CHAINS: dict[str, list[ModelChoice]] = {
         ModelChoice("claude-haiku-4-5-20251001", "fast and capable", "Anthropic"),
         ModelChoice("gpt-4o-mini", "openai cheap fallback", "OpenAI"),
     ],
+    "autonomous": [
+        ModelChoice("llama3-70b-8192", "high-speed autonomous planning", "Groq"),
+        ModelChoice("claude-sonnet-4-5", "complex autonomous fallback", "Anthropic"),
+        ModelChoice("gpt-4o", "openai complex fallback", "OpenAI"),
+    ]
 }
 
 
@@ -55,6 +60,8 @@ def _available(choice: ModelChoice) -> bool:
         return bool(settings.ANTHROPIC_API_KEY)
     if choice.provider == "Google":
         return bool(settings.GOOGLE_API_KEY)
+    if choice.provider == "Groq":
+        return bool(settings.GROQ_API_KEY)
     return False
 
 

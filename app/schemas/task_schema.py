@@ -58,3 +58,10 @@ class GoalResponse(GoalBase):
 
     class Config:
         from_attributes = True
+
+class GoalStatusResponse(BaseModel):
+    goal_id: str
+    status: str
+    description: str
+    tasks: List[TaskStatusResponse] = []
+    progress: float = 0.0

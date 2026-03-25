@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, Dict, Optional
 import redis.asyncio as aioredis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
@@ -49,7 +50,8 @@ class Orchestrator:
         priority: Priority = Priority.NORMAL,
         goal_id: Optional[str] = None, 
         parent_task_id: Optional[str] = None,
-        task_hash: Optional[str] = None
+        task_hash: Optional[str] = None,
+        model_override: Optional[str] = None
     ) -> EnqueueResult:
         task_id = str(uuid.uuid4())
         
@@ -69,8 +71,6 @@ class Orchestrator:
         await db.commit()
 
         # 2. Calculate score for ZSET (Priority first, then timestamp)
-        # Higher score = higher priority
-        # Score = (Priority * 10^12) + (Now)
         score = int(priority) * 1_000_000_000_000 + int(time.time())
         
         task_data = {
@@ -82,6 +82,7 @@ class Orchestrator:
             "goal_id": goal_id,
             "parent_task_id": parent_task_id,
             "task_hash": task_hash,
+            "model_override": model_override,
             "created_at": time.time()
         }
 
@@ -89,8 +90,72 @@ class Orchestrator:
         redis = await get_async_redis_client()
         await redis.zadd(QUEUE_KEY, {json.dumps(task_data): score})
         
-        logger.info(f"Enqueued task {task_id} with priority {priority.name} (hash={task_hash})")
+        logger.info(f"Enqueued task {task_id} with priority {priority.name} (model={model_override})")
         return EnqueueResult(task_id=task_id)
+
+    async def execute_task(
+        self, 
+        payload: str, 
+        priority: Priority = Priority.NORMAL, 
+        user_id: str = "system",
+        model_override: Optional[str] = None
+    ) -> str:
+        """
+        Submits a task and waits for the result (Synchronous-over-Async pattern).
+        """
+        async with AsyncSessionLocal() as db:
+            res = await self.enqueue_task(
+                db=db, 
+                payload=payload, 
+                user_id=user_id, 
+                priority=priority,
+                model_override=model_override
+            )
+            task_id = res.task_id
+            
+        return await self._wait_for_task(task_id)
+
+    async def _wait_for_task(self, task_id: str, timeout: int = 120) -> str:
+        """
+        Polls for task completion using Redis PubSub for real-time efficiency.
+        """
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
+        pubsub = redis.pubsub()
+        channel = f"task_status:{task_id}"
+        
+        await pubsub.subscribe(channel)
+        logger.info(f"Subscribed to {channel} for task completion")
+
+        start_time = time.time()
+        try:
+            while time.time() - start_time < timeout:
+                # 1. Check for PubSub message
+                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                if message:
+                    data = json.loads(message["data"])
+                    status = data.get("status")
+                    if status == "completed":
+                        return data.get("result") or ""
+                    if status == "failed":
+                        raise Exception(f"Task {task_id} failed: {data.get('error')}")
+
+                # 2. Periodic DB Fallback (every 5 seconds)
+                if int(time.time() - start_time) % 5 == 0:
+                    async with AsyncSessionLocal() as db:
+                        result = await db.execute(select(Task).where(Task.task_id == task_id))
+                        task = result.scalars().first()
+                        if task:
+                            if task.status == "completed":
+                                return task.result or ""
+                            if task.status == "failed":
+                                raise Exception(f"Task {task_id} failed: {task.error_message}")
+                
+                await asyncio.sleep(0.1)
+        finally:
+            await pubsub.unsubscribe(channel)
+            
+        raise TimeoutError(f"Task {task_id} timed out after {timeout} seconds")
 
 async def dequeue_next_task(redis_client: aioredis.Redis) -> Optional[Dict[str, Any]]:
     """

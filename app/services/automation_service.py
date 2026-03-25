@@ -6,7 +6,7 @@ import asyncio
 
 from .task_service import send_task
 from ..schemas.task_schema import TaskCreate
-from .event_bus import event_bus, AgentEvent
+from .event_bus import event_bus
 from ..db.database import AsyncSessionLocal
 from ..models.task import Task
 from sqlalchemy import select
@@ -24,17 +24,20 @@ class AutomationService:
     async def start(self):
         """Register listeners with the event bus."""
         logger.info("Automation Service starting...")
-        event_bus.subscribe("task_completed", agent_id="automation_engine")(self.handle_task_completion)
+        self._task = asyncio.create_task(event_bus.subscribe(self.handle_task_completion))
 
-    async def handle_task_completion(self, event: AgentEvent):
+    async def handle_task_completion(self, event: dict):
         """Listen for completed tasks and decide if a sequel is needed."""
         if not self._enabled:
             return
+            
+        if event.get("type") != "task_completed":
+            return
 
-        payload = event.payload
+        payload = event.get("data", {})
         task_id = payload.get("task_id")
         agent_id = payload.get("agent_id")
-        user_id = event.user_id
+        user_id = event.get("user_id") or payload.get("user_id")
 
         if not task_id or not user_id:
             return

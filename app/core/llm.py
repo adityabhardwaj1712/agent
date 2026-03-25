@@ -50,6 +50,15 @@ class LLMService:
             self._gemini_client = genai
         return self._gemini_client
 
+    def _groq(self):
+        if self._groq_client is None:
+            from groq import AsyncGroq
+            key = settings.GROQ_API_KEY
+            if not key:
+                raise RuntimeError("GROQ_API_KEY not set")
+            self._groq_client = AsyncGroq(api_key=key)
+        return self._groq_client
+
     # ─── provider dispatch ───────────────────────────────────────────────────
 
     async def get_completion(
@@ -69,6 +78,8 @@ class LLMService:
             return await self._call_anthropic(messages, model, tools, temperature)
         elif model.startswith("gemini-"):
             return await self._call_gemini(messages, model, tools, temperature)
+        elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
+            return await self._call_groq(messages, model, tools, temperature)
         else:
             return await self._call_openai(messages, model, tools, temperature)
 
@@ -86,6 +97,23 @@ class LLMService:
             kwargs["tool_choice"] = "auto"
 
         resp = await self._openai().chat.completions.create(**kwargs)
+        msg = resp.choices[0].message
+        return msg.content, getattr(msg, "tool_calls", None), resp.usage
+
+    # ─── Groq ────────────────────────────────────────────────────────────────
+
+    async def _call_groq(self, messages, model, tools, temperature):
+        kwargs: dict = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "timeout": 30.0,
+        }
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+
+        resp = await self._groq().chat.completions.create(**kwargs)
         msg = resp.choices[0].message
         return msg.content, getattr(msg, "tool_calls", None), resp.usage
 
@@ -218,6 +246,21 @@ class LLMService:
             total_tokens=0,
         )
         return text, None, usage
+
+    async def complete(
+        self,
+        messages: List[dict],
+        model: str = "gpt-4o-mini",
+        tools: Optional[List[dict]] = None,
+        agent_id: Optional[str] = None, # For logging context
+    ) -> dict:
+        """Compatibility shim for existing worker code."""
+        content, tool_calls, usage = await self.get_completion(messages, model, tools)
+        return {
+            "content": content,
+            "tool_calls": tool_calls,
+            "tokens_used": usage.total_tokens if usage else 0
+        }
 
 
 # ─── Shim types so the rest of the codebase stays unchanged ──────────────────

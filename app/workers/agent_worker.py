@@ -53,7 +53,7 @@ from app.services.reputation import update_reputation
 from app.services.trace_service import log_trace as axon_trace
 from app.services.orchestrator import dequeue_next_task, run_reputation_decay_scheduler, Priority
 from app.services.circuit_breaker import circuit_breaker, send_to_dlq, CircuitState
-from app.services.event_bus import event_bus, agent_delegate
+from app.services.event_bus import event_bus
 from sqlalchemy.future import select
 from sqlalchemy.exc import OperationalError
 
@@ -260,8 +260,8 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
     task_id  = task_dict.get("task_id", "unknown")
     agent_id = task_dict.get("agent_id")
     user_id  = task_dict.get("user_id")
-    prompt   = task_dict.get("prompt", "")
-    model    = task_dict.get("model")
+    prompt   = task_dict.get("payload", "") # Updated from 'prompt' to 'payload' to match Orchestrator
+    model    = task_dict.get("model_override") or task_dict.get("model")
     goal_id  = task_dict.get("goal_id")
 
     logger.info(f"Processing task {task_id} | agent={agent_id} | user={user_id}")
@@ -446,14 +446,21 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
         success = True
         logger.info(f"Task {task_id} COMPLETED ✓ | quality={quality_score:.2f}")
 
-        # ── 18. Notify WebSocket clients
+        # ── 18. Notify WebSocket & Orchestrator
         try:
-            await redis_client.publish(
-                f"task_updates:{user_id}",
-                json.dumps({"task_id": task_id, "status": "completed", "output": output[:200]}),
-            )
+            update_payload = json.dumps({
+                "task_id": task_id, 
+                "status": "completed", 
+                "result": output,
+                "agent_id": agent_id,
+                "quality_score": quality_score
+            })
+            # General user updates channel
+            await redis_client.publish(f"task_updates:{user_id}", update_payload)
+            # Specific task status channel for Orchestrator
+            await redis_client.publish(f"task_status:{task_id}", update_payload)
         except Exception as e:
-            logger.debug(f"WS publish failed: {e}")
+            logger.debug(f"PubSub notify failed: {e}")
 
         # ── 19. Circuit breaker success
         try:
@@ -473,6 +480,13 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
 
         # Publish failure event
         try:
+            fail_payload = json.dumps({
+                "task_id": task_id, 
+                "status": "failed", 
+                "error": str(exc),
+                "agent_id": agent_id
+            })
+            await redis_client.publish(f"task_status:{task_id}", fail_payload)
             await log_event(
                 event_type="task_failed",
                 payload={"task_id": task_id, "agent_id": agent_id, "error": str(exc)},
@@ -578,14 +592,19 @@ async def run_worker():
                         backoff = 2 ** retry_count  # 1s, 2s, 4s
                         logger.info(f"Retrying task {task_id} in {backoff}s (attempt {retry_count+1}/{max_retries})")
                         await asyncio.sleep(backoff)
-                        try:
-                            await redis_client.lpush(
-                                "tasks:high",  # Re-queue at high priority
-                                json.dumps(task_dict),
+                        
+                        # Use orchestrator to re-enqueue with same priority
+                        from app.services.orchestrator import orchestrator, Priority
+                        async with AsyncSessionLocal() as db:
+                            await orchestrator.enqueue_task(
+                                db=db,
+                                payload=task_dict.get("payload"),
+                                user_id=user_id,
+                                agent_id=agent_id,
+                                priority=Priority(task_dict.get("priority", 5)),
+                                goal_id=goal_id,
+                                model_override=task_dict.get("model_override")
                             )
-                        except Exception as re:
-                            logger.error(f"Failed to re-queue task {task_id}: {re}")
-                            await send_to_dlq(task_dict, reason="requeue_failed")
                     else:
                         logger.error(f"Task {task_id} exhausted {max_retries} retries — sending to DLQ")
                         try:

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
     
     # Infrastructure (Phase 9)
     DEPLOYMENT_MODE: str = "cloud" # cloud, byoc, onprem

@@ -60,6 +60,16 @@ class ToolExecutor:
             })
 
         logger.info(f"Executing tool: {tool_name} args={list(args)[:5]}")
+        
+        # ENTERPRISE AUDIT
+        from .audit_service import audit_service
+        await audit_service.log_action(
+            user_id=context.get("user_id", "unknown") if context else "unknown",
+            action_type="tool_execution",
+            agent_id=context.get("agent_id") if context else None,
+            task_id=context.get("task_id") if context else None,
+            detail={"tool": tool_name, "args_preview": list(args)[:5]}
+        )
         try:
             result = await handler(**args)
             return json.dumps(result)

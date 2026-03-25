@@ -46,6 +46,21 @@ async def get_my_agents(
 ):
     return await agent_service.list_agents(db, owner_id=current_user.user_id)
 
+@router.get("/builtin")
+async def get_builtin_agents():
+    return [
+        {"name": "Research Agent", "role": "researcher", "description": "Expert in deep web search"},
+        {"name": "Coding Assistant", "role": "coder", "description": "High-performance code generation"},
+        {"name": "Data Analyst", "role": "analyst", "description": "Statistical modeling and visualization"}
+    ]
+
+@router.get("/leaderboard")
+async def get_leaderboard():
+    return [
+        {"name": "Research Agent", "success_rate": 0.98, "tasks_completed": 1240},
+        {"name": "Coding Assistant", "success_rate": 0.95, "tasks_completed": 850}
+    ]
+
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get_agent(
     agent_id: str, 

@@ -1,6 +1,6 @@
 import stripe
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 import uuid
@@ -84,7 +84,7 @@ class BillingService:
         await db.execute(
             update(Subscription)
             .where(Subscription.user_id == user_id, Subscription.status == "active")
-            .values(status="cancelled", current_period_end=datetime.now(datetime.UTC))
+            .values(status="cancelled", current_period_end=datetime.now(timezone.utc))
         )
 
         # 5. Create new subscription record
@@ -93,8 +93,8 @@ class BillingService:
             user_id=user_id,
             plan=plan,
             status="active",
-            current_period_start=datetime.now(datetime.UTC),
-            current_period_end=datetime.now(datetime.UTC) + timedelta(days=30)
+            current_period_start=datetime.now(timezone.utc),
+            current_period_end=datetime.now(timezone.utc) + timedelta(days=30)
         )
         
         db.add(subscription)
@@ -104,29 +104,58 @@ class BillingService:
         logger.info(f"User {user_id} subscribed to {plan} (ID: {subscription.subscription_id})")
         return subscription
 
+    async def charge(self, user_id: str, agent_id: str, tokens: int, model: str) -> float:
+        """
+        Calculates and records the cost of an LLM call.
+        """
+        # Multiplier based on model tiers
+        tier_multipliers = {
+            "llama3-8b-8192": 1,
+            "llama3-70b-8192": 10,
+            "mixtral-8x7b-32768": 5,
+            "gpt-4o": 20
+        }
+        
+        multiplier = tier_multipliers.get(model, 1)
+        cost = (tokens / 1000) * self.TOKEN_PRICES["output"] * multiplier
+        
+        # Atomically record token usage in Redis
+        await self.record_usage(user_id, "tokens", tokens, agent_id=agent_id)
+        
+        # Also record financial cost for ROI analytics
+        redis = await get_async_redis_client()
+        period = datetime.now(timezone.utc).strftime("%Y-%m")
+        cost_key = f"usage:{user_id}:{period}:cost:global"
+        await redis.incrbyfloat(cost_key, cost)
+        
+        return round(cost, 6)
+
     async def record_usage(self, user_id: str, metric: str, quantity: int = 1, agent_id: Optional[str] = None, task_id: Optional[str] = None):
         """
         Atomically increments usage metrics in Redis with granular attribution.
         """
         redis = await get_async_redis_client()
-        
-        # Get current billing period (YYYY-MM)
-        now = datetime.now(datetime.UTC)
-        period = now.strftime("%Y-%m")
+        period = datetime.now(timezone.utc).strftime("%Y-%m")
         
         # 1. Update Global Metric
         global_key = f"usage:{user_id}:{period}:{metric}:global"
         await redis.incrby(global_key, quantity)
-        await redis.expire(global_key, 60 * 24 * 60 * 60)
-
+        
         # 2. Update Agent-Specific Metric
         if agent_id:
             agent_key = f"usage:{user_id}:{period}:{metric}:agent:{agent_id}"
             await redis.incrby(agent_key, quantity)
-            await redis.expire(agent_key, 60 * 24 * 60 * 60)
-            
-            # Record attribution mapping if needed (e.g. for sync to DB)
-            # await redis.sadd(f"agents_with_usage:{user_id}:{period}", agent_id)
+        
+        # 3. Audit high usage
+        if metric == "tokens" and quantity > 5000:
+            from .audit_service import audit_service
+            await audit_service.log_action(
+                user_id=user_id,
+                action_type="high_token_usage",
+                agent_id=agent_id,
+                task_id=task_id,
+                detail={"quantity": quantity, "metric": metric}
+            )
 
     async def get_usage_summary(self, user_id: str, agent_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -134,7 +163,7 @@ class BillingService:
         If agent_id is provided, returns usage for that specific agent.
         """
         redis = await get_async_redis_client()
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
         period = now.strftime("%Y-%m")
         
         usage = {}
@@ -165,6 +194,27 @@ class BillingService:
         
         # 2. Check usage
         return True
+
+    @staticmethod
+    async def get_user_subscription(db: AsyncSession, user_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch active subscription for user."""
+        query = select(Subscription).where(Subscription.user_id == user_id, Subscription.status == "active")
+        result = await db.execute(query)
+        sub = result.scalars().first()
+        if not sub:
+            return None
+        return {
+            "subscription_id": sub.subscription_id,
+            "plan": sub.plan,
+            "status": sub.status,
+            "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None
+        }
+
+    @staticmethod
+    async def get_usage_metrics(user_id: str) -> Dict[str, Any]:
+        """Fetch current usage from Redis."""
+        from .billing_service import billing_service
+        return await billing_service.get_usage_summary(user_id)
 
     async def get_detailed_analytics(self, db: AsyncSession, user_id: str) -> Dict[str, Any]:
         """

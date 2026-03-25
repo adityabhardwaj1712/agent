@@ -1,11 +1,12 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
 import asyncio
-import json
+from .v1.router import router as v1_router
+from ..services.event_bus import event_bus
 
 router = APIRouter()
 
-# Simple in-memory manager for task updates (demo-level)
+# Live Connection Manager
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
@@ -18,26 +19,36 @@ class ConnectionManager:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: dict):
         for connection in self.active_connections:
             try:
-                await connection.send_text(message)
+                await connection.send_json(message)
             except Exception as e:
-                logger.error(f"Failed to broadcast: {e}")
+                logger.error(f"Failed to broadcast WS: {e}")
 
 manager = ConnectionManager()
 
 @router.websocket("/ws/tasks")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    
+    # Subscribe to Event Bus for this connection
+    async def event_handler(event: dict):
+        await manager.broadcast(event)
+
+    # Start the event bus subscription in a background task for this socket
+    sub_task = asyncio.create_task(event_bus.subscribe(event_handler))
+    
     try:
         while True:
-            # Just keep the connection alive
+            # Maintain connection and listen for heartbeat
             data = await websocket.receive_text()
-            # Echo for demo or heartbeat
-            await websocket.send_text(f"Heartbeat: {data}")
+            if data == "ping":
+                await websocket.send_text("pong")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        sub_task.cancel()
     except Exception as e:
         logger.error(f"WS Error: {e}")
         manager.disconnect(websocket)
+        sub_task.cancel()

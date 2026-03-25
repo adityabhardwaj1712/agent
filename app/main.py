@@ -36,8 +36,10 @@ app = FastAPI(title="AgentCloud", version="1.0.0")
 async def startup_event():
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
+    from .services.supervisor import supervisor_service
     await automation_service.start()
     await auto_mode_service.start()
+    await supervisor_service.start()
     logger.info("AgentCloud Services Initialized Successfully")
 
 app.state.limiter = limiter

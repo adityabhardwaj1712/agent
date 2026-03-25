@@ -1,0 +1,338 @@
+﻿api-1  | [32m2026-03-25 09:34:21[0m | [1mINFO    [0m | [36mapp.services.reporting_service[0m:[36mgenerate_daily_report[0m:[36m82[0m | [1mDaily fleet report generated: app/storage/reports/report_20260325_093420.json[0m
+api-1  | INFO:     127.0.0.1:40880 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:34226 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:34230 - "GET /metrics HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:34232 - "GET /v1/analytics/metrics HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52488 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52490 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52488 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52490 - "OPTIONS /v1/tasks HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52488 - "GET /v1/tasks HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:52474 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52490 - "OPTIONS /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52488 - "GET /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52488 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52490 - "OPTIONS /v1/tasks HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52488 - "GET /v1/tasks HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52490 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "OPTIONS /v1/agents HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "GET /v1/agents HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:52496 - "OPTIONS /v1/agents/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "GET /v1/agents/ HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/goals HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/goals HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/goals/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/goals/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "OPTIONS /v1/workflows HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/workflows HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:43266 - "OPTIONS /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "GET /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 404 Not Found
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "OPTIONS /v1/workflows HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43266 - "GET /v1/workflows HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:52474 - "OPTIONS /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 404 Not Found
+api-1  | INFO:     172.20.0.1:43266 - "GET /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:41662 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43266 - "OPTIONS /v1/goals HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/goals HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:43266 - "OPTIONS /v1/goals/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/goals/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43266 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:43266 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:52496 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:43282 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43282 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:51512 - "OPTIONS /v1/traces HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51512 - "GET /v1/traces HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:51524 - "OPTIONS /v1/traces/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51512 - "GET /v1/traces/ HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:51512 - "OPTIONS /v1/workflows HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43282 - "OPTIONS /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51524 - "GET /v1/workflows HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:43282 - "OPTIONS /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51512 - "GET /v1/workflows/Market%20Research%20Pipeline HTTP/1.1" 404 Not Found
+api-1  | INFO:     172.20.0.1:51524 - "GET /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:49058 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50464 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/workflows HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "POST /v1/workflows HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "POST /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "OPTIONS /v1/workflows HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "GET /v1/workflows HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:46572 - "GET /v1/workflows/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/tasks HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "GET /v1/tasks HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:50448 - "OPTIONS /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "GET /v1/tasks/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50464 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50448 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:33944 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:46584 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:46584 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:46584 - "OPTIONS /v1/agents HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:46590 - "GET /v1/agents HTTP/1.1" 307 Temporary Redirect
+api-1  | INFO:     172.20.0.1:46584 - "OPTIONS /v1/agents/ HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:46590 - "GET /v1/agents/ HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:34194 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     Shutting down
+api-1  | INFO:     Waiting for application shutdown.
+api-1  | INFO:     Application shutdown complete.
+api-1  | INFO:     Finished server process [17]
+api-1  | INFO:     Stopping reloader process [1]
+api-1  | Starting AgentCloud Initialization...
+api-1  | Checking for JWT RSA keys...
+api-1  | Skipping RSA key generation for HS256
+api-1  | Running database migrations...
+api-1  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+api-1  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+api-1  | SYNC-MIGRATION: Connecting to postgresql://postgres:postgres@db:5432/agentcloud
+api-1  | SYNC-MIGRATION: Connected. Setting up extension...
+api-1  | SYNC-MIGRATION: Configuring context...
+api-1  | SYNC-MIGRATION: Starting transaction and running migrations...
+api-1  | SYNC-MIGRATION: Migrations completed successfully
+api-1  | Initialization complete. Executing: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+api-1  | INFO:     Will watch for changes in these directories: ['/app']
+api-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+api-1  | INFO:     Started reloader process [1] using StatReload
+api-1  | [32m2026-03-25 09:38:18[0m | [1mINFO    [0m | [36mapp.core.logging_config[0m:[36msetup_logging[0m:[36m67[0m | [1mLogging configured with level: INFO[0m
+api-1  | INFO:     Started server process [18]
+api-1  | INFO:     Waiting for application startup.
+api-1  | 
+api-1  | ========================================
+api-1  | AgentCloud System Context
+api-1  | ----------------------------------------
+api-1  | Deployment Mode : local
+api-1  | Region          : us-east-1
+api-1  | Database        : db:5432/agentcloud
+api-1  | Redis           : redis://redis:6379/0
+api-1  | CORS Origins    : http://localhost:3000,http://frontend:3000,http://localhost:8000
+api-1  | ========================================
+api-1  | 
+api-1  |   [Environment WARNING] No real AI API keys detected. Agent reasoning will fail.
+api-1  | Γ£ô AgentCloud Environment Validation Passed
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.core.logging_config[0m:[36msetup_logging[0m:[36m67[0m | [1mLogging configured with level: INFO[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.core.logging_config[0m:[36msetup_logging[0m:[36m67[0m | [1mLogging configured with level: INFO[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.services.automation_service[0m:[36mstart[0m:[36m26[0m | [1mAutomation Service starting...[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.services.auto_mode_service[0m:[36mstart[0m:[36m49[0m | [1mAuto Mode Service Started[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.services.supervisor[0m:[36mstart[0m:[36m52[0m | [1mSupervisor Service starting...[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.main[0m:[36mstartup_event[0m:[36m43[0m | [1mAgentCloud Services Initialized Successfully[0m
+api-1  | [32m2026-03-25 09:38:19[0m | [1mINFO    [0m | [36mapp.services.event_bus[0m:[36mconnect[0m:[36m23[0m | [1mEvent Bus connected to Redis[0m
+api-1  | INFO:     Application startup complete.
+api-1  | [32m2026-03-25 09:38:20[0m | [31m[1mERROR   [0m | [36mapp.services.reporting_service[0m:[36mgenerate_daily_report[0m:[36m68[0m | [31m[1mFailed to generate AI report summary: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-place**lder. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}[0m
+api-1  | [32m2026-03-25 09:38:20[0m | [1mINFO    [0m | [36mapp.services.reporting_service[0m:[36mgenerate_daily_report[0m:[36m82[0m | [1mDaily fleet report generated: app/storage/reports/report_20260325_093819.json[0m
+api-1  | INFO:     127.0.0.1:43122 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:44038 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:44052 - "GET /metrics HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.6:44066 - "GET /v1/analytics/metrics HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50900 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50916 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50900 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50924 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:38606 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:34478 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49760 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49768 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:33232 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49768 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49768 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49750 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49768 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49768 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49750 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49768 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:49768 - "OPTIONS /v1/agents/register HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:49750 - "POST /v1/agents/register HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:37234 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43204 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43214 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:43204 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:43218 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:58116 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50772 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50772 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:50772 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:50786 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:44842 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:40482 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:40482 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:40486 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:40486 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:37566 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:40486 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:35900 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:59430 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51534 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51536 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:51534 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:51548 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:45920 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:57798 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:60334 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     127.0.0.1:36736 - "GET / HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:34294 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:34294 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     172.20.0.1:34280 - "OPTIONS /v1/analytics/summary HTTP/1.1" 200 OK
+api-1  | INFO:     172.20.0.1:34308 - "GET /v1/analytics/summary HTTP/1.1" 401 Unauthorized
+api-1  | INFO:     127.0.0.1:34402 - "GET / HTTP/1.1" 200 OK
+db-1  | The files belonging to this database system will be owned by user "postgres".
+db-1  | This user must also own the server process.
+db-1  | 
+db-1  | The database cluster will be initialized with locale "en_US.utf8".
+db-1  | The default database encoding has accordingly been set to "UTF8".
+db-1  | The default text search configuration will be set to "english".
+db-1  | 
+db-1  | Data page checksums are disabled.
+db-1  | 
+db-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+db-1  | creating subdirectories ... ok
+db-1  | selecting dynamic shared memory implementation ... posix
+db-1  | selecting default max_connections ... 100
+db-1  | selecting default shared_buffers ... 128MB
+db-1  | selecting default time zone ... Etc/UTC
+db-1  | creating configuration files ... ok
+db-1  | running bootstrap script ... ok
+db-1  | performing post-bootstrap initialization ... ok
+db-1  | syncing data to disk ... ok
+db-1  | 
+db-1  | 
+db-1  | Success. You can now start the database server using:
+db-1  | 
+db-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+db-1  | 
+db-1  | initdb: warning: enabling "trust" authentication for local connections
+db-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+db-1  | waiting for server to start....2026-03-25 09:34:05.961 UTC [47] LOG:  starting PostgreSQL 15.17 (Debian 15.17-1.pgdg12+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+db-1  | 2026-03-25 09:34:05.972 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1  | 2026-03-25 09:34:06.011 UTC [50] LOG:  database system was shut down at 2026-03-25 09:34:04 UTC
+db-1  | 2026-03-25 09:34:06.029 UTC [47] LOG:  database system is ready to accept connections
+db-1  |  done
+db-1  | server started
+db-1  | CREATE DATABASE
+db-1  | 
+db-1  | 
+db-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+db-1  | 
+db-1  | waiting for server to shut down...2026-03-25 09:34:06.332 UTC [47] LOG:  received fast shutdown request
+db-1  | .2026-03-25 09:34:06.342 UTC [47] LOG:  aborting any active transactions
+db-1  | 2026-03-25 09:34:06.347 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+db-1  | 2026-03-25 09:34:06.347 UTC [48] LOG:  shutting down
+db-1  | 2026-03-25 09:34:06.363 UTC [48] LOG:  checkpoint starting: shutdown immediate
+db-1  | 2026-03-25 09:34:07.098 UTC [48] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.054 s, sync=0.643 s, total=0.751 s; sync files=301, longest=0.528 s, average=0.003 s; distance=4222 kB, estimate=4222 kB
+db-1  | 2026-03-25 09:34:07.112 UTC [47] LOG:  database system is shut down
+db-1  |  done
+db-1  | server stopped
+db-1  | 
+db-1  | PostgreSQL init process complete; ready for start up.
+db-1  | 
+db-1  | 2026-03-25 09:34:07.200 UTC [1] LOG:  starting PostgreSQL 15.17 (Debian 15.17-1.pgdg12+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+db-1  | 2026-03-25 09:34:07.203 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1  | 2026-03-25 09:34:07.205 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1  | 2026-03-25 09:34:07.226 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1  | 2026-03-25 09:34:07.255 UTC [63] LOG:  database system was shut down at 2026-03-25 09:34:07 UTC
+db-1  | 2026-03-25 09:34:07.275 UTC [1] LOG:  database system is ready to accept connections
+db-1  | 2026-03-25 09:35:26.752 UTC [1] LOG:  received fast shutdown request
+db-1  | 2026-03-25 09:35:26.764 UTC [1] LOG:  aborting any active transactions
+db-1  | 2026-03-25 09:35:26.768 UTC [1] LOG:  background worker "logical replication launcher" (PID 66) exited with exit code 1
+db-1  | 2026-03-25 09:35:26.770 UTC [61] LOG:  shutting down
+db-1  | 2026-03-25 09:35:26.787 UTC [61] LOG:  checkpoint starting: shutdown immediate
+db-1  | 2026-03-25 09:35:27.052 UTC [61] LOG:  checkpoint complete: wrote 340 buffers (2.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.038 s, sync=0.178 s, total=0.283 s; sync files=250, longest=0.092 s, average=0.001 s; distance=2066 kB, estimate=2066 kB
+db-1  | 2026-03-25 09:35:27.060 UTC [1] LOG:  database system is shut down
+db-1  | 
+db-1  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+db-1  | 
+db-1  | 2026-03-25 09:38:03.574 UTC [1] LOG:  starting PostgreSQL 15.17 (Debian 15.17-1.pgdg12+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+db-1  | 2026-03-25 09:38:03.574 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1  | 2026-03-25 09:38:03.574 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1  | 2026-03-25 09:38:03.607 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1  | 2026-03-25 09:38:03.642 UTC [29] LOG:  database system was shut down at 2026-03-25 09:35:27 UTC
+db-1  | 2026-03-25 09:38:03.661 UTC [1] LOG:  database system is ready to accept connections
+smoke-1  | Starting AgentCloud Initialization...
+smoke-1  | Checking for JWT RSA keys...
+smoke-1  | Skipping RSA key generation for HS256
+smoke-1  | Initialization complete. Executing: python scripts/smoke.py
+smoke-1  | GET /v1/analytics/metrics failed: 401 {'detail': 'Not authenticated'}
+smoke-1  | Starting AgentCloud Initialization...
+smoke-1  | Checking for JWT RSA keys...
+smoke-1  | Skipping RSA key generation for HS256
+smoke-1  | Initialization complete. Executing: python scripts/smoke.py
+smoke-1  | GET /v1/analytics/metrics failed: 401 {'detail': 'Not authenticated'}
+frontend-1  |    Γû▓ Next.js 15.5.14
+frontend-1  |    - Local:        http://localhost:3000
+frontend-1  |    - Network:      http://0.0.0.0:3000
+frontend-1  | 
+frontend-1  |  Γ£ô Starting...
+frontend-1  |  Γ£ô Ready in 463ms
+frontend-1  |    Γû▓ Next.js 15.5.14
+frontend-1  |    - Local:        http://localhost:3000
+frontend-1  |    - Network:      http://0.0.0.0:3000
+frontend-1  | 
+frontend-1  |  Γ£ô Starting...
+frontend-1  |  Γ£ô Ready in 229ms
+worker-1    | Starting AgentCloud Initialization...
+worker-1    | Checking for JWT RSA keys...
+worker-1    | Skipping RSA key generation for HS256
+worker-1    | Initialization complete. Executing: sh -c sleep 10 && PYTHONPATH=/app python -m app.workers.agent_worker
+worker-1    | Traceback (most recent call last):
+worker-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+worker-1    |   File "<frozen runpy>", line 88, in _run_code
+worker-1    |   File "/app/app/workers/agent_worker.py", line 56, in <module>
+worker-1    |     from app.services.event_bus import event_bus, agent_delegate
+worker-1    | ImportError: cannot import name 'agent_delegate' from 'app.services.event_bus' (/app/app/services/event_bus.py)
+worker-1    | Starting AgentCloud Initialization...
+worker-1    | Checking for JWT RSA keys...
+worker-1    | Skipping RSA key generation for HS256
+worker-1    | Initialization complete. Executing: sh -c sleep 10 && PYTHONPATH=/app python -m app.workers.agent_worker
+worker-1    | Traceback (most recent call last):
+worker-1    |   File "<frozen runpy>", line 198, in _run_module_as_main
+worker-1    |   File "<frozen runpy>", line 88, in _run_code
+worker-1    |   File "/app/app/workers/agent_worker.py", line 56, in <module>
+worker-1    |     from app.services.event_bus import event_bus, agent_delegate
+worker-1    | ImportError: cannot import name 'agent_delegate' from 'app.services.event_bus' (/app/app/services/event_bus.py)
+redis-1     | 1:C 25 Mar 2026 09:34:03.028 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1     | 1:C 25 Mar 2026 09:34:03.028 * Redis version=7.4.8, bits=64, commit=00000000, modified=0, pid=1, just started
+redis-1     | 1:C 25 Mar 2026 09:34:03.028 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+redis-1     | 1:M 25 Mar 2026 09:34:03.029 * monotonic clock: POSIX clock_gettime
+redis-1     | 1:M 25 Mar 2026 09:34:03.034 * Running mode=standalone, port=6379.
+redis-1     | 1:M 25 Mar 2026 09:34:03.037 * Server initialized
+redis-1     | 1:M 25 Mar 2026 09:34:03.037 * Ready to accept connections tcp
+redis-1     | 1:signal-handler (1774431326) Received SIGTERM scheduling shutdown...
+redis-1     | 1:M 25 Mar 2026 09:35:26.755 * User requested shutdown...
+redis-1     | 1:M 25 Mar 2026 09:35:26.755 * Saving the final RDB snapshot before exiting.
+redis-1     | 1:M 25 Mar 2026 09:35:26.797 * DB saved on disk
+redis-1     | 1:M 25 Mar 2026 09:35:26.797 # Redis is now ready to exit, bye bye...
+redis-1     | 1:C 25 Mar 2026 09:38:03.460 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1     | 1:C 25 Mar 2026 09:38:03.460 * Redis version=7.4.8, bits=64, commit=00000000, modified=0, pid=1, just started
+redis-1     | 1:C 25 Mar 2026 09:38:03.460 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+redis-1     | 1:M 25 Mar 2026 09:38:03.461 * monotonic clock: POSIX clock_gettime
+redis-1     | 1:M 25 Mar 2026 09:38:03.462 * Running mode=standalone, port=6379.
+redis-1     | 1:M 25 Mar 2026 09:38:03.462 * Server initialized
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * Loading RDB produced by version 7.4.8
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * RDB age 157 seconds
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * RDB memory usage when created 1.00 Mb
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * Done loading RDB, keys loaded: 0, keys expired: 0.
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * DB loaded from disk: 0.000 seconds
+redis-1     | 1:M 25 Mar 2026 09:38:03.463 * Ready to accept connections tcp
