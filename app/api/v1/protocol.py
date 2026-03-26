@@ -20,6 +20,19 @@ async def send_message(
     message_id = await protocol_service.send_protocol_message(db, data)
     return {"status": "dispatched", "message_id": message_id}
 
+@router.get("/messages", response_model=list)
+async def get_messages(
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the history of inter-agent protocol messages.
+    """
+    messages = await protocol_service.get_protocol_messages(db, limit)
+    return messages
+
+
 @router.get("/status/{message_id}")
 async def get_message_status(
     message_id: str,

@@ -15,6 +15,8 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { useToast } from './Toast';
+import { apiFetch } from '../lib/api';
+
 
 const AGENTS = ['TaskOrchestrator', 'WebResearcher', 'DataAnalyst', 'CodeHelper', 'ContentWriter', 'SecurityGuardian', 'FleetSummarizer'];
 const INIT_MSGS = [
@@ -26,18 +28,50 @@ const INIT_MSGS = [
 ];
 
 export default function ProtocolView() {
-  const [msgs, setMsgs] = useState(INIT_MSGS);
+  const [msgs, setMsgs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState(AGENTS[0]);
   const [to, setTo] = useState(AGENTS[1]);
   const [type, setType] = useState('delegate_task');
   const [payload, setPayload] = useState('');
   const toast = useToast();
 
-  const send = () => {
+  const fetchMessages = async () => {
+    try {
+      const data = await apiFetch<any[]>('/protocol/messages');
+      setMsgs(data || []);
+    } catch (err) {
+      console.error('Failed to fetch protocol messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const send = async () => {
     if (!payload.trim()) { toast('Payload required', 'warn'); return; }
-    setMsgs(p => [{ from, to, type, payload: payload.slice(0, 120), t: 'JUST_NOW' }, ...p]);
-    toast(`Protocol Packet Sent: ${from} → ${to}`, 'ok');
-    setPayload('');
+    try {
+      await apiFetch('/protocol/send', {
+        method: 'POST',
+        body: JSON.stringify({
+          from_agent_id: from,
+          to_agent_id: to,
+          type: type,
+          payload: payload,
+          correlation_id: `corr-${Date.now()}`
+        })
+      });
+      toast(`Protocol Packet Dispatched: ${from} → ${to}`, 'ok');
+      setPayload('');
+      fetchMessages();
+    } catch (err) {
+      toast('Dispatch Failed', 'err');
+    }
   };
 
   return (
@@ -75,11 +109,11 @@ export default function ProtocolView() {
                     <div className="ms-packet-content">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="from">{m.from}</span>
+                          <span className="from">{m.from_agent_id}</span>
                           <ChevronsRight size={10} style={{ color: 'var(--t3)' }} />
-                          <span className="to">{m.to}</span>
+                          <span className="to">{m.to_agent_id}</span>
                         </div>
-                        <span className="time">{m.t}</span>
+                        <span className="time">{new Date(m.created_at).toLocaleTimeString()}</span>
                       </div>
                       
                       <div className="ms-packet-payload">
@@ -87,7 +121,7 @@ export default function ProtocolView() {
                       </div>
                       
                       <div className="flex items-center gap-3 mt-3">
-                         <div className="ms-badge ms-b-p" style={{ fontSize: '9px', padding: '2px 8px' }}>{m.type.toUpperCase()}</div>
+                         <div className="ms-badge ms-b-p" style={{ fontSize: '9px', padding: '2px 8px' }}>{m.message_type?.toUpperCase()}</div>
                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button className="ms-btn-icon-xs"><TerminalIcon size={12} /></button>
                             <button className="ms-btn-icon-xs"><Share2 size={12} /></button>

@@ -69,8 +69,44 @@ async def get_summary(
         "active_events": recent_traces_count or 0
     }
 
-@router.get("/metrics")
-async def get_metrics(current_user: User = Depends(get_current_user)):
-    # Placeholder for more detailed metrics if needed
-    return {"status": "ok"}
+@router.get("/timeseries")
+async def get_timeseries(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get 24-hour task distribution for charts.
+    """
+    now = datetime.datetime.utcnow()
+    last_24h = now - datetime.timedelta(hours=24)
+    
+    # Query tasks by hour
+    result = await db.execute(
+        select(
+            func.date_trunc('hour', Task.created_at).label('hour'),
+            func.count(Task.task_id).label('count')
+        )
+        .filter(Task.created_at >= last_24h)
+        .group_by('hour')
+        .order_by('hour')
+    )
+    
+    rows = result.all()
+    
+    # Fill gaps for hours with no tasks
+    data = []
+    current_ptr = last_24h.replace(minute=0, second=0, microsecond=0)
+    
+    row_map = {r.hour: r.count for r in rows}
+    
+    for i in range(25):
+        h_str = current_ptr.strftime("%H:%M")
+        data.append({
+            "time": h_str,
+            "value": row_map.get(current_ptr, 0)
+        })
+        current_ptr += datetime.timedelta(hours=1)
+        
+    return data
+
 

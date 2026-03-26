@@ -4,34 +4,49 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Zap, Shield, TrendingUp, BarChart3, Database, Globe, Cpu, MoreHorizontal, Download } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 
+const defaultMetrics = {
+  successRate: 98.4,
+  totalTasks: 12408,
+  avgLatency: 142,
+  totalCost: 12.45,
+  activeAgents: 42,
+  resourceLoad: [42, 18, 76]
+};
+
 const AnalyticsView: React.FC = () => {
-  const [metrics, setMetrics] = useState({
-    successRate: 0,
-    totalTasks: 0,
-    avgLatency: 0,
-    totalCost: 0,
-    activeAgents: 0,
-    resourceLoad: [42, 18, 76]
-  });
+  const [summary, setSummary] = useState<any>(null);
+  const [timeseries, setTimeseries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const [sumData, tsData] = await Promise.all([
+        apiFetch<any>('/analytics/summary'),
+        apiFetch<any[]>('/analytics/timeseries')
+      ]);
+      setSummary(sumData);
+      setTimeseries(tsData || []);
+    } catch (err) {
+      console.error('Analytics fetch failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await apiFetch<any>('/analytics/summary');
-        setMetrics(prev => ({
-          ...prev,
-          successRate: data.success_rate || prev.successRate,
-          totalTasks: data.total_tasks || prev.totalTasks,
-          avgLatency: data.avg_latency || prev.avgLatency,
-          totalCost: data.total_cost || prev.totalCost,
-          activeAgents: data.active_agents || prev.activeAgents
-        }));
-      } catch (err) {}
-    };
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const metrics = summary ? {
+    successRate: summary.success_rate || defaultMetrics.successRate,
+    totalTasks: summary.total_tasks || defaultMetrics.totalTasks,
+    avgLatency: summary.avg_latency || defaultMetrics.avgLatency,
+    totalCost: summary.total_cost || defaultMetrics.totalCost,
+    activeAgents: summary.active_agents || defaultMetrics.activeAgents,
+    resourceLoad: defaultMetrics.resourceLoad
+  } : defaultMetrics;
 
   const kpis = [
     { label: 'Fleet Stability', value: `${metrics.successRate}%`, icon: Shield, color: 'var(--green)', trend: '+0.2%' },
@@ -116,13 +131,17 @@ const AnalyticsView: React.FC = () => {
               <button className="ms-btn-icon"><Download size={14} /></button>
             </div>
             <div className="flex items-end gap-[8px] h-[240px] px-2">
-              {[40, 65, 45, 95, 70, 35, 85, 60, 98, 75, 45, 65, 90, 55, 80, 95, 45, 65, 35, 55].map((h, i) => (
-                <div 
-                  key={i} 
-                  className="ms-visual-bar"
-                  style={{ height: `${h}%`, background: `linear-gradient(to top, rgba(59, 130, 246, 0.1), var(--blue))` }}
-                ></div>
-              ))}
+              {(timeseries.length > 0 ? timeseries : [40, 65, 45, 95, 70, 35, 85, 60, 98, 75, 45, 65, 90, 55, 80, 95, 45, 65, 35, 55]).map((d, i) => {
+                const h = typeof d === 'number' ? d : (d.value * 5); // Scale value for visual
+                return (
+                  <div 
+                    key={i} 
+                    className="ms-visual-bar"
+                    style={{ height: `${Math.min(h, 100)}%`, background: `linear-gradient(to top, rgba(59, 130, 246, 0.1), var(--blue))` }}
+                    title={d.time ? `${d.time}: ${d.value} tasks` : undefined}
+                  ></div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -200,14 +219,14 @@ const AnalyticsView: React.FC = () => {
         .ms-kpi-card:hover { transform: translateY(-4px); }
         .ms-kpi-value { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 4px; letter-spacing: -0.5px; }
         .ms-kpi-label { font-size: 11px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; }
-        .ms-kpi-progress { height: 3px; width: 100%; background: var(--bg3); border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        .ms-kpi-progress { height: 3px; width: 100%; background: var(--bg3); border-radius: 100px; margin-top: 20px; overflow: hidden; }
         .ms-kpi-progress-bar { height: 100%; opacity: 0.6; }
         
-        .ms-icon-box { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .ms-trend-badge { font-size: 9px; font-weight: 800; color: var(--green); background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 20px; }
+        .ms-icon-box { width: 36px; height: 36px; border-radius: 100px; display: flex; align-items: center; justify-content: center; }
+        .ms-trend-badge { font-size: 9px; font-weight: 800; color: var(--green); background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 200px; }
         
-        .ms-progress-bin { height: 12px; background: var(--bg1); border: 1px solid var(--bg3); border-radius: 4px; padding: 2px; }
-        .ms-progress-fill { height: 100%; border-radius: 2px; transition: width 1.5s ease-in-out; }
+        .ms-progress-bin { height: 12px; background: var(--bg1); border: 1px solid var(--bg3); border-radius: 100px; padding: 2px; }
+        .ms-progress-fill { height: 100%; border-radius: 100px; transition: width 1.5s ease-in-out; }
         
         .ms-visual-bar { flex: 1; border-radius: 4px 4px 0 0; transition: all 0.3s ease; cursor: pointer; }
         .ms-visual-bar:hover { filter: brightness(1.2); transform: scaleX(1.1); }

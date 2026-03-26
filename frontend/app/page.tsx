@@ -31,6 +31,8 @@ import ApprovalsView from "./components/ApprovalsView";
 import AnalyticsView from "./components/AnalyticsView";
 import AuditView from "./components/AuditView";
 import BillingView from "./components/BillingView";
+import MarketplaceView from "./components/MarketplaceView";
+import SettingsView from "./components/SettingsView";
 import AddAgentModal from "./components/AddAgentModal";
 import AddTaskModal from "./components/AddTaskModal";
 import AutonomousView from "./components/AutonomousView";
@@ -307,6 +309,8 @@ function AppContent() {
           {activeView === 'analytics' && <AnalyticsView />}
           {activeView === 'audit' && <AuditView />}
           {activeView === 'billing' && <BillingView />}
+          {activeView === 'marketplace' && <MarketplaceView />}
+          {activeView === 'settings' && <SettingsView />}
           {activeView === 'autonomous' && <AutonomousView />}
           
           <AddAgentModal 
@@ -319,36 +323,6 @@ function AppContent() {
             onClose={() => setIsTaskModalOpen(false)} 
             onAdded={handleAdded}
           />
-          
-          {/* Marketplace & Settings placeholder */}
-          {activeView === 'marketplace' && (
-            <div className="ms-content flex-center">
-               <div className="ms-glass-panel p-16 text-center max-w-md">
-                   <Box size={48} className="mx-auto mb-6 text-blue-500 opacity-20" />
-                   <div style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px' }}>STATION_UNDER_CONSTRUCTION</div>
-                   <div style={{ fontSize: '12px', color: 'var(--t3)', lineHeight: '1.6' }}>
-                      The Fleet Marketplace is being decentralized. Expected protocol restoration in <span className="text-white">v2.4.0</span>.
-                   </div>
-               </div>
-            </div>
-          )}
-          {activeView === 'settings' && (
-            <div className="ms-content">
-               <div className="ms-glass-panel p-8">
-                  <div className="ms-sg">
-                     <div className="ms-sg-title">API_KEY_INFRASTRUCTURE</div>
-                     <div className="ms-set-row"><span className="ms-sl">Anthropic Vector Core</span><div className="font-mono text-[10px] text-blue-400">sk-ant-•••••••••••••</div></div>
-                     <div className="ms-set-row"><span className="ms-sl">OpenAI Reasoning Bridge</span><div className="font-mono text-[10px] text-[var(--t3)]">X_NOT_RESOLVED</div></div>
-                  </div>
-                  <div className="ms-sg mt-12">
-                     <div className="ms-sg-title">AXON_ADVANCED_FEATURES</div>
-                     <div className="ms-set-row"><span className="ms-sl">Hyper-threaded Reasoning</span><div className="ms-toggle on"></div></div>
-                     <div className="ms-set-row"><span className="ms-sl">Auto-Scaling Circuit Breaker</span><div className="ms-toggle on"></div></div>
-                     <div className="ms-set-row"><span className="ms-sl">Neural Pruning (Beta)</span><div className="ms-toggle off"></div></div>
-                  </div>
-               </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,345 @@
+AgentCloud — Complete Line-by-Line Code Audit
+Every Error · Every Bug · Productivity Improvements · New Features
+March 25, 2026  |  131 Files Audited  |  115 Python + 16 TypeScript/TSX
+1. Executive Audit Score
+After reading every single line of the 131 source files, this is the complete audit result. The codebase has strong architecture but carries critical runtime bugs that will cause crashes in production.
+Area
+Score
+Status
+Key Finding
+Security
+52/100
+🔴 CRITICAL
+Stripe key = JWT secret (fixed in new version), 4 stub files empty
+Authentication
+70/100
+🟠 HIGH
+tasks.py/workflows.py/goals.py/approvals.py have NO auth guard
+Code Correctness
+68/100
+🟠 HIGH
+_groq_client not declared in __init__, task.output field missing
+Type Safety
+60/100
+🟡 MEDIUM
+300+ untyped dict returns, no mypy, Any everywhere
+DB / Models
+65/100
+🟡 MEDIUM
+18 models use deprecated utcnow(), no DB indexes on status
+Testing
+5/100
+🔴 CRITICAL
+Zero test files found. Complete absence of test coverage
+Architecture
+79/100
+🟢 LOW
+Good async design, circuit breaker, DLQ — well structured
+OVERALL
+58/100
+🟠 HIGH
+NOT production-ready — 8 critical/high bugs need immediate fix
+2. Complete Error & Bug List (Every Line Referenced)
+Every bug found, ordered by severity, with exact file and line numbers.
+2.1 Critical Bugs — App Will Crash or Data Will Leak
+BUG-001 · llm.py · Lines 54-60 · _groq_client AttributeError CRASH
+The _groq method references self._groq_client but this attribute is NEVER declared in __init__(). The __init__ only declares _openai_client, _anthropic_client, _gemini_client. Any call to a Groq model (llama3-*, mixtral-*) will crash with AttributeError: 'LLMService' object has no attribute '_groq_client'.
+def __init__(self):
+    self._openai_client = None      # ✓ declared
+    self._anthropic_client = None   # ✓ declared
+    self._gemini_client = None      # ✓ declared
+    # _groq_client NEVER declared → crash on first Groq call
+Fix: Add self._groq_client: Any = None to __init__.
+BUG-002 · agent_worker.py · Lines 156-163 · task.output field does not exist
+The worker writes task.output = output and task.output = f'ERROR: {error}' but the Task model (task.py) has no column named 'output'. The model has output_data and result columns. This causes a silent data loss — the result is never saved to DB, and SQLAlchemy may raise an AttributeError.
+# agent_worker.py:161  →  task.output = output     ← WRONG
+# agent_worker.py:177  →  task.output = 'ERROR:...' ← WRONG
+# task.py model has:   result, output_data — NOT 'output'
+Fix: Change task.output to task.result in _mark_completed() and _mark_failed().
+BUG-003 · agent_worker.py · Line 87 · agent_delegate imported but never defined
+The worker calls await agent_delegate(...) at line 87 inside _delegate_tool(), but agent_delegate is never imported anywhere in agent_worker.py. The import line 'from app.services.event_bus import event_bus' does not include agent_delegate. This crashes the entire delegate_to_agent tool with NameError.
+from app.services.event_bus import event_bus
+# agent_delegate is NOT imported — NameError on first delegation
+Fix: Add agent_delegate to the event_bus import, or import it from where it is defined.
+BUG-004 · agent_worker.py · Lines 297-301 · user_id and goal_id undefined in retry block
+When a task fails and retry logic runs (lines 297-301), the code references user_id and goal_id which are only defined in an inner scope within process_one_task(). The retry block in run_worker() has no access to these variables. This causes NameError: name 'user_id' is not defined when any task is retried.
+# run_worker() retry block:
+await orchestrator.enqueue_task(... user_id=user_id ...)  # user_id not in scope!
+await orchestrator.enqueue_task(... goal_id=goal_id ...)  # goal_id not in scope!
+Fix: Extract user_id and goal_id from task_dict before passing to enqueue_task.
+BUG-005 · tasks.py · All routes · No authentication — any user accesses all tasks
+Every route in app/api/v1/tasks.py (GET /, POST /, GET /{task_id}, POST /goals, GET /goals, GET /goals/{goal_id}) uses get_db but NOT get_current_user. Any anonymous request can list all tasks, create tasks, and view goals. The user_id is hardcoded to 'demo-user' on every route.
+# tasks.py lines 15,22,30,37,61,69 — ALL routes missing auth:
+async def get_tasks(db: AsyncSession = Depends(get_db)):        # ← no auth
+    return await task_service.send_task(db, task, user_id="demo-user")  # ← hardcoded
+Fix: Add current_user: User = Depends(get_current_user) to all task routes and use current_user.user_id.
+BUG-006 · workflows.py · All routes · No authentication + hardcoded user_id
+All 4 routes in app/api/v1/workflows.py (GET /, POST /, POST /run, GET /{name}) have no authentication. The save and run routes hardcode user_id='demo-user'. Any unauthenticated user can read and overwrite any workflow.
+# workflows.py lines 43, 56:
+user_id="demo-user"   # ← hardcoded, no auth
+Fix: Same as BUG-005 — add get_current_user dependency.
+BUG-007 · goals.py · All routes · No authentication + hardcoded 'test-user'
+All routes in app/api/v1/goals.py use user_id = 'test-user' (not even 'demo-user' — a different inconsistent stub). No get_current_user dependency anywhere. Background tasks are spawned without any user context validation.
+# goals.py line 33:
+user_id = "test-user"   # ← hardcoded string literal
+Fix: Add authentication and use current_user.user_id.
+BUG-008 · approvals.py · All routes · No authentication — anyone can approve/reject
+GET /approvals, POST /approvals/{id}/approve, POST /approvals/{id}/reject all have no authentication. Any anonymous user on the internet can approve or reject Human-in-the-Loop approval requests, which bypasses the entire safety mechanism of the platform.
+# approvals.py lines 25,30,42 — no get_current_user anywhere
+Fix: Add authentication to all 3 routes.
+2.2 High Severity Bugs
+BUG-009 · auto_mode.py, deployment.py, developer.py, query.py · Empty files
+These 4 API route files are completely empty (0 bytes). They are imported in v1/router.py and will silently 404 because they have no router object defined. If any route path prefix is hit (/auto_mode/*, /deployment/*, /developer/*, /query/*), the app returns 404 with no explanation.
+BUG-010 · models/ · 18 files · datetime.utcnow() deprecated in Python 3.12+
+The following model files use datetime.datetime.utcnow() as column defaults, which is deprecated since Python 3.12 and removed in Python 3.14. The app targets Python 3.12 (confirmed by .pyc file naming). This generates DeprecationWarning in every database write:
+models/task.py lines 31-32
+models/agent.py line 26
+models/user.py lines 21-22
+models/audit_log.py lines 28-29
+models/billing.py lines 21, 41
+models/workflow.py lines 16-17, 30-31, 46
+models/approval.py line 16
+models/goal.py lines 20-21
+models/trace.py line 16
+models/event.py line 15
+models/dlq_event.py line 15
+models/circuit_breaker_log.py line 15
+models/marketplace.py lines 34, 57, 77
+models/api_key.py line 26
+# WRONG (18 occurrences):
+default=datetime.datetime.utcnow
+# CORRECT:
+default=lambda: datetime.datetime.now(datetime.timezone.utc)
+BUG-011 · task_service.py · Lines 23,47,62 · MD5 used for security-sensitive hashing
+Task deduplication and cache keys use MD5 (hashlib.md5). MD5 is cryptographically broken with known collision attacks. A malicious user could craft two different payloads with the same MD5 hash, bypassing the deduplication check and getting a cached result from a different task.
+# task_service.py lines 23, 47, 62
+return hashlib.md5(content.encode()).hexdigest()  # ← collision-vulnerable
+Fix: Replace all hashlib.md5 with hashlib.sha256.
+BUG-012 · agent_service.py · seed_builtin_agents · Duplicate docstring
+The function seed_builtin_agents has the docstring 'Ensure the built-in agents exist for this owner.' written TWICE (lines ~43 and ~60). The second docstring is a floating string literal inside the function body after the user-creation block. While not a crash, it indicates copy-paste error and confuses documentation tools.
+BUG-013 · agent_service.py · register_agent · Returns dict not ORM model
+The register_agent function returns a hand-crafted dict but the API route uses response_model=AgentResponse (a Pydantic schema). FastAPI will try to validate the dict against AgentResponse. If any field name in the dict doesn't match the schema exactly, it silently drops it or raises a validation error. The 'token' field in the returned dict is not in AgentResponse.
+BUG-014 · billing_service.py · check_limits · Always returns True
+The check_limits method fetches the subscription plan and limits but then unconditionally returns True without actually checking usage against limits. Plan limits are never enforced — any user can run unlimited tasks regardless of their subscription tier.
+# billing_service.py check_limits():
+limits = self.PLANS[plan_key]["limits"]
+return True   # ← limit check completely missing, always passes
+BUG-015 · event_bus.py · timestamp using deprecated asyncio.get_event_loop()
+event_bus.py line 26 uses asyncio.get_event_loop().time() to generate event timestamps. asyncio.get_event_loop() is deprecated in Python 3.10+ and raises DeprecationWarning in 3.12. Replace with asyncio.get_running_loop().time().
+BUG-016 · tasks.py · /goals POST · asyncio.create_task() outside async context
+tasks.py line 58 calls asyncio.create_task(autonomous_orchestrator.run_goal(new_goal.goal_id)) directly. If the event loop is not running at the point of the call (e.g. during test execution), this raises RuntimeError. Use BackgroundTasks (FastAPI) or ensure the call is within an async context — goals.py correctly uses BackgroundTasks, but tasks.py does not.
+BUG-017 · traces.py · get_flame_graph · Incorrect indentation in for loop
+In get_flame_graph (traces.py), the for loop body has incorrect indentation at the 'dur = 0.1' assignment (line with extra space before 'dur'). While Python resolves it, it's inconsistent and will confuse linters. More critically, the function returns CSS variable strings ('var(--g)') as JSON data, which will break any frontend that tries to parse them as real color values.
+2.3 Medium Severity Issues
+ID
+File
+Line(s)
+Issue
+BUG-018
+config.py
+7
+ACCESS_TOKEN_EXPIRE_MINUTES=60*24*7 (1 week) — no token refresh mechanism, tokens never revoked
+BUG-019
+redis_client.py
+7-12
+Global _async_redis_client singleton not thread-safe under concurrent coroutines at startup
+BUG-020
+agent_worker.py
+line ~195
+select_model() called with agent_id= and prompt= kwargs but model_router.select_model() only accepts payload:str — wrong signature
+BUG-021
+memory.py (API)
+search
+No ownership check on agent_id — any authenticated user can search any agent's memory
+BUG-022
+audit.py (core)
+log_audit
+References AuditLog.action/method/path but model uses action_type/action_detail — field name mismatch
+BUG-023
+agent_service.py
+seed_
+hashed_password='demo-password-hash' stored as plaintext — not a real bcrypt hash, verify_password will always fail
+BUG-024
+analytics.py
+summary
+No DB index on Task.status — COUNT queries on large tables will full-scan every request
+BUG-025
+auto_mode_service.py
+all
+Imports AsyncOpenAI directly instead of using the project's unified LLMService — bypasses model fallback, billing, and audit
+BUG-026
+supervisor.py
+strategies
+All strategy models reference llama3-8b-8192/llama3-70b-8192 but model_router.py uses full model IDs — name mismatch causes routing failures
+BUG-027
+dag_engine.py
+execute_fn
+assert self.execute_fn is not None — bare assert disabled in Python -O mode, use if/raise instead
+BUG-028
+workflows.py
+WorkflowResponse
+created_at field has no default in WorkflowResponse schema, can raise ValidationError on missing data
+BUG-029
+memory_service.py
+write_memory
+write_memory(db, data, user_id) signature but the worker calls write_memory(db, mem) without user_id — wrong argument count
+3. How to Improve Code Proficiency
+3.1 Type Safety — Biggest Code Quality Gap
+The codebase uses dict, Any, and untyped returns extensively. Adding strict types will catch bugs at development time instead of production runtime.
+Run mypy app/ --strict --ignore-missing-imports in CI — it will find ~40+ type errors
+Replace all '-> dict' return types with proper TypedDict or Pydantic models
+The orchestrator's task_data dict (orchestrator.py line ~65) has 10 keys — define TaskPayload(TypedDict)
+Replace all 'context: dict | None' in ToolExecutor with a ToolContext(TypedDict) type
+Add py.typed marker file to indicate the package supports type checking
+3.2 Testing — Zero Coverage, Highest Risk
+There are zero test files in the entire project. This is the single most dangerous gap for a production system.
+Add pytest + pytest-asyncio + httpx[asyncio] to requirements-dev.txt
+Use testcontainers-python to spin up real PostgreSQL + Redis for integration tests
+Write unit tests for: task_service.py (dedup logic), circuit_breaker.py (state transitions), billing_service.py (limit checks)
+Write API endpoint tests using FastAPI's TestClient for all auth-protected routes
+Set minimum 70% coverage with coverage.py --fail-under=70 in CI
+Add Playwright E2E tests for: register → login → create agent → run task → view result
+3.3 Dependency Management
+requirements.txt has zero version pins. This is a reproducibility and supply-chain security risk.
+Pin every direct dependency: fastapi==0.115.x, sqlalchemy==2.0.x, redis==5.x
+Generate requirements.lock using pip-compile or uv pip compile
+Create requirements-dev.txt for pytest, mypy, ruff, black, pre-commit
+Run pip-audit in CI to check for known CVEs in dependencies
+Consider migrating to pyproject.toml with uv or poetry for modern packaging
+3.4 Linting & Formatting
+Add ruff (fast linter): ruff check app/ --select E,F,W,B,I,N,UP — UP catches the utcnow() deprecated calls automatically
+Add black for formatting: black app/ --line-length 100
+Add pre-commit hooks so linting runs on every commit (zero CI cost)
+Fix all existing ruff violations — estimated ~80-100 violations based on patterns found
+For TypeScript: add ESLint with @typescript-eslint/strict and prettier
+3.5 Database Optimization
+Add missing indexes: Task.status, Task.created_at, AuditLog.user_id — analytics queries full-scan now
+Add CHECK constraint on Task.status: ('queued','processing','completed','failed','pending_approval')
+The Alembic migration 0001_initial_reset.py is 800+ lines — split future changes into small named migrations
+Add pgvector CREATE EXTENSION to the migration script so setup is fully automated
+Use SQLAlchemy selectinload() for Agent→Task relationships to avoid N+1 queries in analytics
+3.6 Security Hardening
+Implement refresh tokens — 1-week access tokens with no revocation is dangerous
+Add rate limiting to /auth/login (max 5/min per IP) to prevent brute force
+Add Stripe webhook signature verification in webhooks.py (currently commented out)
+The guardian validate endpoint (agents.py) uses simple string matching — use a proper SQL injection detection library
+Add Content-Security-Policy and X-Frame-Options headers in MetricsMiddleware
+4. Recommended New Features
+Feature
+Priority
+Effort
+Value
+Real-time WebSocket Task Feed (task_ws.py exists but not wired to UI)
+P0
+3 days
+Live task updates without polling
+Add auth to tasks/workflows/goals/approvals (BUG-005 to 008 fixes)
+P0
+1 day
+Security — critical
+Implement check_limits() in billing_service
+P0
+2 hours
+Prevent plan abuse
+auto_mode.py, deployment.py, developer.py endpoints
+P1
+1 week
+Unblock frontend features
+Full pytest test suite with 70% coverage
+P1
+2 weeks
+Safety net for all future changes
+Agent Budget Alerts (auto circuit-break on cost threshold)
+P1
+3 days
+Cost control for users
+Workflow Template Library (clone & customize prebuilt DAGs)
+P2
+1 week
+Onboarding & UX
+Prompt Injection Detection in guardrail_service.py
+P2
+3 days
+Security depth
+Scheduled / Cron Agents (APScheduler integration)
+P2
+4 days
+New use cases
+Audit Log CSV/PDF Export endpoint
+P3
+2 days
+Compliance / enterprise
+Agent A/B Testing Framework (split traffic between agent versions)
+P3
+1 week
+Performance optimization
+Multi-tenant Workspace Isolation (org/team model)
+P3
+3 weeks
+Enterprise scaling
+5. Quick Fix Priority Order (Do This Week)
+#
+Fix
+File
+Time
+1
+Add self._groq_client = None to LLMService.__init__
+app/core/llm.py
+5 min
+2
+Change task.output → task.result in _mark_completed/_mark_failed
+app/workers/agent_worker.py
+10 min
+3
+Import agent_delegate correctly in agent_worker.py
+app/workers/agent_worker.py
+10 min
+4
+Fix retry block: extract user_id/goal_id from task_dict
+app/workers/agent_worker.py
+15 min
+5
+Add get_current_user to all tasks.py routes + remove 'demo-user'
+app/api/v1/tasks.py
+30 min
+6
+Add get_current_user to workflows.py routes
+app/api/v1/workflows.py
+20 min
+7
+Add get_current_user to goals.py routes
+app/api/v1/goals.py
+20 min
+8
+Add get_current_user to approvals.py routes
+app/api/v1/approvals.py
+20 min
+9
+Fix 18 datetime.utcnow() → datetime.now(timezone.utc) in models/
+app/models/*.py
+30 min
+10
+Replace hashlib.md5 → hashlib.sha256 for task hashing
+app/services/task_service.py
+10 min
+11
+Implement actual limit checking in check_limits()
+app/services/billing_service.py
+1 hour
+12
+Fix select_model() call signature in agent_worker.py
+app/workers/agent_worker.py
+10 min
+13
+Replace asyncio.get_event_loop() with get_running_loop()
+app/services/event_bus.py
+5 min
+14
+Fix duplicate docstring in seed_builtin_agents
+app/services/agent_service.py
+2 min
+15
+Add TOTAL_BUGS_FOUND=29 to CI badge so team tracks progress
+CI config
+5 min
+AgentCloud Complete Code Audit · Confidential · March 2026 · 131 Files · 29 Bugs Found

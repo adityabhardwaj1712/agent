@@ -28,38 +28,39 @@ export default function AddAgentModal({ isOpen, onClose, onAdded }: { isOpen: bo
     <div className={`overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
       <div className="modal" style={{ width: 440 }} onClick={e => e.stopPropagation()}>
         <div className="modal-hd">
-          <div className="modal-title">Register New Agent</div>
-          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={onClose}>✕</button>
+          <div className="modal-title">REGISTER_NEURAL_AGENT</div>
+          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={onClose} style={{ width: 32, height: 32, padding: 0 }}>✕</button>
         </div>
         <div className="modal-body">
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="fg">
-              <label className="fl">Agent Name</label>
-              <input className="fi" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. ResearchBot" />
+              <label className="fl">Agent Identity</label>
+              <input className="fi" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. ResearchBot_v2" />
             </div>
             <div className="fg">
-              <label className="fl">Role / Expertise</label>
-              <input className="fi" required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} placeholder="e.g. Web Researcher" />
+              <label className="fl">Operational Role</label>
+              <input className="fi" required value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} placeholder="e.g. Core Web Researcher" />
             </div>
             <div className="fg">
-              <label className="fl">Model</label>
+              <label className="fl">Inference Model</label>
               <select className="fi" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}>
-                <option value="gpt-4o">GPT-4o</option>
-                <option value="gpt-4o-mini">GPT-4o Mini</option>
-                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="gpt-4o">GPT-4o (Default)</option>
+                <option value="gpt-4o-mini">GPT-4o Mini (Efficiency)</option>
+                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Logic)</option>
               </select>
             </div>
             <div className="fg">
-              <label className="fl">Description</label>
-              <textarea className="fi" style={{ height: 80 }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What does this agent do?" />
+              <label className="fl">Mission Directives</label>
+              <textarea className="fi" style={{ height: 100 }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Describe primary autonomous capabilities..." />
             </div>
-            <div className="modal-ft" style={{ padding: 0, border: 'none' }}>
-              <button type="button" className="ms-btn ms-btn-g" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-              <button type="submit" className="ms-btn ms-btn-p" style={{ flex: 1 }}>Register Agent</button>
+            <div className="modal-ft" style={{ padding: '24px 0 0', border: 'none' }}>
+              <button type="button" className="ms-btn ms-btn-g" style={{ flex: 1 }} onClick={onClose}>ABORT</button>
+              <button type="submit" className="ms-btn ms-btn-p" style={{ flex: 1 }}>REGISTER_PROTOCOL</button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
   );
 }

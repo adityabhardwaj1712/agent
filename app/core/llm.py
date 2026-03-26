@@ -19,6 +19,7 @@ class LLMService:
         self._openai_client: Any = None
         self._anthropic_client: Any = None
         self._gemini_client: Any = None
+        self._groq_client: Any = None
 
     # ─── lazy clients ────────────────────────────────────────────────────────
 

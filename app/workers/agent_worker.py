@@ -53,7 +53,7 @@ from app.services.reputation import update_reputation
 from app.services.trace_service import log_trace as axon_trace
 from app.services.orchestrator import dequeue_next_task, run_reputation_decay_scheduler, Priority
 from app.services.circuit_breaker import circuit_breaker, send_to_dlq, CircuitState
-from app.services.event_bus import event_bus
+from app.services.event_bus import event_bus, agent_delegate
 from sqlalchemy.future import select
 from sqlalchemy.exc import OperationalError
 
@@ -158,7 +158,7 @@ async def _mark_completed(task_id: str, output: str) -> None:
             task = result.scalars().first()
             if task:
                 task.status = "completed"
-                task.output = output
+                task.result = output
                 await db.commit()
     except Exception as e:
         logger.error(f"Failed to mark task {task_id} as completed: {e}")
@@ -174,7 +174,7 @@ async def _mark_failed(task_id: str, error: str) -> None:
             task = result.scalars().first()
             if task:
                 task.status = "failed"
-                task.output = f"ERROR: {error}"
+                task.result = f"ERROR: {error}"
                 await db.commit()
     except Exception as e:
         logger.error(f"Failed to mark task {task_id} as failed: {e}")
@@ -246,7 +246,7 @@ async def _safe_memory_write(agent_id: str, content: str) -> bool:
     try:
         async with AsyncSessionLocal() as db:
             mem = MemoryCreate(agent_id=agent_id, content=content)
-            await write_memory(db, mem)
+            await write_memory(db, mem, user_id=_CURRENT_CONTEXT.get("user_id"))
             return True
     except Exception as e:
         logger.warning(f"Memory write failed for agent {agent_id}: {e}")
@@ -323,7 +323,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
         # ── 6. Model selection
         try:
             if not model and agent:
-                model = await select_model(agent_id=agent_id, prompt=prompt)
+                model = await select_model(prompt=prompt)
             model = model or "gpt-4o"
         except Exception as e:
             logger.warning(f"Model selection failed (falling back to gpt-4o): {e}")
@@ -579,6 +579,8 @@ async def run_worker():
 
                 retry_count = task_dict.get("retry_count", 0)
                 max_retries = 3
+                user_id  = task_dict.get("user_id")
+                goal_id  = task_dict.get("goal_id")
 
                 try:
                     await _mark_processing(task_id)

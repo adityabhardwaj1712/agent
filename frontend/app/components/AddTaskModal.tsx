@@ -41,29 +41,30 @@ export default function AddTaskModal({ isOpen, onClose, onAdded }: { isOpen: boo
     <div className={`overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
       <div className="modal" style={{ width: 440 }} onClick={e => e.stopPropagation()}>
         <div className="modal-hd">
-          <div className="modal-title">Initialize Task</div>
-          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={onClose}>✕</button>
+          <div className="modal-title">INITIALIZE_NEURAL_TASK</div>
+          <button className="ms-btn ms-btn-g ms-btn-sm" onClick={onClose} style={{ width: 32, height: 32, padding: 0 }}>✕</button>
         </div>
         <div className="modal-body">
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="fg">
-              <label className="fl">Select Agent</label>
+              <label className="fl">TARGET_AGENT</label>
               <select className="fi" required value={formData.agent_id} onChange={e => setFormData({...formData, agent_id: e.target.value})}>
                 {agents.map(a => <option key={a.agent_id} value={a.agent_id}>{a.name} ({a.role})</option>)}
                 {agents.length === 0 && <option disabled>No agents found</option>}
               </select>
             </div>
             <div className="fg">
-              <label className="fl">Task Objective</label>
-              <textarea className="fi" required style={{ height: 100 }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What should the agent do?" />
+              <label className="fl">MISSION_OBJECTIVE</label>
+              <textarea className="fi" required style={{ height: 120 }} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What should the agent execute? Be specific about the desired outcome..." />
             </div>
-            <div className="modal-ft" style={{ padding: 0, border: 'none' }}>
-              <button type="button" className="ms-btn ms-btn-g" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-              <button type="submit" className="ms-btn ms-btn-p" style={{ flex: 1 }}>Dispatch Task</button>
+            <div className="modal-ft" style={{ padding: '24px 0 0', border: 'none' }}>
+              <button type="button" className="ms-btn ms-btn-g" style={{ flex: 1 }} onClick={onClose}>ABORT</button>
+              <button type="submit" className="ms-btn ms-btn-p" style={{ flex: 1 }}>DISPATCH_PROTOCOL</button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
   );
 }

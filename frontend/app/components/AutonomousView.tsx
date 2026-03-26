@@ -30,22 +30,58 @@ const AutonomousView: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [newGoalDesc, setNewGoalDesc] = useState('');
   const [workflowType, setWorkflowType] = useState<'linear' | 'dag'>('linear');
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [missionLogs, setMissionLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const fetchGoals = async () => {
+    setLoading(true); // Added setLoading(true)
     try {
-      const data = await apiFetch<Goal[]>('/goals');
-      if (Array.isArray(data)) setGoals(data);
-    } catch (e) {
-      console.error('Failed to fetch goals:', e);
+      const data = await apiFetch<any[]>('/goals');
+      setGoals(data || []); // Changed setMissions to setGoals
+      if (data && data.length > 0 && !selectedGoalId) {
+        setSelectedGoalId(data[0].goal_id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch goals:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMissionTasks = async (goalId: string) => {
+    setLoadingLogs(true);
+    try {
+      const data = await apiFetch<any[]>(`/goals/${goalId}/tasks`);
+      // Map tasks to log format
+      const logs = (data || []).map(t => ({
+        id: t.task_id,
+        msg: t.payload?.slice(0, 50) + '...',
+        t: new Date(t.created_at).toLocaleTimeString(),
+        st: t.status === 'completed' ? 'ok' : t.status === 'failed' ? 'err' : 'info'
+      }));
+      setMissionLogs(logs);
+    } catch (err) {
+      console.error('Failed to fetch mission tasks:', err);
+    } finally {
+      setLoadingLogs(false);
     }
   };
 
   useEffect(() => {
     fetchGoals();
-    const interval = setInterval(fetchGoals, 5000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (selectedGoalId) {
+      fetchMissionTasks(selectedGoalId);
+      const interval = setInterval(() => fetchMissionTasks(selectedGoalId), 10000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedGoalId]);
+
+  const activeMission = goals.find(m => m.goal_id === selectedGoalId) || goals[0]; // Changed missions to goals
 
   const handleStartMission = async () => {
     if (!newGoalDesc.trim()) return;
@@ -198,20 +234,36 @@ const AutonomousView: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Right: Telemetry / Logs */}
                     <div className="flex flex-col">
-                      <div className="text-[10px] font-bold text-[var(--t3)] uppercase tracking-widest mb-4 flex items-center gap-2">
-                         <TerminalIcon size={12} /> MISSION_TELEMETRY
+                      <div className="text-[10px] font-bold text-[var(--t3)] uppercase tracking-widest mb-4 flex items-center gap-2" onClick={() => setSelectedGoalId(goal.goal_id)} style={{ cursor: 'pointer' }}>
+                         <TerminalIcon size={12} /> MISSION_TELEMETRY {selectedGoalId === goal.goal_id && <span className="text-[var(--blue)]">(ACTIVE)</span>}
                       </div>
                       <div className="ms-telemetry-stream">
-                        <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag blue">INFO</span> Protocol initiation sequence started...</div>
-                        <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag violet">NEURAL</span> Context retrieved from Brain-Link.</div>
-                        <div className="line blink"><span className="ts">[{new Date().toLocaleTimeString()}]</span> <span className="tag yellow">WARN</span> Token utilization at 82% threshold.</div>
-                        {goal.status === 'completed' && (
+                        {selectedGoalId === goal.goal_id && missionLogs.length > 0 ? (
+                          missionLogs.map((log, li) => (
+                            <div key={li} className={`line ${log.st === 'err' ? 'blink' : ''}`}>
+                              <span className="ts">[{log.t}]</span> 
+                              <span className={`tag ${log.st === 'ok' ? 'green' : log.st === 'err' ? 'yellow' : 'blue'}`}>
+                                {log.st.toUpperCase()}
+                              </span> 
+                              {log.msg}
+                            </div>
+                          ))
+                        ) : (
+                          <>
+                            <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag blue">INFO</span> Protocol initiation sequence started...</div>
+                            <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag violet">NEURAL</span> Context retrieved from Brain-Link.</div>
+                            {selectedGoalId !== goal.goal_id && (
+                              <div className="line italic text-[var(--t3)] mt-4">Click "MISSION_TELEMETRY" to activate stream for this goal.</div>
+                            )}
+                          </>
+                        )}
+                        {goal.status === 'completed' && missionLogs.length === 0 && (
                           <div className="line"><span className="ts">[{new Date().toLocaleTimeString()}]</span> <span className="tag green">DONE</span> Mission objectives secured.</div>
                         )}
                       </div>
                     </div>
+
                   </div>
                   
                   <div className="mt-8 pt-6 border-t border-[var(--bg3)] flex justify-between items-center">

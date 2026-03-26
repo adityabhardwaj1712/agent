@@ -7,7 +7,9 @@ import uuid
 
 from ...db.database import get_db
 from ...models.goal import Goal
+from ...models.task import Task
 from ...services.autonomous_orchestrator import autonomous_orchestrator
+
 
 router = APIRouter()
 
@@ -64,3 +66,15 @@ async def get_goal(goal_id: str, db: AsyncSession = Depends(get_db)):
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
     return goal
+
+async def get_goal_tasks(goal_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Get all tasks/steps related to a specific mission (goal).
+    """
+    result = await db.execute(
+        select(Task)
+        .filter(Task.goal_id == goal_id)
+        .order_by(Task.created_at.asc())
+    )
+    return result.scalars().all()
+
