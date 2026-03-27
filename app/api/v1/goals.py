@@ -9,6 +9,8 @@ from ...db.database import get_db
 from ...models.goal import Goal
 from ...models.task import Task
 from ...services.autonomous_orchestrator import autonomous_orchestrator
+from ..deps import get_current_user
+from ...models.user import User
 
 
 router = APIRouter()
@@ -29,14 +31,12 @@ class GoalResponse(BaseModel):
 async def create_goal(
     req: GoalCreate, 
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    # For now, use a dummy user_id or get from auth
-    user_id = "test-user" 
-    
     new_goal = Goal(
         goal_id=str(uuid.uuid4()),
-        user_id=user_id,
+        user_id=current_user.user_id,
         description=req.description,
         target_outcome=req.target_outcome,
         workflow_type=req.workflow_type,
@@ -46,7 +46,6 @@ async def create_goal(
     await db.commit()
     await db.refresh(new_goal)
 
-    # Trigger autonomous execution in background
     if req.workflow_type == "dag":
         background_tasks.add_task(autonomous_orchestrator.run_dag_goal, new_goal.goal_id)
     else:
@@ -55,12 +54,19 @@ async def create_goal(
     return new_goal
 
 @router.get("/", response_model=List[GoalResponse])
-async def list_goals(db: AsyncSession = Depends(get_db)):
+async def list_goals(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(Goal).order_by(Goal.created_at.desc()))
     return result.scalars().all()
 
 @router.get("/{goal_id}", response_model=GoalResponse)
-async def get_goal(goal_id: str, db: AsyncSession = Depends(get_db)):
+async def get_goal(
+    goal_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(Goal).filter(Goal.goal_id == goal_id))
     goal = result.scalars().first()
     if not goal:
@@ -77,4 +83,5 @@ async def get_goal_tasks(goal_id: str, db: AsyncSession = Depends(get_db)):
         .order_by(Task.created_at.asc())
     )
     return result.scalars().all()
+
 

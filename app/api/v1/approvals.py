@@ -4,6 +4,8 @@ from sqlalchemy import select
 from typing import List
 from ...db.database import get_db
 from ...models.approval import ApprovalRequest
+from ..deps import get_current_user
+from ...models.user import User
 from pydantic import BaseModel
 import datetime
 
@@ -22,12 +24,19 @@ class ApprovalResponse(BaseModel):
         from_attributes = True
 
 @router.get("/", response_model=List[ApprovalResponse])
-async def list_approvals(db: AsyncSession = Depends(get_db)):
+async def list_approvals(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(ApprovalRequest).order_by(ApprovalRequest.created_at.desc()))
     return result.scalars().all()
 
 @router.post("/{id}/approve")
-async def approve_request(id: str, db: AsyncSession = Depends(get_db)):
+async def approve_request(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(ApprovalRequest).filter(ApprovalRequest.request_id == id))
     request = result.scalars().first()
     if not request:
@@ -39,7 +48,11 @@ async def approve_request(id: str, db: AsyncSession = Depends(get_db)):
     return {"status": "approved"}
 
 @router.post("/{id}/reject")
-async def reject_request(id: str, db: AsyncSession = Depends(get_db)):
+async def reject_request(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(ApprovalRequest).filter(ApprovalRequest.request_id == id))
     request = result.scalars().first()
     if not request:
@@ -49,4 +62,5 @@ async def reject_request(id: str, db: AsyncSession = Depends(get_db)):
     request.processed_at = datetime.datetime.now(datetime.UTC)
     await db.commit()
     return {"status": "rejected"}
+
 

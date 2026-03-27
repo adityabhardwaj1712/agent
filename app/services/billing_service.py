@@ -180,7 +180,7 @@ class BillingService:
 
     async def check_limits(self, db: AsyncSession, user_id: str, metric: str) -> bool:
         """
-        Enforces plan limits.
+        Enforces plan limits. Returns True if within limits, False if exceeded.
         """
         # 1. Get active subscription
         query = select(Subscription).where(
@@ -192,7 +192,25 @@ class BillingService:
         
         limits = self.PLANS[plan_key]["limits"]
         
-        # 2. Check usage
+        # 2. Map metric to limit key
+        limit_key_map = {
+            "tasks": "tasks_per_month",
+            "agents": "agents",
+        }
+        limit_name = limit_key_map.get(metric)
+        if not limit_name or limit_name not in limits:
+            return True  # No limit defined for this metric
+        
+        max_allowed = limits[limit_name]
+        
+        # 3. Get current usage from Redis
+        usage = await self.get_usage_summary(user_id)
+        current_usage = usage.get(metric, 0)
+        
+        if current_usage >= max_allowed:
+            logger.warning(f"User {user_id} exceeded {metric} limit: {current_usage}/{max_allowed} on plan {plan_key}")
+            return False
+        
         return True
 
     @staticmethod

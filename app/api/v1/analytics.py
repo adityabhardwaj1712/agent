@@ -109,4 +109,40 @@ async def get_timeseries(
         
     return data
 
+@router.get("/fleet-health")
+async def get_fleet_health(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns agent state distribution for fleet health donut chart.
+    """
+    total = await db.scalar(select(func.count(Agent.agent_id))) or 0
+    
+    # Count agents by status
+    running = await db.scalar(
+        select(func.count(Agent.agent_id)).filter(Agent.status == "running")
+    ) or 0
+    idle = await db.scalar(
+        select(func.count(Agent.agent_id)).filter(Agent.status == "idle")
+    ) or 0
+    cooldown = await db.scalar(
+        select(func.count(Agent.agent_id)).filter(Agent.status == "cooldown")
+    ) or 0
+    offline = await db.scalar(
+        select(func.count(Agent.agent_id)).filter(Agent.status == "offline")
+    ) or 0
+    
+    # Agents with other/unknown statuses count as idle
+    other = total - running - idle - cooldown - offline
+    idle += other
+    
+    return {
+        "running": running,
+        "idle": idle,
+        "cooldown": cooldown,
+        "offline": offline,
+        "total": total
+    }
+
 

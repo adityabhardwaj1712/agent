@@ -4,6 +4,8 @@ from sqlalchemy import select
 from typing import List
 from ...db.database import get_db
 from ...models.workflow import WorkflowDefinition, WorkflowRun
+from ..deps import get_current_user
+from ...models.user import User
 from pydantic import BaseModel
 import datetime
 
@@ -22,12 +24,19 @@ class WorkflowResponse(WorkflowSchema):
         from_attributes = True
 
 @router.get("/", response_model=List[WorkflowResponse])
-async def list_workflows(db: AsyncSession = Depends(get_db)):
+async def list_workflows(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(WorkflowDefinition).order_by(WorkflowDefinition.updated_at.desc()))
     return result.scalars().all()
 
 @router.post("/")
-async def save_workflow(wf: WorkflowSchema, db: AsyncSession = Depends(get_db)):
+async def save_workflow(
+    wf: WorkflowSchema,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(WorkflowDefinition).filter(WorkflowDefinition.name == wf.name))
     existing = result.scalars().first()
     
@@ -40,7 +49,7 @@ async def save_workflow(wf: WorkflowSchema, db: AsyncSession = Depends(get_db)):
             name=wf.name,
             description=wf.description,
             definition=wf.definition,
-            user_id="demo-user"
+            user_id=current_user.user_id
         )
         db.add(new_wf)
     
@@ -48,12 +57,15 @@ async def save_workflow(wf: WorkflowSchema, db: AsyncSession = Depends(get_db)):
     return {"status": "saved"}
 
 @router.post("/run")
-async def run_workflow(wf: dict, db: AsyncSession = Depends(get_db)):
-    # Placeholder for actual workflow execution logic
+async def run_workflow(
+    wf: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     new_run = WorkflowRun(
         workflow_name=wf.get("name", "unknown"),
         status="running",
-        user_id="demo-user"
+        user_id=current_user.user_id
     )
     db.add(new_run)
     await db.commit()
@@ -61,10 +73,15 @@ async def run_workflow(wf: dict, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{name}", response_model=WorkflowResponse)
-async def get_workflow(name: str, db: AsyncSession = Depends(get_db)):
+async def get_workflow(
+    name: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     result = await db.execute(select(WorkflowDefinition).filter(WorkflowDefinition.name == name))
     wf = result.scalars().first()
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
     return wf
+
 
