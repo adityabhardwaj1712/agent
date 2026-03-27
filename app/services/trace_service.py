@@ -52,3 +52,14 @@ async def get_trace_analytics(db: AsyncSession, agent_id: str | None = None, lim
     
     result = await db.execute(query)
     return {row[0]: row[1] for row in result.all()}
+
+async def get_traces_for_task(db: AsyncSession, task_id: str, limit: int = 5):
+    """
+    Fetch the latest execution traces for a given task ID. Used by Root Cause Analysis.
+    """
+    from sqlalchemy import select
+    from ..models.trace import Trace
+    
+    query = select(Trace).filter(Trace.task_id == task_id).order_by(Trace.created_at.desc()).limit(limit)
+    res = await db.execute(query)
+    return res.scalars().all()

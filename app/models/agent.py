@@ -12,6 +12,8 @@ class Agent(Base):
     role = Column(String, nullable=True) # e.g., "Software Engineer", "Researcher"
     description = Column(Text, nullable=True)
     owner_id = Column(String, ForeignKey("users.user_id"), index=True)
+    status = Column(String, default="idle", index=True) # running, idle, cooldown, offline
+    
     
     # Relationships
     owner = relationship("User", back_populates="agents")

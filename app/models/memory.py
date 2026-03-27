@@ -11,4 +11,4 @@ class Memory(Base):
     user_id = Column(String, index=True)
     content = Column(Text)
     embedding = Column(Vector(1536), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))

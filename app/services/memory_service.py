@@ -43,7 +43,19 @@ async def search_memory(db: AsyncSession, agent_id: str, query: str, limit: int 
             stmt = stmt.filter(Memory.content.ilike(f"%{query}%"))
         
         result = await db.execute(stmt.limit(limit))
-        return result.scalars().all()
+        memories = result.scalars().all()
+        
+        if not memories and query:
+            # Full keyword fallback if no results from initial vector/filtered search
+            logger.info(f"No semantic results for '{query}', trying keyword fallback")
+            stmt_fallback = select(Memory).filter(
+                Memory.agent_id == agent_id,
+                Memory.content.ilike(f"%{query}%")
+            )
+            result_fallback = await db.execute(stmt_fallback.limit(limit))
+            return result_fallback.scalars().all()
+            
+        return memories
     except Exception as e:
         logger.error(f"Memory search error: {e}")
         return []

@@ -13,7 +13,8 @@ import {
   Compass,
   FileText,
   Search,
-  MoreHorizontal
+  MoreHorizontal,
+  AlertTriangle
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import { useToast } from './Toast';
@@ -24,6 +25,9 @@ export default function TaskTable() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const toast = useToast();
+
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<{task_id: string, analysis: string, fix_suggestion: string} | null>(null);
 
   const fetchTasks = async () => {
     try {
@@ -36,10 +40,33 @@ export default function TaskTable() {
     }
   };
 
+  const handleAnalyze = async (taskId: string) => {
+    setAnalyzing(taskId);
+    setAnalysisResult(null);
+    try {
+      const res = await apiFetch<any>(`/tasks/${taskId}/root-cause`);
+      setAnalysisResult({ task_id: taskId, ...res });
+    } catch (err: any) {
+      toast('Failed to analyze task: ' + err.message, 'err');
+    } finally {
+      setAnalyzing(null);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
-    const interval = setInterval(fetchTasks, 10000);
-    return () => clearInterval(interval);
+    
+    // Connect to Real-time WebSockets
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//localhost:8000/ws/tasks`);
+    
+    ws.onmessage = (event) => {
+      try {
+        fetchTasks(); // Refresh tasks automatically
+      } catch (e) {}
+    };
+
+    return () => ws.close();
   }, []);
 
   const getStatusBadge = (status: string) => {
@@ -72,7 +99,7 @@ export default function TaskTable() {
             </div>
             <div>
                <div style={{ fontSize: '14px', fontWeight: 800 }}>TASK_ORCHESTRATION_HISTORY</div>
-               <div style={{ fontSize: '10px', color: 'var(--t3)', letterSpacing: '1px' }}>SYNC_STATUS: <span style={{ color: 'var(--green)' }}>OPTIMIZED</span> · REGISTRY: LOCAL_SQLITE</div>
+               <div style={{ fontSize: '10px', color: 'var(--t3)', letterSpacing: '1px' }}>SYNC_STATUS: <span style={{ color: 'var(--green)' }}>LIVE (WS)</span> · REGISTRY: LOCAL_SQLITE</div>
             </div>
           </div>
           
@@ -99,7 +126,7 @@ export default function TaskTable() {
                 <th>DIRECTIVE_DESCRIPTION</th>
                 <th style={{ width: 160 }}>EXECUTION_STATE</th>
                 <th style={{ width: 180 }}>TIMESTAMP</th>
-                <th style={{ width: 80 }}>ACTION</th>
+                <th style={{ width: 140 }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +156,20 @@ export default function TaskTable() {
                       </div>
                     </td>
                     <td>
-                       <button className="ms-btn-icon-sm"><MoreHorizontal size={14} /></button>
+                       <div className="flex items-center gap-2">
+                         {task.status.toLowerCase() === 'failed' && (
+                           <button 
+                             className="ms-btn ms-btn-sm" 
+                             style={{ background: 'rgba(255,45,78,0.1)', color: 'var(--red)', border: '1px solid rgba(255,45,78,0.2)' }}
+                             disabled={analyzing === task.task_id}
+                             onClick={() => handleAnalyze(task.task_id)}
+                           >
+                             <Activity size={12} className={analyzing === task.task_id ? 'animate-spin mr-1' : 'mr-1'}/>
+                             {analyzing === task.task_id ? 'ANALYZING' : 'ANALYZE'}
+                           </button>
+                         )}
+                         <button className="ms-btn-icon-sm"><MoreHorizontal size={14} /></button>
+                       </div>
                     </td>
                   </tr>
                 ))
@@ -138,6 +178,40 @@ export default function TaskTable() {
           </table>
         </div>
       </div>
+
+      {analysisResult && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="ms-glass-panel" style={{ width: 600, maxWidth: '90vw', border: '1px solid var(--red)' }}>
+            <div className="ms-card-hd" style={{ borderBottomColor: 'rgba(255,45,78,0.2)' }}>
+              <div className="flex items-center gap-2 text-[var(--red)] font-bold">
+                <AlertTriangle size={18} /> ROOT CAUSE ANALYSIS
+              </div>
+              <button className="ms-icon-btn red" onClick={() => setAnalysisResult(null)}><XCircle size={16} /></button>
+            </div>
+            <div className="p-6">
+              <div style={{ fontSize: '11px', color: 'var(--t3)', fontFamily: 'var(--mono)', marginBottom: '16px' }}>TARGET_ID: {analysisResult.task_id}</div>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--t2)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Search size={14} /> DIAGNOSIS
+                </h4>
+                <div style={{ background: 'var(--bg1)', padding: '16px', borderRadius: '8px', borderLeft: '3px solid var(--red)', fontSize: '13px', lineHeight: 1.6 }}>
+                  {analysisResult.analysis}
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--green)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CheckCircle2 size={14} /> RECOMMENDED FIX
+                </h4>
+                <div style={{ background: 'rgba(0,232,149,0.05)', padding: '16px', borderRadius: '8px', borderLeft: '3px solid var(--green)', fontSize: '13px', lineHeight: 1.6, color: 'var(--t1)' }}>
+                  {analysisResult.fix_suggestion}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddTaskModal 
         isOpen={isModalOpen} 

@@ -43,7 +43,7 @@ async def save_workflow(
     if existing:
         existing.definition = wf.definition
         existing.description = wf.description
-        existing.updated_at = datetime.datetime.now(datetime.UTC)
+        existing.updated_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     else:
         new_wf = WorkflowDefinition(
             name=wf.name,

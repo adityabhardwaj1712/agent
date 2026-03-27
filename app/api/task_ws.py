@@ -28,8 +28,9 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/ws/tasks")
+@router.websocket("/tasks")
 async def websocket_endpoint(websocket: WebSocket):
+    logger.info("New WebSocket connection request to /ws/tasks")
     await manager.connect(websocket)
     
     # Subscribe to Event Bus for this connection

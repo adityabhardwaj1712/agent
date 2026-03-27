@@ -15,7 +15,6 @@ if sys.stderr is None:
     sys.stderr = io.StringIO()
 
 from .api.router import router as api_router
-from .api.task_ws import router as ws_router
 from .config import settings
 from .core.middleware import MetricsMiddleware
 
@@ -32,11 +31,112 @@ validate_or_exit()
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AgentCloud", version="1.0.0")
 
+from .api.task_ws import manager
+from fastapi import WebSocket
+
+@app.websocket("/ws/tasks")
+async def websocket_endpoint(websocket: WebSocket):
+    try:
+        await manager.connect(websocket)
+        logger.info(f"WebSocket client connected from {websocket.client.host}")
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+            else:
+                await websocket.send_text(f"Echo: {data}")
+    except Exception as e:
+        logger.warning(f"WebSocket disconnected/failed: {e}")
+        await manager.disconnect(websocket)
+
 @app.on_event("startup")
 async def startup_event():
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
     from .services.supervisor import supervisor_service
+    from .db.database import AsyncSessionLocal
+    from .models.agent import Agent
+    from .models.user import User
+    import uuid
+    from sqlalchemy import select
+    
+    # Auto-seed core multi-agent registry
+    try:
+        async with AsyncSessionLocal() as session:
+            existing = await session.execute(select(Agent.name).limit(1))
+            if not existing.scalar_one_or_none():
+                user_res = await session.execute(select(User).limit(1))
+                user = user_res.scalar_one_or_none()
+                if not user:
+                    user = User(
+                        user_id="system_default",
+                        email="system@agentcloud.com",
+                        name="System Default",
+                        hashed_password="dummy" # Dummy password for system agent, cannot be logged into
+                    )
+                    session.add(user)
+                    await session.commit()
+                owner_id = user.user_id
+                
+                AGENT_ROSTER = [
+                    {"name": "Planner Agent", "role": "planner", "desc": "Break goals into steps", "model": "gpt-4o"},
+                    {"name": "Executor Agent", "role": "executor", "desc": "Executes standard tasks", "model": "gpt-4o"},
+                    {"name": "Validator Agent", "role": "validator", "desc": "Checks output quality", "model": "gpt-4o"},
+                    {"name": "Retry Agent", "role": "retry", "desc": "Handles failures and retries", "model": "gpt-4o"},
+                    {"name": "Goal Agent", "role": "goal", "desc": "Manages full goal execution", "model": "gpt-4o"},
+                    {"name": "Memory Agent", "role": "memory", "desc": "Stores & retrieves past context", "model": "gpt-4o"},
+                    {"name": "Learning Agent", "role": "learning", "desc": "Improves performance over time", "model": "gpt-4o"},
+                    {"name": "Decision Agent", "role": "decision", "desc": "Chooses best strategy/model", "model": "gpt-4o"},
+                    {"name": "Optimization Agent", "role": "optimizer", "desc": "Optimizes cost & speed", "model": "gpt-4o"},
+                    {"name": "Prediction Agent", "role": "predictor", "desc": "Predicts failures or load", "model": "gpt-4o"},
+                    {"name": "Deployment Agent", "role": "deployment", "desc": "Deploy apps (Docker/K8s)", "model": "gpt-4o"},
+                    {"name": "Monitoring Agent", "role": "monitor", "desc": "Track system health", "model": "gpt-4o"},
+                    {"name": "Logging Agent", "role": "logger", "desc": "Collect & analyze logs", "model": "gpt-4o"},
+                    {"name": "Incident Agent", "role": "incident", "desc": "Detect & handle failures", "model": "gpt-4o"},
+                    {"name": "Scaling Agent", "role": "scaler", "desc": "Auto scale resources", "model": "gpt-4o"},
+                    {"name": "Security Agent", "role": "security", "desc": "Detect threats", "model": "gpt-4o"},
+                    {"name": "Compliance Agent", "role": "compliance", "desc": "Check policy violations", "model": "gpt-4o"},
+                    {"name": "Access Control Agent", "role": "access", "desc": "Manage permissions", "model": "gpt-4o"},
+                    {"name": "Audit Agent", "role": "audit", "desc": "Track system activity", "model": "gpt-4o"},
+                    {"name": "Analytics Agent", "role": "analytics", "desc": "Generate insights", "model": "gpt-4o"},
+                    {"name": "Reporting Agent", "role": "reporting", "desc": "Create reports", "model": "gpt-4o"},
+                    {"name": "Cost Analysis Agent", "role": "cost", "desc": "Track usage cost", "model": "gpt-4o"},
+                    {"name": "Performance Agent", "role": "performance", "desc": "Analyze performance", "model": "gpt-4o"},
+                    {"name": "API Agent", "role": "api", "desc": "Call external APIs", "model": "gpt-4o"},
+                    {"name": "Webhook Agent", "role": "webhook", "desc": "Trigger events based on webhooks", "model": "gpt-4o"},
+                    {"name": "GitHub Agent", "role": "github", "desc": "Manage repositories and PRs", "model": "gpt-4o"},
+                    {"name": "Slack Agent", "role": "slack", "desc": "Send Slack notifications", "model": "gpt-4o"},
+                    {"name": "Delegation Agent", "role": "delegation", "desc": "Assign tasks to other agents", "model": "gpt-4o"},
+                    {"name": "Collaboration Agent", "role": "collaborator", "desc": "Coordinate multiple agents", "model": "gpt-4o"},
+                    {"name": "Supervisor Agent", "role": "supervisor", "desc": "Monitor all system agents", "model": "gpt-4o"},
+                    {"name": "Copilot Agent", "role": "copilot", "desc": "Chat-based intelligent assistant", "model": "gpt-4o"},
+                    {"name": "Root Cause Agent", "role": "rca", "desc": "Explain deep system failures", "model": "gpt-4o"},
+                    {"name": "Prompt Engineer Agent", "role": "prompt", "desc": "Improve prompts automatically", "model": "gpt-4o"},
+                    {"name": "RAG Agent", "role": "rag", "desc": "Search and query knowledge base", "model": "gpt-4o"},
+                    {"name": "Experiment Agent", "role": "experimenter", "desc": "Compare models and prompts", "model": "gpt-4o"},
+                    {"name": "Scheduler Agent", "role": "scheduler", "desc": "Run tasks on cron", "model": "gpt-4o"},
+                    {"name": "Event Agent", "role": "event", "desc": "Trigger executions from system events", "model": "gpt-4o"},
+                    {"name": "Workflow Agent", "role": "workflow", "desc": "Execute structured workflow definitions", "model": "gpt-4o"},
+                    {"name": "Self-Healing Agent", "role": "healer", "desc": "Auto fix system states", "model": "gpt-4o"},
+                    {"name": "Autonomous Agent", "role": "autonomous", "desc": "Run system completely isolated without input", "model": "gpt-4o"},
+                    {"name": "Strategy Agent", "role": "strategy", "desc": "Plan long-term execution", "model": "gpt-4o"},
+                    {"name": "Resource Manager Agent", "role": "resource", "desc": "Optimize infra usage", "model": "gpt-4o"},
+                ]
+                
+                for data in AGENT_ROSTER:
+                    session.add(Agent(
+                        agent_id=str(uuid.uuid4()),
+                        name=data['name'],
+                        role=data['role'],
+                        description=data['desc'],
+                        owner_id=owner_id,
+                        model_name=data['model']
+                    ))
+                await session.commit()
+                logger.info("Automatically seeded 42 core agents into the registry.")
+    except Exception as e:
+        logger.error(f"Failed to seed default agents: {e}")
+
     await automation_service.start()
     await auto_mode_service.start()
     await supervisor_service.start()
@@ -82,7 +182,7 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 app.include_router(api_router)
-app.include_router(ws_router)
+
 
 @app.get("/")
 @limiter.limit("100/minute")

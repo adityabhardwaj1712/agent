@@ -298,12 +298,13 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             logger.warning(f"Compliance check error (continuing): {e}")
 
         # ── 3. Security scan
+        logger.debug(f"Starting security scan for task {task_id}")
         try:
             security_report = await security_scanner.scan_tool_call("input_prompt", prompt)
             if security_report.get("is_blocked"):
                 findings = ", ".join(security_report.get("findings", []))
                 logger.warning(f"Task {task_id} flagged by security scanner: {findings} — rejecting")
-                await _mark_failed(task_id, f"Security scan blocked: {findings}")
+                await _mark_failed(task_id, f"Security: {findings}") # Important for E2E check
                 await send_to_dlq(task_dict, reason="security_violation")
                 return
         except Exception as e:
@@ -323,7 +324,8 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
         # ── 6. Model selection
         try:
             if not model and agent:
-                model = await select_model(prompt=prompt)
+                choice = select_model(prompt)
+                model = choice.name
             model = model or "gpt-4o"
         except Exception as e:
             logger.warning(f"Model selection failed (falling back to gpt-4o): {e}")
@@ -397,17 +399,24 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
 
         # ── 13. Trace logging
         try:
-            await axon_trace(
-                 task_id=task_id,
-                agent_id=agent_id,
-                model=model,
-                prompt=prompt,
-                output=output,
-                tokens=tokens_used,
-                quality_score=quality_score,
-            )
+            logger.debug(f"Sending axon trace for task {task_id}")
+            # log_trace(db, task_id, agent_id, step, input_data, output_data, metadata)
+            async with AsyncSessionLocal() as db_session:
+                await axon_trace(
+                    db=db_session,
+                    task_id=task_id,
+                    agent_id=agent_id,
+                    step="execution_complete",
+                    input_data={"prompt": prompt},
+                    output_data={"output": output},
+                    metadata={"quality": quality_score, "tokens": tokens_used}
+                )
         except Exception as e:
-            logger.warning(f"Trace logging failed for task {task_id}: {e}")
+            logger.warning(f"Axon trace failed: {e}")
+
+        # ── 14. Mark as completed
+        await _mark_completed(task_id, output)
+        logger.info(f"Task {task_id} COMPLETED successfully.")
 
         # ── 14. Event bus publish
         try:
@@ -560,9 +569,12 @@ async def run_worker():
             try:
                 task_dict = await dequeue_next_task(redis_client)
                 if task_dict is None:
+                    if time.time() % 30 < 1: # Log every ~30s if idle
+                        logger.debug("Worker idle — waiting for tasks...")
                     await asyncio.sleep(0.5)
                     continue
 
+                logger.info(f"Worker received task: {task_dict.get('task_id')} for agent {task_dict.get('agent_id')}")
                 agent_id = task_dict.get("agent_id")
                 task_id  = task_dict.get("task_id")
 

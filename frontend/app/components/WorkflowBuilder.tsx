@@ -254,6 +254,46 @@ const WorkflowBuilder: React.FC = () => {
 
         {/* Intelligence Palette */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* AI Copilot */}
+          <div className="ms-glass-panel" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <TerminalIcon size={18} style={{ color: 'var(--yellow)' }} />
+              <span style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.5px' }}>AI COPILOT</span>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input 
+                className="fi" 
+                placeholder="e.g. Deploy an app and monitor errors..." 
+                style={{ width: '100%', paddingRight: '40px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '6px' }}
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter') {
+                    const val = e.currentTarget.value;
+                    if (!val) return;
+                    e.currentTarget.value = 'Generating workflow...';
+                    e.currentTarget.disabled = true;
+                    try {
+                      const res = await apiFetch('/copilot/generate-workflow', {
+                        method: 'POST',
+                        body: JSON.stringify({ prompt: val })
+                      });
+                      setSelectedWfName(res.name);
+                      setNodes(res.definition.nodes || []);
+                      setEdges(res.definition.edges || []);
+                      e.currentTarget.value = '';
+                    } catch (err) {
+                      toast('Failed to generate workflow. Try again.', 'err');
+                      e.currentTarget.value = val;
+                    } finally {
+                      e.currentTarget.disabled = false;
+                    }
+                  }
+                }}
+              />
+              <ArrowRight size={14} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--t3)' }} />
+            </div>
+            <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '8px', letterSpacing: '0.5px' }}>PRESS ENTER TO AUTO-BUILD FLOW</div>
+          </div>
+
           <div className="ms-glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <Layers size={18} style={{ color: 'var(--blue)' }} />

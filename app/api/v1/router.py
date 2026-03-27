@@ -30,3 +30,6 @@ router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])
 router.include_router(tools_router, prefix="/tools", tags=["tools"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(admin_router, prefix="/admin", tags=["admin"])
+
+from .memory import router as memory_router
+router.include_router(memory_router, prefix="/memory", tags=["memory"])

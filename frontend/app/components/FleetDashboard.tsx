@@ -236,8 +236,18 @@ export default function FleetDashboard() {
   // ─── Polling + Progress Bar ────────────────────────────────────
   useEffect(() => {
     fetchAll();
-    const timer = setInterval(fetchAll, POLL_FAST);
-    return () => clearInterval(timer);
+    
+    // Connect to Real-time WebSockets
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//localhost:8000/ws/tasks`);
+    
+    ws.onmessage = (event) => {
+      try {
+        fetchAll(); // Refresh on any broadcast
+      } catch (e) {}
+    };
+
+    return () => ws.close();
   }, [fetchAll]);
 
   useEffect(() => {

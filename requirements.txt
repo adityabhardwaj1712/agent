@@ -24,3 +24,9 @@ aiohttp
 stripe
 httpx
 psycopg2-binary
+pytest
+pytest-asyncio
+coverage
+aiosqlite
+groq
+

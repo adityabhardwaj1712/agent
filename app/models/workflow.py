@@ -13,8 +13,8 @@ class WorkflowDefinition(Base):
     definition = Column(JSON, nullable=False) # Nodes and edges
     user_id = Column(String, index=True, nullable=False)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
 
 class WorkflowRun(Base):
     __tablename__ = "workflow_runs"
