@@ -1,8 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from loguru import logger
 import asyncio
-from .v1.router import router as v1_router
-from ..services.event_bus import event_bus
+import json
 
 router = APIRouter()
 
@@ -19,37 +18,59 @@ class ConnectionManager:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception as e:
-                logger.error(f"Failed to broadcast WS: {e}")
-
 manager = ConnectionManager()
 
 @router.websocket("/tasks")
-async def websocket_endpoint(websocket: WebSocket):
-    logger.info("New WebSocket connection request to /ws/tasks")
+async def websocket_endpoint(websocket: WebSocket, user_id: str = Query(None)):
+    logger.info(f"New WebSocket connection request to /ws/tasks for user_id={user_id}")
     await manager.connect(websocket)
     
-    # Subscribe to Event Bus for this connection
-    async def event_handler(event: dict):
-        await manager.broadcast(event)
-
-    # Start the event bus subscription in a background task for this socket
-    sub_task = asyncio.create_task(event_bus.subscribe(event_handler))
+    redis = None
+    pubsub = None
+    listen_task = None
     
+    if user_id:
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
+        pubsub = redis.pubsub()
+        await pubsub.subscribe(f"task_updates:{user_id}")
+        
+        async def listen_redis():
+            try:
+                async for message in pubsub.listen():
+                    if message["type"] == "message":
+                        await websocket.send_text(
+                            message["data"].decode() if isinstance(message["data"], bytes) else message["data"]
+                        )
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.error(f"Redis listen error: {e}")
+                
+        listen_task = asyncio.create_task(listen_redis())
+
     try:
         while True:
             # Maintain connection and listen for heartbeat
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
+            elif data.startswith("subscribe:task:"):
+                # Handle dynamic task stream subscription
+                task_id = data.split(":")[-1]
+                if pubsub:
+                    await pubsub.subscribe(f"task_stream:{task_id}")
+                    logger.info(f"WS subscribed to task_stream:{task_id}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        sub_task.cancel()
     except Exception as e:
         logger.error(f"WS Error: {e}")
         manager.disconnect(websocket)
-        sub_task.cancel()
+    finally:
+        if listen_task: 
+            listen_task.cancel()
+        if pubsub: 
+            try:
+                await pubsub.close()
+            except Exception:
+                pass

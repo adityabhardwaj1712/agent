@@ -38,6 +38,52 @@ async def get_task_status(
 ):
     return await task_service.get_task_status(db, task_id, user_id=current_user.user_id)
 
+@router.get("/{task_id}/stream")
+async def stream_task_output(
+    task_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from fastapi.responses import StreamingResponse
+    from ...db.redis_client import get_async_redis_client
+    import json
+    
+    redis = await get_async_redis_client()
+    pubsub = redis.pubsub()
+    await pubsub.subscribe(f"task_stream:{task_id}")
+    await pubsub.subscribe(f"task_status:{task_id}")
+    
+    async def event_generator():
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    channel = message["channel"].decode() if isinstance(message["channel"], bytes) else message["channel"]
+                    data = message["data"].decode() if isinstance(message["data"], bytes) else message["data"]
+                    
+                    if channel == f"task_stream:{task_id}":
+                        try:
+                            parsed = json.loads(data)
+                            chunk = parsed.get("chunk", "")
+                            sse_data = json.dumps({"token": chunk, "done": False})
+                            yield f"data: {sse_data}\n\n"
+                        except:
+                            pass
+                    elif channel == f"task_status:{task_id}":
+                        try:
+                            parsed = json.loads(data)
+                            if parsed.get("status") in ["completed", "failed"]:
+                                sse_data = json.dumps({"token": "", "done": True})
+                                yield f"data: {sse_data}\n\n"
+                                break
+                        except:
+                            pass
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await pubsub.close()
+            
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 from pydantic import BaseModel
 class RootCauseResponse(BaseModel):
     analysis: str

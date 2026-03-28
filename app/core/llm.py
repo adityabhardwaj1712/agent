@@ -68,6 +68,7 @@ class LLMService:
         model: str = "gpt-4o-mini",
         tools: Optional[List[dict]] = None,
         temperature: float = 0.7,
+        task_id: Optional[str] = None,
     ) -> Tuple[Optional[str], Optional[List[Any]], Optional[Any]]:
         """
         Returns (content, tool_calls, usage).
@@ -76,17 +77,17 @@ class LLMService:
         logger.debug(f"LLM call → model={model} msgs={len(messages)}")
 
         if model.startswith("claude-"):
-            return await self._call_anthropic(messages, model, tools, temperature)
+            return await self._call_anthropic(messages, model, tools, temperature, task_id)
         elif model.startswith("gemini-"):
             return await self._call_gemini(messages, model, tools, temperature)
         elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
-            return await self._call_groq(messages, model, tools, temperature)
+            return await self._call_groq(messages, model, tools, temperature, task_id)
         else:
-            return await self._call_openai(messages, model, tools, temperature)
+            return await self._call_openai(messages, model, tools, temperature, task_id)
 
     # ─── OpenAI ──────────────────────────────────────────────────────────────
 
-    async def _call_openai(self, messages, model, tools, temperature):
+    async def _call_openai(self, messages, model, tools, temperature, task_id=None):
         kwargs: dict = {
             "model": model,
             "messages": messages,
@@ -96,14 +97,31 @@ class LLMService:
         if tools:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
+            
+        if task_id and not tools:
+            kwargs["stream"] = True
 
         resp = await self._openai().chat.completions.create(**kwargs)
+        
+        if task_id and not tools:
+            from ..db.redis_client import get_async_redis_client
+            redis = await get_async_redis_client()
+            import json
+            chunks = []
+            async for chunk in resp:
+                if not chunk.choices: continue
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    chunks.append(delta.content)
+                    await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": delta.content}))
+            return "".join(chunks), None, _Usage(0, 0, 0)
+
         msg = resp.choices[0].message
-        return msg.content, getattr(msg, "tool_calls", None), resp.usage
+        return msg.content, getattr(msg, "tool_calls", None), getattr(resp, "usage", _Usage(0, 0, 0))
 
     # ─── Groq ────────────────────────────────────────────────────────────────
 
-    async def _call_groq(self, messages, model, tools, temperature):
+    async def _call_groq(self, messages, model, tools, temperature, task_id=None):
         kwargs: dict = {
             "model": model,
             "messages": messages,
@@ -114,13 +132,30 @@ class LLMService:
             kwargs["tools"] = tools
             kwargs["tool_choice"] = "auto"
 
+        if task_id and not tools:
+            kwargs["stream"] = True
+
         resp = await self._groq().chat.completions.create(**kwargs)
+        
+        if task_id and not tools:
+            from ..db.redis_client import get_async_redis_client
+            redis = await get_async_redis_client()
+            import json
+            chunks = []
+            async for chunk in resp:
+                if not chunk.choices: continue
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    chunks.append(delta.content)
+                    await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": delta.content}))
+            return "".join(chunks), None, _Usage(0, 0, 0)
+
         msg = resp.choices[0].message
-        return msg.content, getattr(msg, "tool_calls", None), resp.usage
+        return msg.content, getattr(msg, "tool_calls", None), getattr(resp, "usage", _Usage(0, 0, 0))
 
     # ─── Anthropic ───────────────────────────────────────────────────────────
 
-    async def _call_anthropic(self, messages, model, tools, temperature):
+    async def _call_anthropic(self, messages, model, tools, temperature, task_id=None):
         """
         Translates the OpenAI message format → Anthropic format.
         System messages are extracted and passed separately.
@@ -181,7 +216,21 @@ class LLMService:
                 for t in tools
             ]
 
+        if task_id and not tools:
+            kwargs["stream"] = True
+
         resp = await self._anthropic().messages.create(**kwargs)
+        
+        if task_id and not tools:
+            from ..db.redis_client import get_async_redis_client
+            redis = await get_async_redis_client()
+            import json
+            chunks = []
+            async for event in resp:
+                if event.type == "content_block_delta" and event.delta.type == "text_delta":
+                    chunks.append(event.delta.text)
+                    await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": event.delta.text}))
+            return "".join(chunks), None, _Usage(0, 0, 0)
 
         text_content = ""
         tool_calls_out = []
@@ -254,9 +303,10 @@ class LLMService:
         model: str = "gpt-4o-mini",
         tools: Optional[List[dict]] = None,
         agent_id: Optional[str] = None, # For logging context
+        task_id: Optional[str] = None,
     ) -> dict:
         """Compatibility shim for existing worker code."""
-        content, tool_calls, usage = await self.get_completion(messages, model, tools)
+        content, tool_calls, usage = await self.get_completion(messages, model, tools, task_id=task_id)
         return {
             "content": content,
             "tool_calls": tool_calls,

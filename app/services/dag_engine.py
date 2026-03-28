@@ -73,7 +73,7 @@ class DAGEngine:
                 node.started_at = datetime.now(timezone.utc)
                 
                 # Start execution as a background task
-                task = asyncio.create_task(self._execute_node(goal_id, node))
+                task = asyncio.create_task(self._execute_node(goal_id, node, graph))
                 running_tasks[node_id] = task
                 logger.debug(f"Started node {node_id}: {node.description}")
 
@@ -108,7 +108,7 @@ class DAGEngine:
         logger.info(f"Workflow {goal_id} finished. {len(completed_nodes)}/{len(graph)} nodes completed.")
         return {node_id: {"status": n.status, "result": n.result, "error": n.error} for node_id, n in graph.items()}
 
-    async def _execute_node(self, goal_id: str, node: DAGNode):
+    async def _execute_node(self, goal_id: str, node: DAGNode, graph: Dict[str, DAGNode]):
         """
         Executes a single node in the DAG.
         """
@@ -119,9 +119,20 @@ class DAGEngine:
             
             logger.info(f"Executing node {node.id}: {node.description}")
             
+            # Substitute {prev_output} with the output of the first dependency
+            description = node.description
+            if "{prev_output}" in description and node.dependencies:
+                dep_id = list(node.dependencies)[0]
+                prev_result = graph[dep_id].result or ""
+                description = description.replace("{prev_output}", str(prev_result))
+            elif "{input}" in description and node.dependencies:
+                dep_id = list(node.dependencies)[0]
+                prev_result = graph[dep_id].result or ""
+                description = description.replace("{input}", str(prev_result))
+            
             # Use the passed execution function
             assert self.execute_fn is not None
-            result = await self.execute_fn(node.description)
+            result = await self.execute_fn(description)
             
             node.result = result
             node.status = "completed"

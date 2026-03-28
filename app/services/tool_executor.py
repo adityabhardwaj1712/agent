@@ -115,6 +115,60 @@ async def google_search(query: str, num_results: int = 5) -> dict:
     }
 
 
+# ─── 1.5. Web Search (Free DuckDuckGo/Google Wrapper) ───────────────────────
+
+@ToolExecutor.register("web_search")
+async def web_search(query: str, num_results: int = 5) -> dict:
+    """
+    Search the web for information.
+    Automatically uses Serper API if available, otherwise falls back to a free DuckDuckGo search.
+    """
+    # Try Google Search first if key exists
+    if os.getenv("SERPER_API_KEY"):
+        return await google_search(query, num_results)
+    
+    # Fallback to free DuckDuckGo HTML scraping
+    try:
+        async with httpx.AsyncClient(
+            timeout=15.0,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        ) as client:
+            resp = await client.post(
+                "https://html.duckduckgo.com/html/", 
+                data={"q": query}
+            )
+            resp.raise_for_status()
+            
+        import re
+        results = []
+        html = resp.text
+        # Simple regex to extract results from DuckDuckGo HTML
+        snippets = re.finditer(r'<a class="result__snippet[^>]+href="([^"]+)"[^>]*>(.*?)</a>', html, re.DOTALL | re.IGNORECASE)
+        titles = re.finditer(r'<h2 class="result__title">.*?<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', html, re.DOTALL | re.IGNORECASE)
+        
+        # It's an imperfect regex scrape, but works well enough as a free no-key fallback
+        for s_match, t_match in zip(snippets, titles):
+            if len(results) >= num_results:
+                break
+            url = s_match.group(1).lstrip('/url?q=') # DDG sometimes wraps the urls
+            if '&' in url:
+                url = url.split('&')[0]
+            
+            import urllib.parse
+            url = urllib.parse.unquote(url)
+                
+            title = re.sub(r'<[^>]+>', '', t_match.group(2)).strip()
+            snippet = re.sub(r'<[^>]+>', '', s_match.group(2)).strip()
+            results.append({"title": title, "url": url, "snippet": snippet})
+            
+        if not results:
+            return {"query": query, "results": [], "error": "No results found."}
+            
+        return {"query": query, "results": results}
+    except Exception as e:
+        return {"error": f"Web search failed: {str(e)}", "query": query}
+
+
 # ─── 2. Web Fetch ────────────────────────────────────────────────────────────
 
 @ToolExecutor.register("web_fetch")
@@ -299,3 +353,30 @@ async def calculate(expression: str) -> dict:
         return {"expression": expression, "result": result}
     except Exception as exc:
         return {"error": str(exc), "expression": expression}
+
+# ─── 9. Local Python Sandbox ───────────────────────────────────────────────
+
+@ToolExecutor.register("run_python")
+async def run_python(code: str) -> dict:
+    """Executes Python code locally in a subprocess sandbox with a 10s timeout."""
+    import asyncio
+    import sys
+    
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable, "-c", code,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+            return {"output": stdout.decode(), "error": stderr.decode()}
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.communicate()
+            return {"error": "Execution timed out after 10 seconds. Script killed.", "code": code}
+            
+    except Exception as e:
+        return {"error": str(e), "code": code}
+

@@ -1,0 +1,9 @@
+﻿CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS                    PORTS                                         NAMES
+86b548e10eab   agent-smoke              "/app/docker/docker-ΓÇª"   8 minutes ago   Created                                                                 agent-smoke-1
+e9884a77d379   agent-doctor             "/app/docker/docker-ΓÇª"   8 minutes ago   Created                                                                 agent-doctor-1
+a490eebec8c4   agent-worker             "/app/docker/docker-ΓÇª"   8 minutes ago   Created                                                                 agent-worker-1
+f31d7588f33c   agent-frontend           "docker-entrypoint.sΓÇª"   8 minutes ago   Created                                                                 agent-frontend-1
+de1580f8cb8e   agent-api                "/app/docker/docker-ΓÇª"   8 minutes ago   Created                                                                 agent-api-1
+5f2cf4ba1f94   redis:7                  "docker-entrypoint.sΓÇª"   8 minutes ago   Up 8 minutes (healthy)    0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp   agent-redis-1
+b06b2a23f327   pgvector/pgvector:pg15   "docker-entrypoint.sΓÇª"   8 minutes ago   Up 8 minutes (healthy)    0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp   agent-db-1
+1c5c00060a52   42f9aca8e962             "/app/docker/docker-ΓÇª"   22 hours ago    Exited (0) 22 hours ago                                                 agent-doctor-run-cdaf7a0001f7

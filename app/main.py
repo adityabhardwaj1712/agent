@@ -31,24 +31,6 @@ validate_or_exit()
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AgentCloud", version="1.0.0")
 
-from .api.task_ws import manager
-from fastapi import WebSocket
-
-@app.websocket("/ws/tasks")
-async def websocket_endpoint(websocket: WebSocket):
-    try:
-        await manager.connect(websocket)
-        logger.info(f"WebSocket client connected from {websocket.client.host}")
-        while True:
-            data = await websocket.receive_text()
-            if data == "ping":
-                await websocket.send_text("pong")
-            else:
-                await websocket.send_text(f"Echo: {data}")
-    except Exception as e:
-        logger.warning(f"WebSocket disconnected/failed: {e}")
-        await manager.disconnect(websocket)
-
 @app.on_event("startup")
 async def startup_event():
     from .services.automation_service import automation_service
@@ -140,6 +122,11 @@ async def startup_event():
     await automation_service.start()
     await auto_mode_service.start()
     await supervisor_service.start()
+    
+    from .workers.agent_worker import run_worker
+    import asyncio
+    asyncio.create_task(run_worker())
+    
     logger.info("AgentCloud Services Initialized Successfully")
 
 app.state.limiter = limiter

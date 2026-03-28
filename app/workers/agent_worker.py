@@ -298,6 +298,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             logger.warning(f"Compliance check error (continuing): {e}")
 
         # ── 3. Security scan
+        await publish_step("security_scan", "Running security scan on prompt...")
         logger.debug(f"Starting security scan for task {task_id}")
         try:
             security_report = await security_scanner.scan_tool_call("input_prompt", prompt)
@@ -318,6 +319,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             logger.warning(f"Personality service error (using default): {e}")
 
         # ── 5. Memory retrieval
+        await publish_step("memory_retrieval", "Searching long-term memory...")
         memories = await _safe_memory_search(agent_id, prompt)
         memory_context = "\n".join(m.content for m in memories) if memories else ""
 
@@ -345,6 +347,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
         messages.append({"role": "user", "content": prompt})
 
         # ── 8. LLM call with billing
+        await publish_step("calling_llm", f"Generating response using {model}...")
         llm_response = None
         tokens_used  = 0
         try:
@@ -352,6 +355,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
                  messages=messages,
                 model=model,
                 agent_id=agent_id,
+                task_id=task_id,
             )
             output      = llm_response.get("content", "")
             tokens_used = llm_response.get("tokens_used", 0)
@@ -364,17 +368,21 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
         tool_calls = llm_response.get("tool_calls", [])
         if tool_calls:
             try:
+                # Add check for lists or robust parsing
+                names = [tc.get('function', {}).get('name', 'unknown') for tc in tool_calls if isinstance(tc, dict)]
+                await publish_step("executing_tool", f"Executing tools: {', '.join(names)}...")
                 tool_results = await ToolExecutor.execute_all(tool_calls)
                 # Follow-up LLM call with tool results
                 messages.append({"role": "assistant", "content": output, "tool_calls": tool_calls})
                 messages.append({"role": "tool", "content": json.dumps(tool_results)})
-                followup = await llm_service.complete(messages=messages, model=model, agent_id=agent_id)
+                followup = await llm_service.complete(messages=messages, model=model, agent_id=agent_id, task_id=task_id)
                 output = followup.get("content", output)
                 tokens_used += followup.get("tokens_used", 0)
             except Exception as e:
                 logger.warning(f"Tool execution error for task {task_id} (using original output): {e}")
 
         # ── 10. Quality scoring
+        await publish_step("quality_scoring", "Scoring output quality...")
         quality_score = 0.0
         try:
             quality_score = await score_output(output, prompt)

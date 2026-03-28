@@ -32,4 +32,7 @@ router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(admin_router, prefix="/admin", tags=["admin"])
 
 from .memory import router as memory_router
+from .chains import router as chains_router
+
 router.include_router(memory_router, prefix="/memory", tags=["memory"])
+router.include_router(chains_router, prefix="/chains", tags=["chains"])
