@@ -12,5 +12,5 @@ class ProtocolMessage(Base):
     message_type = Column(String, nullable=False)
     payload = Column(Text, nullable=False)
     correlation_id = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
 

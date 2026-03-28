@@ -35,7 +35,7 @@ class AuditService:
                     action_type=action_type,
                     action_detail=detail,
                     ip_address=ip_address,
-                    timestamp=datetime.now(timezone.utc)
+                    timestamp=datetime.now(timezone.utc).replace(tzinfo=None)
                 )
                 db.add(log_entry)
                 await db.commit()

@@ -26,15 +26,15 @@ async def log_trace(
     await db.commit()
     
     # Also publish to Redis for real-time UI updates (ACP Visualization)
-    from ..db.redis_client import get_redis_client
-    r = get_redis_client()
+    from ..db.redis_client import get_async_redis_client
+    redis = await get_async_redis_client()
     event = {
         "task_id": task_id,
         "agent_id": agent_id,
         "step": step,
         "timestamp": str(trace.created_at)
     }
-    r.publish(f"agent:{agent_id}:traces", json.dumps(event))
+    await redis.publish(f"agent:{agent_id}:traces", json.dumps(event))
 async def get_trace_analytics(db: AsyncSession, agent_id: str | None = None, limit: int = 100):
     """
     AXON Analytics: Calculates average tool/step latency from recent traces.

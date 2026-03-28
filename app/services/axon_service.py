@@ -1,4 +1,5 @@
 from app.services.model_router import select_model, call_provider
+from loguru import logger
 
 class AxonService:
     @staticmethod
@@ -33,7 +34,8 @@ class AxonService:
         """
         Attempts to 'auto-heal' a failed task by analyzing the error.
         """
-        print(f"AXON Guard: Detecting failure -> {error_context}")
+        logger.info(f"AXON Guard: Detecting failure -> {error_context}")
+
         
         if "timeout" in error_context.lower():
             strategy = "Allocating 2x compute resources for retry."
@@ -42,5 +44,6 @@ class AxonService:
         else:
             strategy = "Fallback to secondary model endpoint."
             
-        print(f"AXON Guard: Strategy applied -> {strategy}")
+        logger.info(f"AXON Guard: Strategy applied -> {strategy}")
+
         return strategy

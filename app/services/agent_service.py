@@ -209,3 +209,27 @@ async def update_agent(db: AsyncSession, agent_id: str, owner_id: str, updates: 
     await db.commit()
     await db.refresh(agent)
     return agent
+
+async def get_leaderboard(db: AsyncSession, limit: int = 10):
+    """Returns agents sorted by total_tasks and success_rate."""
+    # Simplified success rate calculation for SQL
+    from sqlalchemy import desc
+    query = select(Agent).order_by(desc(Agent.total_tasks)).limit(limit)
+    result = await db.execute(query)
+    agents = result.scalars().all()
+    
+    return [
+        {
+            "name": a.name,
+            "success_rate": (a.successful_tasks / a.total_tasks) if a.total_tasks > 0 else 0.0,
+            "tasks_completed": a.total_tasks
+        } for a in agents
+    ]
+
+async def get_builtin_agents_from_db(db: AsyncSession):
+    """Returns agents that match the builtin names."""
+    builtin_names = [s["name"] for s in BUILTIN_AGENTS]
+    query = select(Agent).filter(Agent.name.in_(builtin_names))
+    result = await db.execute(query)
+    return result.scalars().all()
+

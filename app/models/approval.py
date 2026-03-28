@@ -13,6 +13,6 @@ class ApprovalRequest(Base):
     operation = Column(String)  # e.g., "delete_file", "transfer_funds"
     payload = Column(Text)
     status = Column(String, default="pending")  # pending, approved, rejected
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     processed_at = Column(DateTime, nullable=True)
     processed_by = Column(String, nullable=True)

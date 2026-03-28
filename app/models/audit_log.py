@@ -25,5 +25,6 @@ class AuditLog(Base):
     action_detail = Column(JSON, nullable=True)
     ip_address = Column(String, nullable=True)
 
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    

@@ -84,7 +84,7 @@ class BillingService:
         await db.execute(
             update(Subscription)
             .where(Subscription.user_id == user_id, Subscription.status == "active")
-            .values(status="cancelled", current_period_end=datetime.now(timezone.utc))
+            .values(status="cancelled", current_period_end=datetime.now(timezone.utc).replace(tzinfo=None))
         )
 
         # 5. Create new subscription record
@@ -93,8 +93,8 @@ class BillingService:
             user_id=user_id,
             plan=plan,
             status="active",
-            current_period_start=datetime.now(timezone.utc),
-            current_period_end=datetime.now(timezone.utc) + timedelta(days=30)
+            current_period_start=datetime.now(timezone.utc).replace(tzinfo=None),
+            current_period_end=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=30)
         )
         
         db.add(subscription)

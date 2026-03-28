@@ -13,8 +13,8 @@ class WorkflowDefinition(Base):
     definition = Column(JSON, nullable=False) # Nodes and edges
     user_id = Column(String, index=True, nullable=False)
     
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
-    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.UTC).replace(tzinfo=None))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
 
 class WorkflowRun(Base):
     __tablename__ = "workflow_runs"
@@ -27,8 +27,8 @@ class WorkflowRun(Base):
     total_duration_ms = Column(Integer, default=0)
     error = Column(Text, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     node_results = relationship("WorkflowNodeResult", back_populates="workflow_run", cascade="all, delete-orphan")
 
@@ -43,6 +43,6 @@ class WorkflowNodeResult(Base):
     error = Column(Text, nullable=True)
     duration_ms = Column(Integer, default=0)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     workflow_run = relationship("WorkflowRun", back_populates="node_results")

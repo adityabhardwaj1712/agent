@@ -6,6 +6,7 @@ from app.services.planner import planner_service
 from app.services.task_service import send_task
 import uuid
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +23,25 @@ async def create_goal(db: AsyncSession, data: GoalCreate, owner_id: str):
         description=data.description,
         target_outcome=data.target_outcome,
         status="planning",
-        owner_id=owner_id
+        user_id=owner_id
     )
+
     db.add(db_goal)
     await db.commit()
     await db.refresh(db_goal)
 
-    # Trigger Autonomous Planning
-    # Ensure planner_service and send_task handle owner_id
-    plan = await planner_service.generate_plan(db, data.description, owner_id)
+    # Trigger Autonomous Planning with 60s timeout
+    try:
+        plan = await asyncio.wait_for(
+            planner_service.generate_plan(db, data.description, owner_id),
+            timeout=60.0
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"Goal {goal_id} planning timed out after 60s.")
+        db_goal.status = "failed_planning"
+        await db.commit()
+        return db_goal
+
     if plan:
         logger.info(f"Goal {goal_id} planned for user {owner_id}: {plan.summary}")
         
@@ -59,12 +70,14 @@ async def create_goal(db: AsyncSession, data: GoalCreate, owner_id: str):
     return db_goal
 
 async def get_goal(db: AsyncSession, goal_id: str, owner_id: str):
-    query = select(Goal).where(Goal.goal_id == goal_id, Goal.owner_id == owner_id)
+    query = select(Goal).where(Goal.goal_id == goal_id, Goal.user_id == owner_id)
+
     result = await db.execute(query)
     return result.scalars().first()
 
 async def list_goals(db: AsyncSession, owner_id: str):
-    stmt = select(Goal).where(Goal.owner_id == owner_id).order_by(Goal.created_at.desc())
+    stmt = select(Goal).where(Goal.user_id == owner_id).order_by(Goal.created_at.desc())
+
     result = await db.execute(stmt)
     return result.scalars().all()
 

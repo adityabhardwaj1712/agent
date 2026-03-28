@@ -13,4 +13,5 @@ class Trace(Base):
     input_data = Column(JSON, nullable=True)
     output_data = Column(JSON, nullable=True)
     metadata_info = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    

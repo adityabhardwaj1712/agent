@@ -18,7 +18,7 @@ class Subscription(Base):
     current_period_start = Column(DateTime)
     current_period_end = Column(DateTime)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     # Relationships
     user = relationship("User", back_populates="subscriptions")
@@ -38,4 +38,4 @@ class UsageRecord(Base):
     agent_id = Column(String, ForeignKey("agents.agent_id"), nullable=True, index=True)
     task_id = Column(String, ForeignKey("tasks.task_id"), nullable=True, index=True)
     
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))

@@ -25,4 +25,6 @@ class Agent(Base):
     personality_config = Column(Text, nullable=True) # JSON config for persona/tone
     model_name = Column(String, default="gpt-4o")
     base_cost = Column(sa.Float, default=0.01) # Cost per task in credits/USD
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    

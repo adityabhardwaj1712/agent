@@ -23,7 +23,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request, json; resp = urllib.request.urlopen('http://localhost:8000/').read(); status = json.loads(resp); exit(0 if status['status'] == 'running' else 1)\""]
       interval: 15s
@@ -51,7 +51,7 @@ services:
       api:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
 
   db:
     image: pgvector/pgvector:pg15
@@ -87,6 +87,9 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - API_BASE_URL=http://api:8000
+
+
     depends_on:
       api:
         condition: service_healthy
@@ -95,11 +98,33 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
     command: python scripts/smoke.py
     env_file:
       - .env
     environment:
       - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  doctor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: python scripts/doctor.py --fix
+    env_file:
+      - .env
+    environment:
+      - API_BASE_URL=http://api:8000
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/agentcloud
     depends_on:
       api:
         condition: service_healthy

@@ -23,7 +23,7 @@ class APIKey(Base):
     
     last_used_at = Column(DateTime)
     expires_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     # Relationships
     user = relationship("User", back_populates="api_keys")

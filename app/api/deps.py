@@ -13,8 +13,31 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> User:
-    # TEMP FIX: Return system default user to bypass auth
-    user = await db.get(User, "system_default")
-    if user:
-        return user
-    return User(user_id="system_default", email="system@agentcloud.com")
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    if not token:
+        raise credentials_exception
+
+    # Check for blacklisted tokens
+    from ..db.redis_client import get_async_redis_client
+    redis = await get_async_redis_client()
+    if await redis.get(f"blacklist:{token}"):
+        raise HTTPException(status_code=401, detail="Token revoked")
+    
+    payload = verify_token(token)
+    if payload is None or payload.get("type") != "access":
+        raise credentials_exception
+    
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise credentials_exception
+        
+    user = await user_service.get_user(db, user_id)
+    if user is None:
+        raise credentials_exception
+        
+    return user

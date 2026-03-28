@@ -47,19 +47,14 @@ async def get_my_agents(
     return await agent_service.list_agents(db, owner_id=current_user.user_id)
 
 @router.get("/builtin")
-async def get_builtin_agents():
-    return [
-        {"name": "Research Agent", "role": "researcher", "description": "Expert in deep web search"},
-        {"name": "Coding Assistant", "role": "coder", "description": "High-performance code generation"},
-        {"name": "Data Analyst", "role": "analyst", "description": "Statistical modeling and visualization"}
-    ]
+async def get_builtin_agents(db: AsyncSession = Depends(get_db)):
+    return await agent_service.get_builtin_agents_from_db(db)
+
 
 @router.get("/leaderboard")
-async def get_leaderboard():
-    return [
-        {"name": "Research Agent", "success_rate": 0.98, "tasks_completed": 1240},
-        {"name": "Coding Assistant", "success_rate": 0.95, "tasks_completed": 850}
-    ]
+async def get_leaderboard(db: AsyncSession = Depends(get_db)):
+    return await agent_service.get_leaderboard(db)
+
 
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get_agent(
@@ -91,8 +86,18 @@ async def update_agent(
     return await agent_service.update_agent(db, agent_id, current_user.user_id, updates)
 
 @router.get("/{agent_id}/metrics")
-async def get_agent_metrics(agent_id: str):
-    return {"success_rate": 99.9}
+async def get_agent_metrics(
+    agent_id: str, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    agent = await agent_service.get_agent(db, agent_id, current_user.user_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    success_rate = (agent.successful_tasks / agent.total_tasks) if agent.total_tasks > 0 else 0.0
+    return {"success_rate": success_rate * 100, "total_tasks": agent.total_tasks}
+
 
 @router.get("/{agent_id}/history")
 async def get_agent_history(agent_id: str):

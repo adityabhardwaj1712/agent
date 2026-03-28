@@ -14,9 +14,9 @@ def _hash_embedding(text: str, dim: int = 1536) -> List[float]:
     return out
 
 
-def embed(text: str) -> List[float]:
+async def embed_async(text: str) -> List[float]:
     """
-    Generate real semantic embeddings using OpenAI text-embedding-3-small.
+    Generate real semantic embeddings using OpenAI text-embedding-3-small asynchronously.
     Falls back to a deterministic hash only if API key is missing or call fails.
     """
     api_key = os.getenv("OPENAI_API_KEY")
@@ -25,14 +25,19 @@ def embed(text: str) -> List[float]:
         return _hash_embedding(text)
 
     try:
-        from openai import OpenAI
+        from openai import AsyncOpenAI
 
-        client = OpenAI(api_key=api_key)
+        client = AsyncOpenAI(api_key=api_key)
         model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
         
         # Real semantic vector generation
-        res = client.embeddings.create(model=model, input=text)
+        res = await client.embeddings.create(model=model, input=text)
         return list(res.data[0].embedding)
     except Exception as e:
         logger.error(f"OpenAI Embedding failed: {e}. Falling back to hash.")
         return _hash_embedding(text)
+
+def embed(text: str) -> List[float]:
+    # Legacy sync wrapper (should be avoided in async paths)
+    return _hash_embedding(text)
+

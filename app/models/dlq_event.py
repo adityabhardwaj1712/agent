@@ -12,4 +12,4 @@ class DLQEvent(Base):
     payload = Column(Text, nullable=True)
     reason = Column(Text, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))

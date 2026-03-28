@@ -17,5 +17,6 @@ class Goal(Base):
     status = Column(String, default="active") # active, completed, failed
     workflow_type = Column(String, default="linear") # linear, dag
     workflow_json = Column(Text) # Stores nodes/edges for DAG
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    

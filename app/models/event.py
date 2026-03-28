@@ -12,7 +12,8 @@ class Event(Base):
     agent_id = Column(String, nullable=True, index=True)
     task_id = Column(String, nullable=True, index=True)
     payload = Column(JSON, nullable=True)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), index=True)
+    
 
     def to_dict(self):
         return {

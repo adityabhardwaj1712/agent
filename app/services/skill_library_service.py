@@ -23,8 +23,8 @@ class SkillLibraryService:
         if skill_key not in self.skills:
             raise ValueError("Skill not found in library.")
         
-        from ..db.redis_client import get_redis_client
-        redis = await get_redis_client()
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
         
         # Key: agent_skills:{agent_id}
         await redis.sadd(f"agent_skills:{agent_id}", skill_key)
@@ -34,8 +34,8 @@ class SkillLibraryService:
 
     async def get_agent_skills(self, agent_id: str) -> List[Dict[str, Any]]:
         """Retrieves installed skills for an agent."""
-        from ..db.redis_client import get_redis_client
-        redis = await get_redis_client()
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
         
         skill_keys = await redis.smembers(f"agent_skills:{agent_id}")
         return [self.skills[k] for k in skill_keys if k in self.skills]

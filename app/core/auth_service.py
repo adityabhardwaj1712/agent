@@ -4,7 +4,8 @@ from ..config import settings
 
 def create_token(agent_id: str, scopes: list[str] | None = None):
     payload = {
-        "agent": agent_id,
+        "sub": agent_id,
+        "type": "access",
         "scopes": scopes or [],
         "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     }
@@ -16,8 +17,21 @@ def create_token(agent_id: str, scopes: list[str] | None = None):
 
 def create_user_token(user_id: str):
     payload = {
-        "user": user_id,
+        "sub": user_id,
+        "type": "access",
         "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    }
+    return jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM
+    )
+
+def create_refresh_token(user_id: str):
+    payload = {
+        "sub": user_id,
+        "type": "refresh",
+        "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     }
     return jwt.encode(
         payload,

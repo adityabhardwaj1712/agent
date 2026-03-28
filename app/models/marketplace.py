@@ -31,7 +31,8 @@ class AgentTemplate(Base):
     thumbnail_url = Column(String)
     tags = Column(JSON)
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     published_at = Column(DateTime)
     
     # Relationships
@@ -54,7 +55,7 @@ class TemplatePurchase(Base):
     stripe_payment_id = Column(String)
     payment_status = Column(String, default="pending")
     
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     # Relationships
     template = relationship("AgentTemplate", back_populates="purchases")
@@ -74,7 +75,7 @@ class TemplateReview(Base):
     review_text = Column(Text)
     
     is_verified_purchase = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     
     # Relationships
     template = relationship("AgentTemplate", back_populates="reviews")

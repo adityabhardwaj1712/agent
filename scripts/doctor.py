@@ -262,11 +262,12 @@ class AgentCloudDoctor:
 
         # 2b. Login
         try:
+            # Standard OAuth2 form data
             code, body, lat = await self._http("POST", "/v1/auth/login", data={
                 "username": test_email,
                 "password": test_password
             })
-            if code == 200 and "access_token" in str(body):
+            if code == 200 and isinstance(body, dict) and "access_token" in body:
                 self._token = body.get("access_token")
                 self._record("Auth", "User Login (JWT)", Status.PASS, latency=lat)
             else:
@@ -296,10 +297,12 @@ class AgentCloudDoctor:
 
         # 3a. Create agent
         try:
-            code, body, lat = await self._http("POST", "/v1/agents/register", json_body={
+            # Use the actual user ID from registration
+            owner_id = self._admin_user_id or "system_default"
+            code, body, lat = await self._http("POST", "/v1/agents/", json_body={
                 "name": f"Doctor Test Agent {uuid.uuid4().hex[:4]}",
                 "role": "tester",
-                "owner_id": "test_owner",
+                "owner_id": owner_id,
                 "description": "Created by AgentCloud Doctor for diagnostic testing",
                 "model_name": "gpt-4o"
             })

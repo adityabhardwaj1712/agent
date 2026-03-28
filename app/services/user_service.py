@@ -12,6 +12,9 @@ class UserService:
         result = await db.execute(query)
         return result.scalars().first()
 
+    async def get_user(self, db: AsyncSession, user_id: str) -> Optional[User]:
+        return await db.get(User, user_id)
+
     async def create_user(self, db: AsyncSession, schema: UserCreate) -> User:
         user = User(
             user_id=str(uuid.uuid4()),

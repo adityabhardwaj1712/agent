@@ -77,7 +77,7 @@ async def get_timeseries(
     """
     Get 24-hour task distribution for charts.
     """
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
     last_24h = now - datetime.timedelta(hours=24)
     
     # Query tasks by hour
@@ -108,6 +108,55 @@ async def get_timeseries(
         current_ptr += datetime.timedelta(hours=1)
         
     return data
+
+
+@router.get("/metrics")
+async def get_metrics(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns detailed system metrics for the doctor and admin dashboard.
+    """
+    # 1. Task distribution by status
+    status_counts = await db.execute(
+        select(Task.status, func.count(Task.task_id))
+        .group_by(Task.status)
+    )
+    status_map = {row[0]: row[1] for row in status_counts.all()}
+    
+    # 2. Avg Latency for successful tasks
+    avg_latency = await db.scalar(
+        select(func.avg(Task.execution_time_ms))
+        .filter(Task.status == "completed")
+    ) or 0
+    
+    # 3. Agent performance
+    agent_perf = await db.execute(
+        select(Agent.name, func.count(Task.task_id))
+        .select_from(Agent)
+        .join(Task, Agent.agent_id == Task.agent_id)
+        .filter(Task.status == "completed")
+        .group_by(Agent.name)
+        .order_by(func.count(Task.task_id).desc())
+        .limit(5)
+    )
+    top_agents = [{"name": r[0], "tasks": r[1]} for r in agent_perf.all()]
+    
+    return {
+        "tasks": {
+            "completed": status_map.get("completed", 0),
+            "failed": status_map.get("failed", 0),
+            "pending": status_map.get("pending", 0),
+            "running": status_map.get("running", 0),
+            "total": sum(status_map.values())
+        },
+        "performance": {
+            "avg_latency_ms": round(float(avg_latency), 1),
+            "top_agents": top_agents
+        },
+        "system_health": "stable"
+    }
 
 @router.get("/fleet-health")
 async def get_fleet_health(
