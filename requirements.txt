@@ -29,4 +29,6 @@ pytest-asyncio
 coverage
 aiosqlite
 groq
+websockets
+wsproto
 

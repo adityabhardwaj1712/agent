@@ -180,9 +180,24 @@ async def _mark_failed(task_id: str, error: str) -> None:
         logger.error(f"Failed to mark task {task_id} as failed: {e}")
 
 
-async def _update_agent_stats(agent_id: str, success: bool, cost: float = 0.0) -> None:
+async def _publish_step_impl(redis_client, task_id: str, step: str, details: str):
+    """Internal helper to publish a live step update to Redis for the frontend."""
+    try:
+        payload = json.dumps({
+            "task_id": task_id,
+            "step": step,
+            "details": details,
+            "timestamp": time.time()
+        })
+        await redis_client.publish(f"task_steps:{task_id}", payload)
+        logger.debug(f"[STEP] {task_id} @ {step}: {details}")
+    except Exception as e:
+        logger.error(f"Step publish failed: {e}")
+
+
+async def _update_agent_stats(agent_id: str, success: bool, task_id: str, cost: float = 0.0) -> None:
     """Update agent reputation and task counters after a task run."""
-    if not agent_id:
+    if not agent_id or not task_id:
         return
     try:
         async with AsyncSessionLocal() as db:
@@ -196,7 +211,8 @@ async def _update_agent_stats(agent_id: str, success: bool, cost: float = 0.0) -
                     agent.failed_tasks = (agent.failed_tasks or 0) + 1
                 await db.commit()
         # Update reputation score via reputation service
-        await update_reputation(agent_id=agent_id, success=success)
+        async with AsyncSessionLocal() as db:
+            await update_reputation(db=db, agent_id=agent_id, success=success, task_id=task_id)
     except Exception as e:
         logger.error(f"Failed to update agent stats for {agent_id}: {e}")
 
@@ -263,6 +279,9 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
     prompt   = task_dict.get("payload", "") # Updated from 'prompt' to 'payload' to match Orchestrator
     model    = task_dict.get("model_override") or task_dict.get("model")
     goal_id  = task_dict.get("goal_id")
+
+    async def publish_step(step_name: str, step_details: str):
+        await _publish_step_impl(redis_client, task_id, step_name, step_details)
 
     logger.info(f"Processing task {task_id} | agent={agent_id} | user={user_id}")
     start_time = time.time()
@@ -428,12 +447,14 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
 
         # ── 14. Event bus publish
         try:
-            await log_event(
-                event_type="task_completed",
-                payload={"task_id": task_id, "agent_id": agent_id, "quality_score": quality_score},
-            )
+            async with AsyncSessionLocal() as db:
+                await log_event(
+                    db=db,
+                    event_type="task_completed",
+                    payload={"task_id": task_id, "agent_id": agent_id, "quality_score": quality_score},
+                )
         except Exception as e:
-            logger.warning(f"Event bus publish failed: {e}")
+            logger.warning(f"Event bus log failed (non-fatal): {e}")
 
         # ── 15. Slack notification (optional)
         try:
@@ -504,16 +525,18 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
                 "agent_id": agent_id
             })
             await redis_client.publish(f"task_status:{task_id}", fail_payload)
-            await log_event(
-                event_type="task_failed",
-                payload={"task_id": task_id, "agent_id": agent_id, "error": str(exc)},
-            )
-        except Exception:
-            pass
+            async with AsyncSessionLocal() as db:
+                await log_event(
+                    db=db,
+                    event_type="task_failed",
+                    payload={"task_id": task_id, "agent_id": agent_id, "error": str(exc)},
+                )
+        except Exception as e:
+            logger.warning(f"Error logging task failure: {e}")
 
     finally:
         # ── 20. Always update agent stats
-        await _update_agent_stats(agent_id, success=success)
+        await _update_agent_stats(agent_id, success=success, task_id=task_id)
 
 
 async def run_worker():

@@ -191,6 +191,9 @@ export default function FleetDashboard() {
 
   // ─── Data Fetching ─────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('agentcloud_token') : null;
+    if (!token) return;
+
     try {
       const [s, h, t, a, ts, traces] = await Promise.allSettled([
         apiFetch<Stats>('/analytics/summary'),

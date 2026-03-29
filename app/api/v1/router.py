@@ -13,6 +13,7 @@ from .approvals import router as approvals_router
 from .tools import router as tools_router
 from .audit import router as audit_router
 from .admin import router as admin_router
+from .protocol import router as protocol_router
 
 router = APIRouter()
 
@@ -30,6 +31,7 @@ router.include_router(approvals_router, prefix="/approvals", tags=["approvals"])
 router.include_router(tools_router, prefix="/tools", tags=["tools"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(admin_router, prefix="/admin", tags=["admin"])
+router.include_router(protocol_router, prefix="/protocol", tags=["protocol"])
 
 from .memory import router as memory_router
 from .chains import router as chains_router

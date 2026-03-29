@@ -59,8 +59,11 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str = Query(None)):
                 # Handle dynamic task stream subscription
                 task_id = data.split(":")[-1]
                 if pubsub:
+                    # Subscribe to all relevant task channels
                     await pubsub.subscribe(f"task_stream:{task_id}")
-                    logger.info(f"WS subscribed to task_stream:{task_id}")
+                    await pubsub.subscribe(f"task_steps:{task_id}")
+                    await pubsub.subscribe(f"task_status:{task_id}")
+                    logger.info(f"WS Dynamic Subscribed: task_id={task_id}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:

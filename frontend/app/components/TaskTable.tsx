@@ -14,11 +14,14 @@ import {
   FileText,
   Search,
   MoreHorizontal,
-  AlertTriangle
+  AlertTriangle,
+  Monitor,
+  X
 } from 'lucide-react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, getToken } from '../lib/api';
 import { useToast } from './Toast';
 import AddTaskModal from './AddTaskModal';
+import StepMonitor from './StepMonitor';
 
 export default function TaskTable() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -28,6 +31,20 @@ export default function TaskTable() {
 
   const [analyzing, setAnalyzing] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<{task_id: string, analysis: string, fix_suggestion: string} | null>(null);
+  const [monitoringTaskId, setMonitoringTaskId] = useState<string | null>(null);
+
+  const getUserIdFromToken = () => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const userId = getUserIdFromToken();
 
   const fetchTasks = async () => {
     try {
@@ -168,6 +185,14 @@ export default function TaskTable() {
                              {analyzing === task.task_id ? 'ANALYZING' : 'ANALYZE'}
                            </button>
                          )}
+                         <button 
+                           className="ms-btn ms-btn-sm" 
+                           style={{ background: 'rgba(34,211,238,0.1)', color: 'var(--cyan)', border: '1px solid rgba(34,211,238,0.2)' }}
+                           onClick={() => setMonitoringTaskId(task.task_id)}
+                         >
+                           <Monitor size={12} className="mr-1" />
+                           MONITOR
+                         </button>
                          <button className="ms-btn-icon-sm"><MoreHorizontal size={14} /></button>
                        </div>
                     </td>
@@ -218,6 +243,20 @@ export default function TaskTable() {
         onClose={() => setIsModalOpen(false)} 
         onAdded={fetchTasks} 
       />
+
+      {monitoringTaskId && userId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="relative animate-in zoom-in-95 duration-300" style={{ width: 800, height: '80vh', maxWidth: '95vw' }}>
+             <button 
+                onClick={() => setMonitoringTaskId(null)}
+                style={{ position: 'absolute', top: -40, right: 0, color: 'white', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800 }}
+             >
+                <X size={18} /> CLOSE_MONITOR
+             </button>
+             <StepMonitor taskId={monitoringTaskId} userId={userId} />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .ms-task-table-container { flex: 1; overflow-y: auto; }

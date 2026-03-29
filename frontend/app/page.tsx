@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Sidebar from "./components/Sidebar";
 import { ToastProvider, useToast } from "./components/Toast";
-import { apiFetch } from "./lib/api";
+import { apiFetch, getToken } from "./lib/api";
 
 // Views
 import AgentGallery from "./components/AgentGallery";
@@ -55,6 +55,7 @@ function AppContent() {
   };
 
   const fetchGlobalStats = async () => {
+    if (!getToken()) return;
     try {
       const data = await apiFetch<any>('/analytics/summary');
       if (data) setStats((prev: any) => ({ ...prev, ...data }));

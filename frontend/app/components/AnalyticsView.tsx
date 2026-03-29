@@ -19,6 +19,9 @@ const AnalyticsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('agentcloud_token') : null;
+    if (!token) return;
+
     try {
       const [sumData, tsData] = await Promise.all([
         apiFetch<any>('/analytics/summary'),

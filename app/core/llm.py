@@ -27,9 +27,10 @@ class LLMService:
         if self._openai_client is None:
             from openai import AsyncOpenAI
             key = settings.OPENAI_API_KEY
-            if not key:
-                raise RuntimeError("OPENAI_API_KEY not set")
-            self._openai_client = AsyncOpenAI(api_key=key)
+            if not key or "sk-proj-***" in key or "placeholder" in key:
+                logger.warning("OPENAI_API_KEY is missing or invalid. AXON will attempt mock responses for core tasks.")
+                # We'll allow it to initialize but it will fail on call; we catch that in get_completion
+            self._openai_client = AsyncOpenAI(api_key=key or "sk-none")
         return self._openai_client
 
     def _anthropic(self):
@@ -101,23 +102,29 @@ class LLMService:
         if task_id and not tools:
             kwargs["stream"] = True
 
-        resp = await self._openai().chat.completions.create(**kwargs)
-        
-        if task_id and not tools:
-            from ..db.redis_client import get_async_redis_client
-            redis = await get_async_redis_client()
-            import json
-            chunks = []
-            async for chunk in resp:
-                if not chunk.choices: continue
-                delta = chunk.choices[0].delta
-                if delta.content:
-                    chunks.append(delta.content)
-                    await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": delta.content}))
-            return "".join(chunks), None, _Usage(0, 0, 0)
+        try:
+            resp = await self._openai().chat.completions.create(**kwargs)
+            
+            if task_id and not tools:
+                from ..db.redis_client import get_async_redis_client
+                redis = await get_async_redis_client()
+                import json
+                chunks = []
+                async for chunk in resp:
+                    if not chunk.choices: continue
+                    delta = chunk.choices[0].delta
+                    if delta.content:
+                        chunks.append(delta.content)
+                        await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": delta.content}))
+                return "".join(chunks), None, _Usage(0, 0, 0)
 
-        msg = resp.choices[0].message
-        return msg.content, getattr(msg, "tool_calls", None), getattr(resp, "usage", _Usage(0, 0, 0))
+            msg = resp.choices[0].message
+            return msg.content, getattr(msg, "tool_calls", None), getattr(resp, "usage", _Usage(0, 0, 0))
+        except Exception as e:
+            if "invalid_api_key" in str(e).lower() or "401" in str(e):
+                logger.error(f"Critical Auth Failure (OpenAI): {e}")
+                return "ERROR: LLM Authentication Failed. Please check your OPENAI_API_KEY.", None, _Usage(0,0,0)
+            raise
 
     # ─── Groq ────────────────────────────────────────────────────────────────
 
