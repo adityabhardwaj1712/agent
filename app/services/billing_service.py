@@ -287,4 +287,43 @@ class BillingService:
             "roi_percentage": round(roi, 2)
         }
 
+    async def predict_monthly_cost(self, user_id: str) -> Dict[str, Any]:
+        """
+        Predicts total monthly cost based on current daily run rate.
+        """
+        now = datetime.now(timezone.utc)
+        days_in_month = (now.replace(month=now.month % 12 + 1, day=1) - timedelta(days=1)).day
+        days_passed = now.day
+        
+        usage = await self.get_usage_summary(user_id)
+        current_cost = (usage.get("tokens", 0) / 1000) * self.TOKEN_PRICES["output"]
+        
+        daily_rate = current_cost / days_passed if days_passed > 0 else 0
+        predicted_cost = daily_rate * days_in_month
+        
+        return {
+            "current_cost": round(current_cost, 2),
+            "predicted_total": round(predicted_cost, 2),
+            "run_rate": round(daily_rate, 2),
+            "days_remaining": days_in_month - days_passed
+        }
+
+    async def auto_optimize_models(self, user_id: str, budget: float) -> List[Dict[str, Any]]:
+        """
+        Analyzes current usage and budget to suggest model downgrades.
+        """
+        prediction = await self.predict_monthly_cost(user_id)
+        suggestions = []
+        
+        if prediction["predicted_total"] > budget:
+            # Logic: If high-cost models are used, suggest switching
+            suggestions.append({
+                "action": "DOWNGRADE_MODEL",
+                "reason": "Predicted cost exceeds budget by " + str(round(prediction["predicted_total"] - budget, 2)),
+                "suggestion": "Switch high-usage agents to 'gpt-4o-mini' or 'llama3-8b'",
+                "potential_savings": round(prediction["predicted_total"] * 0.4, 2)
+            })
+            
+        return suggestions
+
 billing_service = BillingService()

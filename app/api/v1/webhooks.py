@@ -2,7 +2,14 @@ from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from typing import Optional
 import json
 import logging
+from pydantic import BaseModel
 from ...config import settings
+from ...services.webhook_service import webhook_service
+
+class OutboundWebhookRequest(BaseModel):
+    url: str
+    payload: dict
+    max_retries: Optional[int] = 3
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -46,3 +53,11 @@ async def generic_webhook(source: str, request: Request):
     payload = await request.json()
     logger.info(f"Received generic webhook from {source}")
     return {"source": source, "received": True}
+
+@router.post("/outbound")
+async def dispatch_outbound_webhook(req: OutboundWebhookRequest):
+    """
+    Dispatch an outbound webhook with exponential backoff retry logic.
+    """
+    webhook_service.dispatch(req.url, req.payload, max_retries=req.max_retries)
+    return {"status": "dispatched", "url": req.url, "retries_configured": req.max_retries}

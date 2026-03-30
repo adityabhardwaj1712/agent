@@ -36,6 +36,7 @@ import SettingsView from "./components/SettingsView";
 import AddAgentModal from "./components/AddAgentModal";
 import AddTaskModal from "./components/AddTaskModal";
 import AutonomousView from "./components/AutonomousView";
+import AgentPlayground from "./components/AgentPlayground";
 
 import { MetricCard, IncidentFeed, DashboardAgentList, ConfigraphWidget } from "./components/DashboardWidgets";
 import FleetDashboard from "./components/FleetDashboard";
@@ -91,6 +92,7 @@ function AppContent() {
       case 'analytics': return 'KPI_ANALYTICS';
       case 'memory': return 'NEURAL_MEMORY_STORE';
       case 'autonomous': return 'MISSION_CONTROL';
+      case 'playground': return 'AGENT_EXPERIMENT_LAB';
       case 'settings': return 'SYSTEM_CONFIGURATION';
       case 'approvals': return 'GUARDRAIL_PROTOCOL';
       case 'audit': return 'SECURITY_AUDIT_LOG';
@@ -154,6 +156,7 @@ function AppContent() {
           {activeView === 'marketplace' && <MarketplaceView />}
           {activeView === 'settings' && <SettingsView />}
           {activeView === 'autonomous' && <AutonomousView />}
+          {activeView === 'playground' && <AgentPlayground />}
           {activeView === 'knowledge' && <KnowledgeHub />}
           
           <AddAgentModal 

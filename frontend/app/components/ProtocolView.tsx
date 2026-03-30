@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useToast } from './Toast';
 import { apiFetch } from '../lib/api';
+import CollaborationGraph from './CollaborationGraph';
 
 
 const AGENTS = ['TaskOrchestrator', 'WebResearcher', 'DataAnalyst', 'CodeHelper', 'ContentWriter', 'SecurityGuardian', 'FleetSummarizer'];
@@ -30,6 +31,7 @@ const INIT_MSGS = [
 export default function ProtocolView() {
   const [msgs, setMsgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'feed' | 'graph'>('feed');
   const [from, setFrom] = useState(AGENTS[0]);
   const [to, setTo] = useState(AGENTS[1]);
   const [type, setType] = useState('delegate_task');
@@ -49,8 +51,27 @@ export default function ProtocolView() {
 
   React.useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
+    
+    // Initialize Protocol WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const ws = new WebSocket(`${protocol}//${host}/api/v1/protocol/demo-user`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'SIGNAL' && data.signal_type === 'PROTOCOL_MESSAGE') {
+          setMsgs(prev => [data.payload, ...prev].slice(0, 50));
+        }
+      } catch (e) {
+        console.error('WS Message parsing failed', e);
+      }
+    };
+
+    ws.onopen = () => console.log('Protocol Mesh WebSocket Connected');
+    ws.onclose = () => console.log('Protocol Mesh WebSocket Disconnected');
+
+    return () => ws.close();
   }, []);
 
   const send = async () => {
@@ -80,10 +101,22 @@ export default function ProtocolView() {
         
         {/* Left: Message Feed */}
         <div className="ms-glass-panel flex flex-col">
-          <div className="ms-card-hd" style={{ padding: '20px 24px', borderBottom: '1px solid var(--bg3)' }}>
-             <div className="flex items-center gap-3">
-                <Radio size={18} className="text-blue-400" />
-                <span style={{ fontSize: '14px', fontWeight: 800 }}>A2A_PROTOCOL_BUS</span>
+          <div className="ms-card-hd" style={{ padding: '0 24px', borderBottom: '1px solid var(--bg3)', height: 64 }}>
+             <div className="flex items-center gap-8 h-full">
+                <button 
+                  className={`flex items-center gap-2 h-full px-2 border-b-2 transition-all ${activeTab === 'feed' ? 'border-[var(--blue)] text-[var(--text)]' : 'border-transparent text-[var(--t3)]'}`}
+                  onClick={() => setActiveTab('feed')}
+                >
+                   <Radio size={16} /> 
+                   <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: 1 }}>SIGNAL_FEED</span>
+                </button>
+                <button 
+                  className={`flex items-center gap-2 h-full px-2 border-b-2 transition-all ${activeTab === 'graph' ? 'border-[var(--blue)] text-[var(--text)]' : 'border-transparent text-[var(--t3)]'}`}
+                  onClick={() => setActiveTab('graph')}
+                >
+                   <Share2 size={16} /> 
+                   <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: 1 }}>COLLABORATION_GRAPH</span>
+                </button>
              </div>
              <div className="flex items-center gap-3">
                 <div className="ms-dot ms-dot-g animate-pulse"></div>
@@ -92,7 +125,9 @@ export default function ProtocolView() {
           </div>
 
           <div className="ms-protocol-scroll">
-            {msgs.length === 0 ? (
+            {activeTab === 'graph' ? (
+              <CollaborationGraph />
+            ) : msgs.length === 0 ? (
               <div className="flex-center flex-col py-32 opacity-30">
                  <Activity size={48} style={{ marginBottom: 16 }} />
                  <div style={{ fontSize: '12px', fontWeight: 600 }}>NO_INTER_AGENT_SIGNALS</div>

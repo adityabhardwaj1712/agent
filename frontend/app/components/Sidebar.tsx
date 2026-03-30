@@ -1,22 +1,11 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import { 
-  LayoutDashboard, 
-  Bot, 
-  Zap, 
-  Layers, 
-  ShoppingBag, 
-  BarChart3, 
-  Brain, 
-  History, 
-  CheckCircle2, 
-  FileText, 
-  Settings,
-  Rocket,
-  ShieldCheck,
-  Database,
-  Wallet,
-  Radio
+  LayoutDashboard, Bot, Zap, ListTodo, Settings, Search,
+  Activity, FileText, ChevronDown, ChevronRight, Server,
+  ScrollText, Workflow, CheckCircle2
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,90 +15,139 @@ interface SidebarProps {
   onToggleTheme: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onToggleTheme }) => {
-  const [counts, setCounts] = useState({
-    agents: 0,
-    approvals: 0,
-    traces: 0
-  });
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
+  const [search, setSearch] = useState('');
+  const [fleetOpen, setFleetOpen] = useState(true);
+  const [systemHealth, setSystemHealth] = useState<'healthy' | 'degraded' | 'offline'>('healthy');
+  const [agentCount, setAgentCount] = useState(0);
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchHealth = async () => {
       try {
         const data = await apiFetch<any>('/analytics/summary');
-        setCounts({
-          agents: data.active_agents || 0,
-          approvals: data.pending_approvals || 0,
-          traces: data.active_events || 0
-        });
-      } catch (err) {
-        console.error('Sidebar fetch failed:', err);
+        if (data) {
+          setAgentCount(data.active_agents || 0);
+          setSystemHealth(data.success_rate >= 90 ? 'healthy' : 'degraded');
+        }
+      } catch {
+        setSystemHealth('offline');
       }
     };
-    fetchCounts();
-    const interval = setInterval(fetchCounts, 15000);
-    return () => clearInterval(interval);
+    fetchHealth();
+    const iv = setInterval(fetchHealth, 15000);
+    return () => clearInterval(iv);
   }, []);
 
-  const navItems = [
-    { id: 'fleet', label: 'Fleet Overview', icon: <LayoutDashboard size={18} />, section: 'Core' },
-    { id: 'agents', label: 'Neural Agents', icon: <Bot size={18} />, section: 'Core', badge: counts.agents, badgeColor: 'y' },
-    { id: 'autonomous', label: 'Auto Missions', icon: <Rocket size={18} />, section: 'Core' },
-    { id: 'workflow', label: 'Logic Flows', icon: <Zap size={18} />, section: 'Core' },
-    { id: 'marketplace', label: 'Marketplace', icon: <ShoppingBag size={18} />, section: 'Core' },
-    
-    { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} />, section: 'Insights' },
-    { id: 'memory', label: 'Neural Memory', icon: <Brain size={18} />, section: 'Insights' },
-    { id: 'knowledge', label: 'Knowledge Hub', icon: <Database size={18} />, section: 'Insights' },
-    { id: 'traces', label: 'Execution Traces', icon: <History size={18} />, section: 'Insights' },
-    
-    { id: 'approvals', label: 'Guardrails', icon: <ShieldCheck size={18} />, section: 'Safety', badge: counts.approvals },
-    { id: 'audit', label: 'System Audit', icon: <FileText size={18} />, section: 'Safety' },
-    { id: 'billing', label: 'Billing', icon: <Wallet size={18} />, section: 'Safety' },
-    { id: 'protocol', label: 'Protocol Mesh', icon: <Radio size={18} />, section: 'Safety' },
-    { id: 'settings', label: 'Node Settings', icon: <Settings size={18} />, section: 'Safety' },
+  const mainNav = [
+    { id: 'fleet', label: 'Dashboard', icon: LayoutDashboard },
   ];
 
-  const sections = ['Core', 'Insights', 'Safety'];
+  const fleetSub = [
+    { id: 'agents', label: 'Active Agents' },
+    { id: 'traces', label: 'Agent Logs' },
+    { id: 'autonomous', label: 'Deployment' },
+  ];
+
+  const secondaryNav = [
+    { id: 'monitoring', label: 'Monitoring', icon: Activity },
+    { id: 'tasks', label: 'Tasks', icon: ListTodo },
+    { id: 'workflow', label: 'Workflows', icon: Workflow },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  const isFleetChild = fleetSub.some(s => s.id === activeView);
 
   return (
     <aside className="ms-sb-wide">
+      {/* Logo */}
       <div className="ms-logo-wide">
         <div className="ms-logo-mark">AC</div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div className="ms-logo-name">AGENTCLOUD <span className="text-[var(--blue)]">OPS</span></div>
-          <div className="ms-logo-ver">V3.1 ENTERPRISE</div>
+          <div className="ms-logo-name">AgentCloud</div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={{ padding: '12px 12px 8px' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--t3)' }} />
+          <input
+            className="fi"
+            placeholder="Search..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ 
+              width: '100%', paddingLeft: 32, height: 34, fontSize: 12,
+              background: 'var(--bg1)', border: '1px solid var(--border)', borderRadius: 8
+            }}
+          />
         </div>
       </div>
 
       <nav className="ms-nav-wide">
-        {sections.map(section => (
-          <React.Fragment key={section}>
-            <div className="ms-nav-sec">{section}</div>
-            {navItems.filter(item => item.section === section).map(item => (
-              <div 
-                key={item.id}
-                className={`ms-nav-itm ${activeView === item.id ? 'act' : ''}`}
-                onClick={() => onViewChange(item.id)}
+        {/* Dashboard */}
+        {mainNav.map(item => (
+          <div
+            key={item.id}
+            className={`ms-nav-itm ${activeView === item.id ? 'act' : ''}`}
+            onClick={() => onViewChange(item.id)}
+          >
+            <item.icon size={18} style={{ opacity: 0.7 }} />
+            <span className="flex-1">{item.label}</span>
+          </div>
+        ))}
+
+        {/* Agent Fleet - Expandable */}
+        <div
+          className={`ms-nav-itm ${isFleetChild ? 'act' : ''}`}
+          onClick={() => setFleetOpen(!fleetOpen)}
+          style={{ cursor: 'pointer' }}
+        >
+          <Bot size={18} style={{ opacity: 0.7 }} />
+          <span className="flex-1">Agent Fleet</span>
+          {fleetOpen ? <ChevronDown size={14} style={{ opacity: 0.4 }} /> : <ChevronRight size={14} style={{ opacity: 0.4 }} />}
+        </div>
+        
+        {fleetOpen && (
+          <div style={{ paddingLeft: 20 }}>
+            {fleetSub.map(sub => (
+              <div
+                key={sub.id}
+                className={`ms-nav-itm ${activeView === sub.id ? 'act' : ''}`}
+                onClick={() => onViewChange(sub.id)}
+                style={{ fontSize: 12, padding: '8px 14px' }}
               >
-                <span className="opacity-70">{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`ms-nav-badge ${item.badgeColor || ''}`}>{item.badge}</span>
-                )}
+                <span style={{ width: 4, height: 4, borderRadius: '50%', background: activeView === sub.id ? 'var(--cyan)' : 'var(--t3)', flexShrink: 0 }} />
+                <span>{sub.label}</span>
               </div>
             ))}
-          </React.Fragment>
+          </div>
+        )}
+
+        {/* Secondary Nav */}
+        {secondaryNav.map(item => (
+          <div
+            key={item.id}
+            className={`ms-nav-itm ${activeView === item.id ? 'act' : ''}`}
+            onClick={() => onViewChange(item.id)}
+          >
+            <item.icon size={18} style={{ opacity: 0.7 }} />
+            <span className="flex-1">{item.label}</span>
+          </div>
         ))}
       </nav>
 
-      <div className="ms-sb-footer">
-        <div className="ms-avatar">AK</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
-            Aryan Khanna
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)', letterSpacing: '1px' }}>SYSTEM_ROOT</div>
+      {/* System Health Footer */}
+      <div className="ms-sb-footer" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+          <div style={{ 
+            width: 8, height: 8, borderRadius: '50%', 
+            background: systemHealth === 'healthy' ? 'var(--green)' : systemHealth === 'degraded' ? 'var(--amber)' : 'var(--red)',
+            boxShadow: systemHealth === 'healthy' ? '0 0 8px var(--green)' : 'none'
+          }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
+            {systemHealth === 'healthy' ? 'System Healthy' : systemHealth === 'degraded' ? 'System Degraded' : 'System Offline'}
+          </span>
         </div>
       </div>
     </aside>

@@ -218,10 +218,10 @@ const AnalyticsView: React.FC = () => {
         .ms-visual-bar { flex: 1; border-radius: 4px 4px 0 0; transition: all 0.3s ease; cursor: pointer; }
         .ms-visual-bar:hover { filter: brightness(1.2); transform: scaleX(1.1); }
         
-        .ms-node-status-row { display: flex; items-center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; }
+        .ms-node-status-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; }
         .ms-node-status-row.active { border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05); }
         
-        .ms-btn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg2); border: 1px solid var(--bg3); display: flex; items-center; justify-content: center; color: var(--t3); cursor: pointer; transition: all 0.2s; }
+        .ms-btn-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg2); border: 1px solid var(--bg3); display: flex; align-items: center; justify-content: center; color: var(--t3); cursor: pointer; transition: all 0.2s; }
         .ms-btn-icon:hover { color: var(--text); border-color: var(--blue); }
       `}</style>
     </div>

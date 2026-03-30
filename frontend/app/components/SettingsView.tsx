@@ -17,7 +17,9 @@ import {
   Trash2,
   RefreshCw,
   Plus,
-  Terminal as TerminalIcon
+  Terminal as TerminalIcon,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { useToast } from './Toast';
 
@@ -172,7 +174,37 @@ export default function SettingsView() {
                  </div>
               )}
 
-              {activeTab !== 'infrastructure' && (
+              {activeTab === 'advanced' && (
+                 <div className="space-y-10">
+                    <section className="ms-set-section">
+                       <div className="title">Platform Appearance</div>
+                       <div className="desc">Customize the user interface theme for optimal visibility.</div>
+                       <div className="space-y-3">
+                          <button 
+                             className="ms-btn ms-btn-g w-full" 
+                             style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', height: 'auto' }}
+                             onClick={() => {
+                                const current = document.documentElement.getAttribute('data-theme');
+                                const next = current === 'dark' ? 'light' : 'dark';
+                                document.documentElement.setAttribute('data-theme', next);
+                                toast(`Theme switched to ${next.toUpperCase()} mode`, 'ok');
+                             }}
+                          >
+                             <div className="flex items-center gap-3">
+                                <Sun size={18} className="text-amber-400" />
+                                <div style={{ textAlign: 'left' }}>
+                                   <div className="font-bold text-[var(--text)]">Toggle System Theme</div>
+                                   <div className="text-[11px] text-[var(--t3)] font-mono mt-1">SWITCH BETWEEN DARK AND LIGHT DISPLAY MODES</div>
+                                </div>
+                             </div>
+                             <div className="ms-toggle on"></div>
+                          </button>
+                       </div>
+                    </section>
+                 </div>
+              )}
+
+              {activeTab !== 'infrastructure' && activeTab !== 'advanced' && (
                  <div className="flex-center flex-col py-32 h-full">
                     <TerminalIcon size={48} className="text-[var(--bg3)] mb-6" />
                     <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--t3)', letterSpacing: '2px' }}>MODULE_SYNC_PENDING...</div>

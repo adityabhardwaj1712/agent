@@ -8,6 +8,9 @@ import asyncio
 from ..deps import get_current_user
 from ...models.user import User
 from ...services.model_router import select_model, call_provider
+from ...services import memory_service
+from ...db.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -86,6 +89,7 @@ async def generate_workflow(
 @router.post("/chat")
 async def copilot_chat(
     request: ChatRequest,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -94,19 +98,31 @@ async def copilot_chat(
     async def chat_generator():
         from ...core.llm import llm_service
         
-        # Convert Pydantic messages to dict
-        msgs = [{"role": m.role, "content": m.content} for m in request.messages]
+        # 1. RAG Enrichment
+        user_query = request.messages[-1].content if request.messages else ""
+        memories = await memory_service.search_memory(db, "system", user_query, limit=3)
         
-        # We manually use the underlying provider call to get a stream if possible
-        # For now, we'll use a simplified mock stream to demonstrate the UI
-        # In production, this would use llm_service._call_openai(stream=True)
+        context_str = ""
+        if memories:
+            context_str = "\n\nRelevant Context from Knowledge Hub:\n" + "\n---\n".join([m.content for m in memories])
         
+        # 2. System Prompt Injection
+        enhanced_system = f"You are the AgentCloud Copilot. Assist the user with their agent fleet and tasks.{context_str}"
+        
+        # 3. Message Assembly
+        msgs = [{"role": "system", "content": enhanced_system}]
+        for m in request.messages:
+            msgs.append({"role": m.role, "content": m.content})
+        
+        # 4. Real Streaming
         yield "data: " + json.dumps({"role": "assistant", "content": "", "type": "start"}) + "\n\n"
         
-        full_text = "I am initializing the neural link... How can I assist you with your agent fleet today?"
-        for word in full_text.split():
-            await asyncio.sleep(0.05)
-            yield "data: " + json.dumps({"content": word + " "}) + "\n\n"
+        try:
+            async for chunk in llm_service.stream_completion(msgs, model="gpt-4o-mini"):
+                yield "data: " + json.dumps({"content": chunk}) + "\n\n"
+        except Exception as e:
+            logger.error(f"Copilot Stream Error: {e}")
+            yield "data: " + json.dumps({"content": f"\n\n[System Error: {str(e)}]"}) + "\n\n"
             
         yield "data: [DONE]\n\n"
 

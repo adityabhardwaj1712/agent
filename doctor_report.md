@@ -1,5 +1,5 @@
 # 🩺 AgentCloud Doctor Report
-**Generated**: 2026-03-30T07:00:22.223832
+**Generated**: 2026-03-30T22:57:03.077010
 **Score**: 98% (50/51 checks passed)
 
 ## Summary
@@ -7,7 +7,7 @@
 | Status | Count |
 |--------|-------|
 | ✅ PASS | 50 |
-| ⚠️  WARN | 1 |
+| ❌ FAIL | 1 |
 
 ---
 
@@ -17,93 +17,93 @@
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | API Health Endpoint |  | 519.3ms |
-| ✅ PASS | PostgreSQL Connection |  | 10ms |
-| ✅ PASS | Redis Connection |  | 5ms |
-| ✅ PASS | Prometheus Metrics |  | 44.2ms |
-| ⚠️  WARN | Docker Check | docker not available: [Errno 2] No such file or directory: 'docker' |  |
+| ✅ PASS | API Health Endpoint |  | 37.3ms |
+| ❌ FAIL | System Status | HTTP 404 |  |
+| ✅ PASS | Prometheus Metrics |  | 37.1ms |
+| ✅ PASS | Docker: agent-db-1 | Up 4 minutes (healthy) |  |
+| ✅ PASS | Docker: agent-redis-1 | Up 4 minutes (healthy) |  |
 
 ### Auth
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | User Registration |  | 1032.2ms |
-| ✅ PASS | User Login (JWT) |  | 511.9ms |
-| ✅ PASS | Authenticated Endpoint (/agents/my) |  | 79.7ms |
+| ✅ PASS | User Registration |  | 1184.1ms |
+| ✅ PASS | User Login (JWT) |  | 347.9ms |
+| ✅ PASS | Authenticated Endpoint (/agents/my) |  | 39.4ms |
 
 ### Agents
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Create Agent |  | 53.9ms |
-| ✅ PASS | List Agents (1 found) |  | 217.5ms |
-| ✅ PASS | Get Agent by ID |  | 117.6ms |
-| ✅ PASS | Update Agent |  | 80.1ms |
-| ✅ PASS | Agent Metrics |  | 40.0ms |
-| ✅ PASS | Agent Task History |  | 38.1ms |
-| ✅ PASS | Builtin Templates (0 found) |  | 109.6ms |
-| ✅ PASS | Agent Leaderboard (10 agents) |  | 48.2ms |
+| ✅ PASS | Create Agent |  | 46.4ms |
+| ✅ PASS | List Agents (1 found) |  | 65.0ms |
+| ✅ PASS | Get Agent by ID |  | 14.0ms |
+| ✅ PASS | Update Agent |  | 54.2ms |
+| ✅ PASS | Agent Metrics |  | 15.9ms |
+| ✅ PASS | Agent Task History |  | 20.3ms |
+| ✅ PASS | Builtin Templates (0 found) |  | 52.8ms |
+| ✅ PASS | Agent Leaderboard (10 agents) |  | 23.5ms |
 
 ### Analytics
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Analytics Metrics |  | 107.0ms |
-| ✅ PASS | Analytics Summary (Dashboard) |  | 120.7ms |
-| ✅ PASS | Traces List |  | 48.0ms |
+| ✅ PASS | Analytics Metrics |  | 51.8ms |
+| ✅ PASS | Analytics Summary (Dashboard) |  | 32.4ms |
+| ✅ PASS | Traces List |  | 41.4ms |
 
 ### Marketplace
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | List Templates |  | 31.8ms |
-| ✅ PASS | Featured Agents |  | 28.6ms |
+| ✅ PASS | List Templates |  | 25.9ms |
+| ✅ PASS | Featured Agents |  | 20.2ms |
 
 ### Billing
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Subscription Info |  | 54.7ms |
-| ✅ PASS | Usage Report |  | 29.6ms |
+| ✅ PASS | Subscription Info |  | 28.4ms |
+| ✅ PASS | Usage Report |  | 29.8ms |
 
 ### Workflows
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Workflows List & Run |  | 146.3ms |
-| ✅ PASS | List Goals |  | 196.2ms |
+| ✅ PASS | Workflows List & Run |  | 20.1ms |
+| ✅ PASS | List Goals |  | 11.2ms |
 
 ### HITL
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | List Approvals |  | 72.5ms |
+| ✅ PASS | List Approvals |  | 13.5ms |
 
 ### Tools
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | List Tools (4 found) |  | 30.8ms |
+| ✅ PASS | List Tools (4 found) |  | 31.2ms |
 
 ### Admin
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Audit Logs |  | 45.0ms |
-| ✅ PASS | Admin Circuits |  | 28.3ms |
+| ✅ PASS | Audit Logs |  | 13.2ms |
+| ✅ PASS | Admin Circuits |  | 9.0ms |
 
 ### Security
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Guardian Validate (safe=True) |  | 23.3ms |
-| ✅ PASS | Guardian Blocks Malicious Input |  | 11.2ms |
+| ✅ PASS | Guardian Validate (safe=True) |  | 8.3ms |
+| ✅ PASS | Guardian Blocks Malicious Input |  | 7.1ms |
 
 ### Codebase
 
 | Status | Test | Detail | Latency |
 |--------|------|--------|---------|
-| ✅ PASS | Python Syntax (117 files) |  |  |
+| ✅ PASS | Python Syntax (125 files) |  |  |
 | ✅ PASS | Import: FastAPI App |  |  |
 | ✅ PASS | Import: API Router |  |  |
 | ✅ PASS | Import: Database Module |  |  |
@@ -125,9 +125,13 @@
 | ✅ PASS | Table: tools |  |  |
 | ✅ PASS | Table: audit_logs |  |  |
 | ✅ PASS | Extra Tables (17) | agent_templates, api_keys, approval_requests, circuit_breaker_log, dlq_events, e |  |
-| ✅ PASS | Rows in 'agents': 44 |  |  |
-| ✅ PASS | Rows in 'users': 3 |  |  |
+| ✅ PASS | Rows in 'agents': 45 |  |  |
+| ✅ PASS | Rows in 'users': 4 |  |  |
 | ✅ PASS | Rows in 'tasks': 1 |  |  |
 
+## 🚨 Recommended Actions
+
+1. **Infrastructure → System Status**: HTTP 404
+
 ---
-*Report generated by AgentCloud Doctor v1.0 — 51 checks in 2026-03-30T07:00:10.310103 → 2026-03-30T07:00:22.223832*
+*Report generated by AgentCloud Doctor v1.0 — 51 checks in 2026-03-30T22:56:37.639519 → 2026-03-30T22:57:03.077010*

@@ -9,6 +9,7 @@ from ...db.database import get_db
 from ...models.goal import Goal
 from ...models.task import Task
 from ...services.autonomous_orchestrator import autonomous_orchestrator
+from ...services.goal_orchestrator import goal_orchestrator
 from ..deps import get_current_user
 from ...models.user import User
 

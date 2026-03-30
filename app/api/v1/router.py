@@ -19,6 +19,7 @@ from .memory import router as memory_router
 from .chains import router as chains_router
 from .copilot import router as copilot_router
 from .files import router as files_router
+from .playground import router as playground_router
 
 router = APIRouter()
 
@@ -42,3 +43,4 @@ router.include_router(memory_router, prefix="/memory", tags=["memory"])
 router.include_router(chains_router, prefix="/chains", tags=["chains"])
 router.include_router(copilot_router, prefix="/copilot", tags=["copilot"])
 router.include_router(files_router, prefix="/files", tags=["files"])
+router.include_router(playground_router, prefix="/playground", tags=["playground"])

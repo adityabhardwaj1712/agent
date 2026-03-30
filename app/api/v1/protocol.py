@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...db.database import get_db
+from ...api.deps import get_current_user
+from ...services.signal_service import signal_service
 from ...services import protocol_service
 from ...schemas.protocol_schema import ProtocolSendRequest
-from ...api.deps import get_current_user
 from ...models.user import User
+from datetime import datetime
 
 router = APIRouter()
 
@@ -14,10 +16,22 @@ async def send_message(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Send a protocol-bound message from one agent to another.
-    """
     message_id = await protocol_service.send_protocol_message(db, data)
+    
+    # Emit real-time signal
+    await signal_service.emit_signal(
+        user_id=current_user.user_id,
+        signal_type="PROTOCOL_MESSAGE",
+        payload={
+            "message_id": message_id,
+            "from_agent_id": data.from_agent_id,
+            "to_agent_id": data.to_agent_id,
+            "message_type": data.type,
+            "payload": data.payload,
+            "created_at": str(datetime.now())
+        }
+    )
+    
     return {"status": "dispatched", "message_id": message_id}
 
 @router.get("/messages", response_model=list)

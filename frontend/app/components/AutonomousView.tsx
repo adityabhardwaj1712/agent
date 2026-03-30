@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, wsUrl } from '../lib/api';
 import WorkflowGraph from './WorkflowGraph';
 import { 
   Play, 
@@ -76,8 +76,36 @@ const AutonomousView: React.FC = () => {
   useEffect(() => {
     if (selectedGoalId) {
       fetchMissionTasks(selectedGoalId);
-      const interval = setInterval(() => fetchMissionTasks(selectedGoalId), 10000);
-      return () => clearInterval(interval);
+      
+      // Connect to Task WebSocket for real-time telemetry
+      const ws = new WebSocket(wsUrl(`/task-stream/${selectedGoalId}`)); // Standardized helper
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'THOUGHT' || data.type === 'CHUNK') {
+             const newLog = {
+                id: Date.now().toString(),
+                msg: data.type === 'THOUGHT' ? `THOUGHT: ${data.payload.step}` : data.payload,
+                t: new Date().toLocaleTimeString(),
+                st: data.type === 'THOUGHT' ? 'info' : 'ok'
+             };
+             setMissionLogs(prev => [newLog, ...prev.slice(0, 49)]);
+             
+             // If THOUGHT contains a step update, reflect it in the goals state
+             if (data.type === 'THOUGHT' && data.payload.step) {
+                setGoals(prev => prev.map(g => {
+                   if (g.goal_id === selectedGoalId) {
+                      // Optionally update node statuses if DAG
+                   }
+                   return g;
+                }));
+             }
+          }
+        } catch (e) { console.error("WS Parse Error", e); }
+      };
+
+      return () => ws.close();
     }
   }, [selectedGoalId]);
 
@@ -189,6 +217,15 @@ const AutonomousView: React.FC = () => {
                     <div className={`ms-badge ${goal.status === 'completed' ? 'ms-b-g' : 'ms-b-p'}`}>
                       {goal.status.toUpperCase()}
                     </div>
+                    {goal.workflow_type === 'dag' && !goal.workflow_json && (
+                      <button 
+                        className="ms-btn ms-btn-p py-1 px-3 text-[10px] h-auto" 
+                        onClick={() => {}}
+                        disabled={loading}
+                      >
+                        DECOMPOSE_MISSION
+                      </button>
+                    )}
                     <MoreHorizontal size={14} style={{ color: 'var(--t3)', cursor: 'pointer' }} />
                   </div>
                 </div>
@@ -204,10 +241,14 @@ const AutonomousView: React.FC = () => {
                           </div>
                           <WorkflowGraph 
                             nodes={dagData.nodes.map((n: any) => ({
-                              ...n,
-                              status: goal.status === 'completed' ? 'completed' : 'running'
+                              id: n.id,
+                              description: n.label || n.description,
+                              status: goal.status === 'completed' ? 'completed' : (selectedGoalId === goal.goal_id ? 'running' : 'pending')
                             }))} 
-                            edges={dagData.edges} 
+                            edges={dagData.edges.map((e: any) => ({
+                              source: e.from || e.source,
+                              target: e.to || e.target
+                            }))} 
                           />
                         </div>
                       ) : (

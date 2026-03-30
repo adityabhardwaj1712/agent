@@ -60,6 +60,27 @@ BUILTIN_AGENTS = [
         "personality_config": '{"tone":"analytical","style":"concise","emoji":false}',
         "scopes": "READ_MEMORY,WRITE_MEMORY",
     },
+    {
+        "name": "CustomerSupportBot",
+        "role": "Support Agent",
+        "description": "Handles common customer inquiries, generates polite and helpful responses, and escalates complex issues.",
+        "personality_config": '{"tone":"empathetic","style":"friendly","emoji":true}',
+        "scopes": "READ_MEMORY,WRITE_MEMORY,SEND_PROTOCOL",
+    },
+    {
+        "name": "CodeReviewer",
+        "role": "Quality Assurance",
+        "description": "Reviews pull requests, highlights potential bugs, and enforces coding standards and secure practices.",
+        "personality_config": '{"tone":"technical","style":"objective","emoji":false}',
+        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
+    },
+    {
+        "name": "SocialMediaManager",
+        "role": "Marketing",
+        "description": "Drafts engaging social media posts, suggests trending hashtags, and schedules content campaigns.",
+        "personality_config": '{"tone":"enthusiastic","style":"creative","emoji":true}',
+        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS",
+    },
 ]
 
 from ..models.user import User

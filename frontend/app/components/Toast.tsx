@@ -16,7 +16,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3200);
   }, []);
   const icons: Record<ToastType, string> = { ok: '✓', warn: '⚠', err: '✕', info: 'ℹ' };
-  const cols: Record<ToastType, string> = { ok: 'var(--g)', warn: 'var(--y)', err: 'var(--r)', info: 'var(--a)' };
+  const cols: Record<ToastType, string> = { ok: 'var(--green)', warn: 'var(--yellow)', err: 'var(--red)', info: 'var(--blue)' };
   return (
     <ToastCtx.Provider value={toast}>
       {children}

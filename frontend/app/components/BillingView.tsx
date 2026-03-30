@@ -17,14 +17,23 @@ import { useToast } from './Toast';
 
 export default function BillingView() {
   const [data, setData] = useState<any>(null);
+  const [prediction, setPrediction] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [budget, setBudget] = useState(100);
   const toast = useToast();
 
   useEffect(() => {
     const fetchBilling = async () => {
       try {
-        const result = await apiFetch<any>('/billing/subscription');
-        setData(result);
+        const [sub, pred, opt] = await Promise.all([
+          apiFetch<any>('/billing/subscription'),
+          apiFetch<any>('/billing/predict'),
+          apiFetch<any>(`/billing/optimize?budget=${budget}`)
+        ]);
+        setData(sub);
+        setPrediction(pred);
+        setSuggestions(opt || []);
       } catch (err: any) {
         toast(err.message || 'Failed to fetch billing data', 'err');
       } finally {
@@ -32,7 +41,7 @@ export default function BillingView() {
       }
     };
     fetchBilling();
-  }, []);
+  }, [budget]);
 
   if (loading) {
     return (
@@ -173,7 +182,7 @@ export default function BillingView() {
               <button className="ms-btn ms-btn-p w-full" style={{ height: '44px', fontSize: '12px' }}>MANAGE_SUBSCRIPTION</button>
            </div>
 
-           <div className="p-4 rounded-xl bg-[rgba(59,130,246,0.05)] border border-[rgba(59,130,246,0.1)]">
+           <div className="p-4 rounded-xl bg-[rgba(59,130,246,0.05)] border border-[rgba(59,130,246,0.1)] mb-8">
               <div className="text-[10px] text-[var(--blue)] font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
                  <Zap size={10} /> Auto-Scaling Enabled
               </div>
@@ -181,6 +190,41 @@ export default function BillingView() {
                  Infrastructure is currently scaling across 4 nodes. Token utilization is optimized for high-performance clusters.
               </p>
            </div>
+
+           {/* Cost Predictor */}
+           <div className="ms-card p-5 border-dashed border-[var(--bg3)]" style={{ background: 'transparent' }}>
+              <div className="flex items-center justify-between mb-4">
+                 <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)' }}>RES_PREDICTION_EOM</div>
+                 <div className="ms-badge ms-b-y">ESTIMATED</div>
+              </div>
+              <div className="flex items-baseline gap-2 mb-1">
+                 <div className="text-2xl font-black text-white">${prediction?.predicted_total || '0.00'}</div>
+                 <div className="text-[10px] font-bold text-[var(--red)]"> projected</div>
+              </div>
+              <div className="text-[10px] text-[var(--t3)] font-mono">RUN_RATE: ${prediction?.run_rate || '0.00'}/DAY</div>
+           </div>
+
+           {/* Optimization Suggesions */}
+           {suggestions.length > 0 && (
+             <div className="mt-8">
+                <div className="flex items-center gap-2 mb-4">
+                   <div style={{ width: 6, height: 6, background: 'var(--blue)', borderRadius: '50%' }}></div>
+                   <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1 }}>SMART_OPTIMIZATION_HUB</span>
+                </div>
+                <div className="space-y-3">
+                   {suggestions.map((s, i) => (
+                      <div key={i} className="p-4 rounded-xl bg-[rgba(0,255,170,0.03)] border border-[rgba(0,255,170,0.1)]">
+                         <div className="text-[11px] font-bold text-[var(--green)] flex items-center justify-between">
+                            {s.action}
+                            <span>${s.potential_savings} SAVE</span>
+                         </div>
+                         <div className="text-[10px] text-[var(--t3)] mt-1">{s.suggestion}</div>
+                         <button className="text-[9px] font-bold text-[var(--blue)] mt-3 hover:underline">APPROVE_OPTIMIZATION</button>
+                      </div>
+                   ))}
+                </div>
+             </div>
+           )}
         </div>
       </div>
 

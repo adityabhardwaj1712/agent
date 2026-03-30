@@ -338,9 +338,15 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             logger.warning(f"Personality service error (using default): {e}")
 
         # ── 5. Memory retrieval
-        await publish_step("memory_retrieval", "Searching long-term memory...")
+        await publish_step("memory_retrieval", "Searching long-term memory for semantic context...")
         memories = await _safe_memory_search(agent_id, prompt)
-        memory_context = "\n".join(m.content for m in memories) if memories else ""
+        memory_context = ""
+        if memories:
+            memory_summary = f"Located {len(memories)} relevant experiences. Top hit: {memories[0].content[:60]}..."
+            await publish_step("memory_retrieval", f"Neural Recall: {memory_summary}")
+            memory_context = "\n".join(m.content for m in memories)
+        else:
+            await publish_step("memory_retrieval", "No relevant past experiences found in high-dimensional vector space.")
 
         # ── 6. Model selection
         try:

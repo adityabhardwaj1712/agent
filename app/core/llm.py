@@ -61,6 +61,27 @@ class LLMService:
             self._groq_client = AsyncGroq(api_key=key)
         return self._groq_client
 
+    # ─── New Streaming Interface ─────────────────────────────────────────────
+
+    async def stream_completion(
+        self,
+        messages: List[dict],
+        model: str = "gpt-4o-mini",
+        temperature: float = 0.7,
+    ):
+        """
+        Returns an async generator of (role, content, chunk_type).
+        """
+        if model.startswith("claude-"):
+            async for chunk in self._stream_anthropic(messages, model, temperature):
+                yield chunk
+        elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
+            async for chunk in self._stream_groq(messages, model, temperature):
+                yield chunk
+        else:
+            async for chunk in self._stream_openai(messages, model, temperature):
+                yield chunk
+
     # ─── provider dispatch ───────────────────────────────────────────────────
 
     async def get_completion(
@@ -126,6 +147,23 @@ class LLMService:
                 return "ERROR: LLM Authentication Failed. Please check your OPENAI_API_KEY.", None, _Usage(0,0,0)
             raise
 
+    async def _stream_openai(self, messages, model, temperature):
+        try:
+            resp = await self._openai().chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                stream=True,
+            )
+            async for chunk in resp:
+                if not chunk.choices: continue
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    yield delta.content
+        except Exception as e:
+            logger.error(f"OpenAI Stream Failed: {e}")
+            yield f"ERROR: {str(e)}"
+
     # ─── Groq ────────────────────────────────────────────────────────────────
 
     async def _call_groq(self, messages, model, tools, temperature, task_id=None):
@@ -159,6 +197,23 @@ class LLMService:
 
         msg = resp.choices[0].message
         return msg.content, getattr(msg, "tool_calls", None), getattr(resp, "usage", _Usage(0, 0, 0))
+
+    async def _stream_groq(self, messages, model, temperature):
+        try:
+            resp = await self._groq().chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                stream=True,
+            )
+            async for chunk in resp:
+                if not chunk.choices: continue
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    yield delta.content
+        except Exception as e:
+            logger.error(f"Groq Stream Failed: {e}")
+            yield f"ERROR: {str(e)}"
 
     # ─── Anthropic ───────────────────────────────────────────────────────────
 
@@ -255,6 +310,27 @@ class LLMService:
             total_tokens=resp.usage.input_tokens + resp.usage.output_tokens,
         )
         return text_content or None, tool_calls_out or None, usage
+
+    async def _stream_anthropic(self, messages, model, temperature):
+        system = ""
+        anthropic_messages = []
+        for m in messages:
+            if m["role"] == "system": system = m["content"]
+            else: anthropic_messages.append({"role": m["role"], "content": m["content"]})
+
+        try:
+            async with self._anthropic().messages.stream(
+                model=model,
+                max_tokens=4096,
+                system=system,
+                messages=anthropic_messages,
+                temperature=temperature,
+            ) as stream:
+                async for chunk in stream.text_stream:
+                    yield chunk
+        except Exception as e:
+            logger.error(f"Anthropic Stream Failed: {e}")
+            yield f"ERROR: {str(e)}"
 
     # ─── Google Gemini ────────────────────────────────────────────────────────
 

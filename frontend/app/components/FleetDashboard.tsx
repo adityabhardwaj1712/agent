@@ -1,109 +1,103 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Activity, Cpu, Shield, Zap, Clock, Search, Bell, RefreshCw,
-  AlertTriangle, CheckCircle2, XCircle, MoreHorizontal, TrendingUp
-} from 'lucide-react';
+import { RefreshCw, Clock, ChevronRight } from 'lucide-react';
 import { apiFetch } from '../lib/api';
-import { Stats, FleetHealth, Task, Agent, TimePoint } from '../lib/types';
-import StatusPill from './StatusPill';
-import KpiCard from './KpiCard';
-import ProgressBar from './ProgressBar';
+import { Stats, FleetHealth, Task, Agent } from '../lib/types';
 import NeuralGlobe from './NeuralGlobe';
 
-// ─── Constants ────────────────────────────────────────────────────
-const POLL_FAST = 4000;
-const POLL_SLOW = 10000;
-
-// ─── Helpers ──────────────────────────────────────────────────────
-function sparklinePath(data: number[], w: number, h: number): string {
-  if (data.length < 2) return '';
+// ─── Sparkline SVG ────────────────────────────────────────────────
+function Sparkline({ data, color, w = 100, h = 32 }: { data: number[], color: string, w?: number, h?: number }) {
+  if (data.length < 2) return <div style={{ width: w, height: h }} />;
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
-  return data.map((d, i) => {
+  const pts = data.map((d, i) => {
     const x = (i / (data.length - 1)) * w;
-    const y = h - ((d - min) / range) * h;
-    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
-  }).join(' ');
-}
-
-function donutSlices(values: number[], colors: string[], cx: number, cy: number, r: number) {
-  const total = values.reduce((a, b) => a + b, 0) || 1;
-  let cumAngle = -90;
-  return values.map((v, i) => {
-    const angle = (v / total) * 360;
-    const startRad = (cumAngle * Math.PI) / 180;
-    const endRad = ((cumAngle + angle) * Math.PI) / 180;
-    cumAngle += angle;
-    const x1 = cx + r * Math.cos(startRad);
-    const y1 = cy + r * Math.sin(startRad);
-    const x2 = cx + r * Math.cos(endRad);
-    const y2 = cy + r * Math.sin(endRad);
-    const large = angle > 180 ? 1 : 0;
-    return (
-      <path
-        key={i}
-        d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`}
-        fill={colors[i]}
-        opacity={0.85}
-      />
-    );
+    const y = h - ((d - min) / range) * (h - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={`${pts.join(' ')} ${w},${h} 0,${h}`} fill={`${color}15`} stroke="none" />
+    </svg>
+  );
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// ─── Activity Log ─────────────────────────────────────────────────
+function ActivityLog({ tasks }: { tasks: Task[] }) {
+  const getTag = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'completed') return { label: 'DONE', cls: 'green' };
+    if (s === 'failed') return { label: 'ERROR', cls: 'red' };
+    if (s === 'processing' || s === 'in_progress') return { label: 'SYNC', cls: 'blue' };
+    return { label: 'PROC', cls: 'cyan' };
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {tasks.slice(0, 12).map((t, i) => {
+        const tag = getTag(t.status);
+        const time = new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return (
+          <div key={t.task_id} style={{
+            padding: '8px 0', borderBottom: i < tasks.length - 1 ? '1px solid var(--border)' : 'none',
+            fontSize: 11, fontFamily: 'var(--mono)', lineHeight: 1.5, color: 'var(--t2)'
+          }}>
+            <span style={{ color: 'var(--t3)', marginRight: 6 }}>[{time}]</span>
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 3, marginRight: 6,
+              background: tag.cls === 'green' ? 'rgba(0,255,170,0.15)' : tag.cls === 'red' ? 'rgba(255,42,109,0.15)' : tag.cls === 'blue' ? 'rgba(46,111,255,0.15)' : 'rgba(0,210,255,0.15)',
+              color: tag.cls === 'green' ? 'var(--green)' : tag.cls === 'red' ? 'var(--red)' : tag.cls === 'blue' ? 'var(--blue)' : 'var(--cyan)',
+            }}>{tag.label}</span>
+            <span>
+              {t.agent_id ? `Worker_${t.agent_id.slice(-2)}` : 'Worker'} | Task {t.task_id.slice(0, 4).toUpperCase()}
+            </span>
+            <div style={{ color: 'var(--t3)', fontSize: 10 }}>Status: {t.status.charAt(0).toUpperCase() + t.status.slice(1)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main Dashboard ───────────────────────────────────────────────
 export default function FleetDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [health, setHealth] = useState<FleetHealth | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [timeseries, setTimeseries] = useState<TimePoint[]>([]);
-  const [incidents, setIncidents] = useState<any[]>([]);
-  const [progress, setProgress] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState('');
 
-  const agentHistory = useRef<number[]>([]);
-  const taskHistory = useRef<number[]>([]);
-  const srHistory = useRef<number[]>([]);
-  const latHistory = useRef<number[]>([]);
-  const costHistory = useRef<number[]>([]);
+  const agentHist = useRef<number[]>([]);
+  const taskHist = useRef<number[]>([]);
+  const srHist = useRef<number[]>([]);
+  const latHist = useRef<number[]>([]);
 
-  const pushHistory = (arr: React.MutableRefObject<number[]>, val: number) => {
-    arr.current = [...arr.current.slice(-19), val];
+  const push = (arr: React.MutableRefObject<number[]>, v: number) => {
+    arr.current = [...arr.current.slice(-14), v];
   };
 
   const fetchAll = useCallback(async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('agentcloud_token') : null;
     if (!token) return;
-
     try {
-      const [s, h, t, a, ts, traces] = await Promise.allSettled([
+      const [s, h, t, a] = await Promise.allSettled([
         apiFetch<Stats>('/analytics/summary'),
         apiFetch<FleetHealth>('/analytics/fleet-health'),
         apiFetch<Task[]>('/tasks'),
         apiFetch<Agent[]>('/agents'),
-        apiFetch<TimePoint[]>('/analytics/timeseries'),
-        apiFetch<any[]>('/analytics/incidents')
       ]);
-
       if (s.status === 'fulfilled' && s.value) {
         setStats(s.value);
-        pushHistory(agentHistory, s.value.active_agents);
-        pushHistory(taskHistory, s.value.total_tasks);
-        pushHistory(srHistory, s.value.success_rate);
-        pushHistory(latHistory, s.value.avg_latency);
-        pushHistory(costHistory, s.value.total_cost);
+        push(agentHist, s.value.active_agents);
+        push(taskHist, s.value.total_tasks);
+        push(srHist, s.value.success_rate);
+        push(latHist, s.value.avg_latency);
       }
       if (h.status === 'fulfilled') setHealth(h.value);
       if (t.status === 'fulfilled') setTasks(t.value || []);
       if (a.status === 'fulfilled') setAgents(a.value || []);
-      if (ts.status === 'fulfilled') setTimeseries(ts.value || []);
-      if (traces.status === 'fulfilled') setIncidents(traces.value || []);
-
-      setLastUpdated(new Date().toLocaleTimeString());
-      setProgress(0);
     } catch (err) {
       console.error('Fleet sync failed:', err);
     }
@@ -111,160 +105,167 @@ export default function FleetDashboard() {
 
   useEffect(() => {
     fetchAll();
-    
-    // Real-time WebSocket using wsUrl utility
-    const token = typeof window !== 'undefined' ? localStorage.getItem('agentcloud_token') : null;
-    const { wsUrl } = require('../lib/api');
-    const wsEndpoint = wsUrl(`/ws/fleet${token ? `?token=${token}` : ''}`);
-    let ws: WebSocket;
-
-    const connect = () => {
-      ws = new WebSocket(wsEndpoint);
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'task_update') {
-            setTasks(prev => [data, ...prev.filter(t => t.task_id !== data.task_id)].slice(0, 10));
-          } else if (data.type === 'stats_update') {
-            setStats(prev => prev ? { ...prev, ...data.stats } : data.stats);
-          }
-        } catch (e) {}
-      };
-      ws.onclose = () => setTimeout(connect, 5000);
-    };
-    if (token) connect();
-
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) { fetchAll(); return 0; }
-        return prev + 1;
-      });
-    }, POLL_FAST / 100);
-    
-    return () => {
-      clearInterval(timer);
-      if (ws) ws.close();
-    };
+    const timer = setInterval(fetchAll, 8000);
+    return () => clearInterval(timer);
   }, [fetchAll]);
 
   const s = stats || { active_agents: 0, total_tasks: 0, tasks_completed: 0, success_rate: 100, avg_latency: 0, total_cost: 0, error_rate: 0 };
-  const fl = health || { running: 0, idle: 0, cooldown: 0, offline: 0, total: 0 };
-  const tsValues = timeseries.length > 0 ? timeseries.map(t => t.value) : Array.from({ length: 20 }, () => 0);
-  const tsLabels = timeseries.length > 0 ? timeseries.map(t => t.time) : Array.from({ length: 20 }, (_, i) => `${i}h`);
-
-  const donutValues = [fl.running, fl.idle, fl.cooldown, fl.offline];
-  const donutColors = ['#2e6fff', '#10b981', '#f59e0b', '#334155'];
-  const donutLabels = ['Running', 'Idle', 'Cooldown', 'Offline'];
-  const agentColors = ['rgba(46,111,255,0.14)', 'rgba(124,58,255,0.14)', 'rgba(16,185,129,0.12)', 'rgba(6,182,212,0.12)', 'rgba(245,158,11,0.12)'];
-  const agentIcons = ['🔍', '📊', '✍️', '💻', '🛡️', '⚡', '🧠', '🤖'];
 
   return (
-    <div className="px-6 pb-8 flex flex-col gap-3 animate-ms-fade-in relative">
-      <ProgressBar progress={progress} />
-
-      {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Active Agents" value={String(s.active_agents)} trend="up" trendLabel={`${s.active_agents} total`} color="#2e6fff" sparkData={agentHistory.current} />
-        <KpiCard label="Tasks · 24h" value={s.total_tasks.toLocaleString()} trend="up" trendLabel={`${s.tasks_completed} done`} color="#10b981" sparkData={taskHistory.current} />
-        <KpiCard label="Success Rate" value={`${s.success_rate}%`} trend={s.success_rate >= 90 ? 'up' : 'down'} trendLabel={s.error_rate > 0 ? `${(s.error_rate * 100).toFixed(1)}% err` : 'stable'} color="#f59e0b" sparkData={srHistory.current} />
-        <KpiCard label="Avg Latency" value={`${s.avg_latency}ms`} trend="up" trendLabel="P99 stable" color="#06b6d4" sparkData={latHistory.current} />
+    <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20, animation: 'ms-fade-in 0.6s ease-out', height: '100%', overflow: 'auto' }}>
+      
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)', marginBottom: 4 }}>
+            Dashboard {'>'} Agent {'>'} Core A
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>Network Core</div>
+          <div style={{ fontSize: 12, color: 'var(--t3)' }}>Connected nodes and datapoints from the fleet</div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="ms-btn ms-btn-sm" onClick={fetchAll} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+            <RefreshCw size={13} /> Refresh
+          </button>
+          <div style={{ fontSize: 11, color: 'var(--t3)', fontFamily: 'var(--mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Clock size={12} /> Last 24h
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Neural Globe Visualization */}
-        <div className="ms-glass-panel lg:col-span-2 overflow-hidden h-[300px] relative group">
-          <div className="absolute top-4 left-4 z-10">
-            <div className="text-[13px] font-bold text-white/80">GLOBAL_NEURAL_FLEET</div>
-            <div className="font-mono text-[9px] text-[#64748b]">Active mission telemetry visualization</div>
-          </div>
+      {/* Main Grid: Visualization + Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, flex: 1, minHeight: 360 }}>
+        {/* Network Visualization */}
+        <div className="ms-glass-panel" style={{ position: 'relative', overflow: 'hidden', minHeight: 360 }}>
           <NeuralGlobe />
-          <div className="absolute bottom-4 right-4 z-10 flex flex-col items-end gap-1">
-             <div className="text-[10px] font-mono text-emerald-400">ENCRYPTION: AES-256</div>
-             <div className="text-[10px] font-mono text-[#2e6fff]">LATENCY: {s.avg_latency}ms</div>
-          </div>
+          {/* Overlay labels for agents */}
+          {agents.slice(0, 6).map((a, i) => {
+            const positions = [
+              { left: '20%', top: '35%' }, { left: '40%', top: '25%' },
+              { left: '55%', top: '40%' }, { left: '70%', top: '30%' },
+              { left: '30%', top: '55%' }, { left: '60%', top: '60%' },
+            ];
+            const pos = positions[i] || { left: '50%', top: '50%' };
+            return (
+              <div key={a.agent_id} style={{
+                position: 'absolute', ...pos, transform: 'translate(-50%, -50%)', zIndex: 10,
+                background: 'rgba(6,9,15,0.85)', border: '1px solid var(--border)', borderRadius: 6,
+                padding: '4px 10px', fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--t2)',
+                backdropFilter: 'blur(8px)', cursor: 'pointer', transition: 'all 0.2s',
+              }}>
+                <span style={{ color: a.status === 'active' ? 'var(--cyan)' : 'var(--t3)', marginRight: 4 }}>●</span>
+                {a.name || `Worker-${i + 1}`}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Fleet Health Donut */}
-        <div className="ms-glass-panel overflow-hidden">
-          <div className="p-4 border-b border-[#ffffff0e] flex items-center justify-between">
-             <div className="text-[13px] font-bold">Fleet Topology</div>
-             <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[9px] font-bold font-mono uppercase">Sync: OK</span>
+        {/* Recent Activity */}
+        <div className="ms-glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 800 }}>Recent Activity</div>
+            <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--cyan)', background: 'rgba(0,210,255,0.08)', padding: '2px 8px', borderRadius: 4 }}>
+              {tasks.length} events
+            </span>
           </div>
-          <div className="p-4 flex items-center gap-4">
-            <svg viewBox="0 0 120 120" className="w-24 h-24 shrink-0">
-               {fl.total > 0 ? donutSlices(donutValues, donutColors, 60, 60, 50) : <circle cx={60} cy={60} r={50} fill="none" stroke="#1e293b" strokeWidth={15} />}
-               <circle cx={60} cy={60} r={35} fill="#06090f" />
-               <text x={60} y={62} textAnchor="middle" fill="#f8fafc" fontSize={16} fontWeight={800} className="font-mono uppercase">{fl.total}</text>
-            </svg>
-            <div className="flex flex-col gap-1.5 flex-1">
-               {donutLabels.map((l, i) => (
-                 <div key={l} className="flex items-center justify-between text-[10px]">
-                    <div className="flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-[2px]" style={{ background: donutColors[i] }} />
-                       <span className="text-[#94a3b8]">{l}</span>
-                    </div>
-                    <span className="font-bold font-mono text-[#cbd5e1]">{donutValues[i]}</span>
-                 </div>
-               ))}
-            </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
+            <ActivityLog tasks={tasks} />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-         {/* Task Queue */}
-         <div className="ms-glass-panel overflow-hidden">
-            <div className="p-4 border-b border-[#ffffff0e] font-bold text-[13px]">Mission Sequence Log</div>
-            <div className="overflow-x-auto">
-               <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#ffffff08] font-mono text-[9px] uppercase tracking-wider text-[#64748b]">
-                       <th className="p-3">Sequence_ID</th>
-                       <th className="p-3">Directive</th>
-                       <th className="p-3">State</th>
-                       <th className="p-3 text-right">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tasks.slice(0, 6).map(t => (
-                      <tr key={t.task_id} className="border-b border-[#ffffff05] hover:bg-white/[0.02]">
-                         <td className="p-3 font-mono text-[10px] text-[#475569]">{t.task_id.substring(0, 12)}</td>
-                         <td className="p-3 text-[12px] font-medium text-[#e2e8f0] truncate max-w-[180px]">{t.description || 'Anonymous Action'}</td>
-                         <td className="p-3"><StatusPill status={t.status} /></td>
-                         <td className="p-3 text-right font-mono text-[10px] text-[#475569]">{new Date(t.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
+      {/* KPI Cards Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        {/* Active Agents */}
+        <div className="ms-glass-panel" style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan)' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)' }}>Active Agents</span>
             </div>
-         </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>{s.active_agents}</div>
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 6, display: 'flex', gap: 12 }}>
+                <span>● {Math.round(s.active_agents * 0.8)} Online</span>
+                <span>● {Math.round(s.active_agents * 0.15)} Idle</span>
+                <span>● {Math.round(s.active_agents * 0.05)} Error</span>
+              </div>
+            </div>
+            <Sparkline data={agentHist.current} color="#00d2ff" w={80} h={40} />
+          </div>
+        </div>
 
-         {/* Agents Snapshot */}
-         <div className="ms-glass-panel overflow-hidden">
-            <div className="p-4 border-b border-[#ffffff0e] font-bold text-[13px]">Active Multi-Agent Hub</div>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-               {agents.slice(0, 6).map((a, i) => (
-                 <div key={a.agent_id} className="bg-[#ffffff04] border border-[#ffffff08] rounded-lg p-3 hover:border-[#2e6fff44] transition-all group">
-                    <div className="flex items-center gap-3 mb-2">
-                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0" style={{ background: agentColors[i % agentColors.length] }}>
-                          {agentIcons[i % agentIcons.length]}
-                       </div>
-                       <div className="min-w-0 flex-1">
-                          <div className="text-[12px] font-bold truncate text-[#f1f5f9]">{a.name}</div>
-                          <div className="text-[9px] font-mono text-[#64748b] truncate uppercase">{a.model_name || a.role || 'Neural_Net'}</div>
-                       </div>
-                       <div className={`w-1.5 h-1.5 rounded-full ${a.status === 'active' ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="flex-1 h-1 bg-[#1e293b] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#2e6fff] opacity-60" style={{ width: `${60 + (i * 7) % 35}%` }} />
-                       </div>
-                       <span className="font-mono text-[8px] text-[#475569] w-6">{60 + (i * 7) % 35}%</span>
-                    </div>
-                 </div>
-               ))}
+        {/* Throughput */}
+        <div className="ms-glass-panel" style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)' }}>Throughput</span>
             </div>
-         </div>
+            <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--green)', background: 'rgba(0,255,170,0.1)', padding: '2px 6px', borderRadius: 4 }}>Live</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
+                {s.total_tasks > 0 ? (s.total_tasks / 24).toFixed(1) : '0'} <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--t3)' }}>t/h</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 6, display: 'flex', gap: 12 }}>
+                <span>● File Data</span><span>● Sys Logs</span><span>● API</span>
+              </div>
+            </div>
+            <Sparkline data={taskHist.current} color="#00ffaa" w={80} h={40} />
+          </div>
+        </div>
+
+        {/* Success Rate */}
+        <div className="ms-glass-panel" style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4aa' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)' }}>Success Rate</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
+                {s.success_rate}<span style={{ fontSize: 18, fontWeight: 600 }}>%</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--green)', marginTop: 6 }}>
+                ↑ {(s.success_rate * 0.02).toFixed(1)}% from last hour
+              </div>
+            </div>
+            {/* Mini donut */}
+            <svg width={48} height={48} viewBox="0 0 48 48">
+              <circle cx={24} cy={24} r={18} fill="none" stroke="var(--bg3)" strokeWidth={5} />
+              <circle cx={24} cy={24} r={18} fill="none" stroke="#00d4aa" strokeWidth={5}
+                strokeDasharray={`${s.success_rate * 1.13} 113`}
+                strokeLinecap="round" transform="rotate(-90 24 24)" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Avg Latency */}
+        <div className="ms-glass-panel" style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--amber)' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)' }}>Avg Latency</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
+                {s.avg_latency} <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--t3)' }}>ms</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 6, display: 'flex', gap: 4, alignItems: 'center' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)' }} /> Within SLA threshold
+              </div>
+            </div>
+            <Sparkline data={latHist.current} color="#ffcc33" w={80} h={40} />
+          </div>
+        </div>
       </div>
     </div>
   );

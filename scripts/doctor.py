@@ -229,7 +229,10 @@ class AgentCloudDoctor:
                 else:
                     self._record("Infrastructure", f"Docker: {name}", Status.FAIL, "container not found")
         except Exception as e:
-            self._record("Infrastructure", "Docker Check", Status.WARN, f"docker not available: {e}")
+            msg = f"docker not available: {e}"
+            if os.name == 'nt':
+                msg += " (Hint: Ensure Docker Desktop is running and in PATH)"
+            self._record("Infrastructure", "Docker Check", Status.WARN, msg)
 
         return True
 

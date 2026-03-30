@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from ...db.database import get_db
 from ...services import agent_service
+from ...services.nl_agent_builder import nl_agent_builder
+from ...services.auto_optimizer import auto_optimizer
 from ...schemas.agent_schema import AgentCreate, AgentResponse
 
 from ..deps import get_current_user
@@ -10,6 +13,9 @@ from ...models.user import User
 from ...models.task import Task
 from ...services.guardrail_service import guardrail_service
 from sqlalchemy.future import select
+
+class NLBuilderRequest(BaseModel):
+    prompt: str
 
 router = APIRouter()
 
@@ -42,6 +48,21 @@ async def register_agent(
     agent.owner_id = current_user.user_id
     return await agent_service.register_agent(db, agent)
 
+@router.post("/create-from-prompt", response_model=AgentResponse)
+async def create_agent_from_prompt(
+    req: NLBuilderRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Build and register a new agent using a natural language prompt.
+    """
+    agent_config = await nl_agent_builder.build_from_prompt(req.prompt, current_user.user_id)
+    if not agent_config:
+        raise HTTPException(status_code=400, detail="Failed to parse agent configuration from prompt.")
+    
+    return await agent_service.register_agent(db, agent_config)
+
 @router.get("/my", response_model=List[AgentResponse])
 async def get_my_agents(
     db: AsyncSession = Depends(get_db),
@@ -53,6 +74,68 @@ async def get_my_agents(
 async def get_builtin_agents(db: AsyncSession = Depends(get_db)):
     return await agent_service.get_builtin_agents_from_db(db)
 
+@router.get("/templates")
+async def get_agent_templates():
+    from ...services.agent_service import BUILTIN_AGENTS
+    return BUILTIN_AGENTS
+
+@router.get("/{agent_id}/export")
+async def export_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    agent = await agent_service.get_agent(db, agent_id, current_user.user_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return {
+        "name": f"{agent.name} (Imported)",
+        "role": agent.role,
+        "description": agent.description,
+        "model_name": agent.model_name,
+        "personality_config": agent.personality_config,
+        "scopes": agent.scopes.split(",") if agent.scopes else []
+    }
+
+@router.post("/import", response_model=AgentResponse)
+async def import_agent(
+    agent: AgentCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    agent.owner_id = current_user.user_id
+    return await agent_service.register_agent(db, agent)
+
+@router.get("/{agent_id}/optimization-history")
+async def get_agent_optimization_history(
+    agent_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Fetch the history of prompt optimizations for an agent.
+    """
+    return await auto_optimizer.get_optimization_history(agent_id)
+
+@router.post("/{agent_id}/optimize")
+async def trigger_agent_optimization(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Manually trigger an AI optimization for an agent's prompt.
+    """
+    # Fetch recent history
+    from ...services import task_service
+    history = await task_service.list_tasks(db, user_id=current_user.user_id, limit=20)
+    # Filter for this agent if needed, or pass agent_id to list_tasks if supported
+    history_dicts = [{"payload": h.payload, "status": h.status} for h in history if h.agent_id == agent_id]
+    
+    new_prompt = await auto_optimizer.optimize_agent(agent_id, history_dicts)
+    if not new_prompt:
+        raise HTTPException(status_code=400, detail="Optimization failed or no improvements found.")
+        
+    return {"new_prompt": new_prompt}
 
 @router.get("/leaderboard")
 async def get_leaderboard(db: AsyncSession = Depends(get_db)):
