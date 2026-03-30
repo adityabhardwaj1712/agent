@@ -13,7 +13,10 @@ import {
   FileText, 
   Settings,
   Rocket,
-  ShieldCheck
+  ShieldCheck,
+  Database,
+  Wallet,
+  Radio
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -57,10 +60,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, theme, onTo
     
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} />, section: 'Insights' },
     { id: 'memory', label: 'Neural Memory', icon: <Brain size={18} />, section: 'Insights' },
+    { id: 'knowledge', label: 'Knowledge Hub', icon: <Database size={18} />, section: 'Insights' },
     { id: 'traces', label: 'Execution Traces', icon: <History size={18} />, section: 'Insights' },
     
     { id: 'approvals', label: 'Guardrails', icon: <ShieldCheck size={18} />, section: 'Safety', badge: counts.approvals },
     { id: 'audit', label: 'System Audit', icon: <FileText size={18} />, section: 'Safety' },
+    { id: 'billing', label: 'Billing', icon: <Wallet size={18} />, section: 'Safety' },
+    { id: 'protocol', label: 'Protocol Mesh', icon: <Radio size={18} />, section: 'Safety' },
     { id: 'settings', label: 'Node Settings', icon: <Settings size={18} />, section: 'Safety' },
   ];
 

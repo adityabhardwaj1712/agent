@@ -14,6 +14,11 @@ from .tools import router as tools_router
 from .audit import router as audit_router
 from .admin import router as admin_router
 from .protocol import router as protocol_router
+from .websocket import router as websocket_router
+from .memory import router as memory_router
+from .chains import router as chains_router
+from .copilot import router as copilot_router
+from .files import router as files_router
 
 router = APIRouter()
 
@@ -32,9 +37,8 @@ router.include_router(tools_router, prefix="/tools", tags=["tools"])
 router.include_router(audit_router, prefix="/audit", tags=["audit"])
 router.include_router(admin_router, prefix="/admin", tags=["admin"])
 router.include_router(protocol_router, prefix="/protocol", tags=["protocol"])
-
-from .memory import router as memory_router
-from .chains import router as chains_router
-
+router.include_router(websocket_router, prefix="/ws/fleet", tags=["realtime"])
 router.include_router(memory_router, prefix="/memory", tags=["memory"])
 router.include_router(chains_router, prefix="/chains", tags=["chains"])
+router.include_router(copilot_router, prefix="/copilot", tags=["copilot"])
+router.include_router(files_router, prefix="/files", tags=["files"])

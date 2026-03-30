@@ -5,6 +5,7 @@ from ..models.agent import Agent
 from ..core.auth_service import create_token
 from ..core.scopes import parse_scopes
 from ..schemas.agent_schema import AgentCreate
+from ..core.roster import AGENT_ROSTER
 
 # ──────────────────────────────────────────────────────────────────
 # BUILT-IN FREE AGENTS (seeded into DB on first call if missing)
@@ -63,10 +64,11 @@ BUILTIN_AGENTS = [
 
 from ..models.user import User
 
-async def seed_builtin_agents(db: AsyncSession, owner_id: str):
-    """Ensure the built-in agents exist for this owner."""
-    
-    # Ensure owner exists first to avoid FK constraint violations
+async def seed_system_agents(db: AsyncSession, owner_id: str):
+    """
+    Seeds the core 42-agent roster for the given owner.
+    """
+    # Ensure owner exists first
     result = await db.execute(select(User).filter(User.user_id == owner_id))
     user = result.scalars().first()
     if not user:
@@ -79,14 +81,42 @@ async def seed_builtin_agents(db: AsyncSession, owner_id: str):
         try:
             await db.commit()
             from loguru import logger
-            logger.info(f"Created missing user: {owner_id}")
+            logger.info(f"Created missing user for seeding: {owner_id}")
         except Exception as e:
             await db.rollback()
-            from loguru import logger
-            logger.error(f"Failed to create missing user {owner_id}: {e}")
-            
+            return
 
-    """Ensure the built-in agents exist for this owner."""
+    # Seed the roster
+    for data in AGENT_ROSTER:
+        res = await db.execute(
+            select(Agent).filter(
+                Agent.name == data["name"],
+                Agent.owner_id == owner_id
+            )
+        )
+        if not res.scalars().first():
+            db.add(Agent(
+                agent_id=str(uuid.uuid4()),
+                name=data['name'],
+                role=data['role'],
+                description=data['desc'],
+                owner_id=owner_id,
+                model_name=data.get('model', 'gpt-4o')
+            ))
+    
+    try:
+        await db.commit()
+        from loguru import logger
+        logger.info(f"System agents seeded for owner: {owner_id}")
+    except Exception as e:
+        await db.rollback()
+        from loguru import logger
+        logger.error(f"Seeding failed: {e}")
+
+async def seed_builtin_agents(db: AsyncSession, owner_id: str):
+    """
+    Seeds the standard 7-agent builtin roster for the given owner.
+    """
     for spec in BUILTIN_AGENTS:
         result = await db.execute(
             select(Agent).filter(
@@ -94,23 +124,17 @@ async def seed_builtin_agents(db: AsyncSession, owner_id: str):
                 Agent.owner_id == owner_id
             )
         )
-        existing = result.scalars().first()
-        if existing:
-            continue
-        agent = Agent(
-            agent_id=str(uuid.uuid4()),
-            name=spec["name"],
-            role=spec["role"],
-            description=spec["description"],
-            owner_id=owner_id,
-            scopes=spec["scopes"],
-            personality_config=spec["personality_config"],
-            reputation_score=75.0,
-            total_tasks=0,
-            successful_tasks=0,
-            failed_tasks=0,
-        )
-        db.add(agent)
+        if not result.scalars().first():
+            db.add(Agent(
+                agent_id=str(uuid.uuid4()),
+                name=spec["name"],
+                role=spec["role"],
+                description=spec["description"],
+                owner_id=owner_id,
+                personality_config=spec.get("personality_config"),
+                scopes=spec.get("scopes"),
+                reputation_score=75.0
+            ))
     try:
         await db.commit()
     except Exception as e:

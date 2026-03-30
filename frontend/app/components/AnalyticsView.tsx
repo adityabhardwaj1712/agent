@@ -3,18 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Zap, Shield, TrendingUp, BarChart3, Database, Globe, Cpu, MoreHorizontal, Download } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import KpiCard from './KpiCard';
+import { AnalyticsSummary } from '../lib/types';
 
-const defaultMetrics = {
-  successRate: 98.4,
-  totalTasks: 12408,
-  avgLatency: 142,
-  totalCost: 12.45,
-  activeAgents: 42,
-  resourceLoad: [42, 18, 76]
+const defaultMetrics: AnalyticsSummary = {
+  success_rate: 98.4,
+  total_tasks: 12408,
+  avg_latency: 142,
+  total_cost: 12.45,
+  active_agents: 42
 };
 
 const AnalyticsView: React.FC = () => {
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [timeseries, setTimeseries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +25,7 @@ const AnalyticsView: React.FC = () => {
 
     try {
       const [sumData, tsData] = await Promise.all([
-        apiFetch<any>('/analytics/summary'),
+        apiFetch<AnalyticsSummary>('/analytics/summary'),
         apiFetch<any[]>('/analytics/timeseries')
       ]);
       setSummary(sumData);
@@ -42,46 +43,29 @@ const AnalyticsView: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const metrics = summary ? {
-    successRate: summary.success_rate || defaultMetrics.successRate,
-    totalTasks: summary.total_tasks || defaultMetrics.totalTasks,
-    avgLatency: summary.avg_latency || defaultMetrics.avgLatency,
-    totalCost: summary.total_cost || defaultMetrics.totalCost,
-    activeAgents: summary.active_agents || defaultMetrics.activeAgents,
-    resourceLoad: defaultMetrics.resourceLoad
-  } : defaultMetrics;
+  const metrics = summary || defaultMetrics;
 
-  const kpis = [
-    { label: 'Fleet Stability', value: `${metrics.successRate}%`, icon: Shield, color: 'var(--green)', trend: '+0.2%' },
-    { label: 'Neural Operations', value: metrics.totalTasks.toLocaleString(), icon: Activity, color: 'var(--blue)', trend: '+124' },
-    { label: 'Network Latency', value: `${metrics.avgLatency}ms`, icon: Zap, color: 'var(--yellow)', trend: '-2ms' },
-    { label: 'Protocol Cost', value: `$${metrics.totalCost.toFixed(4)}`, icon: TrendingUp, color: 'var(--violet)', trend: '+$0.02' },
+  const kpiData = [
+    { label: 'Fleet Stability', value: `${metrics.success_rate}%`, icon: Shield, color: 'var(--green)', trend: '+0.2%' },
+    { label: 'Neural Operations', value: metrics.total_tasks.toLocaleString(), icon: Activity, color: 'var(--blue)', trend: '+124' },
+    { label: 'Network Latency', value: `${metrics.avg_latency}ms`, icon: Zap, color: 'var(--amber)', trend: '-2ms' },
+    { label: 'Protocol Cost', value: `$${metrics.total_cost.toFixed(4)}`, icon: TrendingUp, color: 'var(--violet)', trend: '+$0.02' },
   ];
 
   const models = [
-    { name: 'LLama 3.1 70B', load: metrics.resourceLoad[0], type: 'Heavy Duty Inference', color: 'var(--blue)' },
-    { name: 'LLama 3.1 8B', load: metrics.resourceLoad[1], type: 'Fast Response Edge', color: 'var(--green)' },
-    { name: 'Mixtral 8x7B', load: metrics.resourceLoad[2], type: 'MoE Logic Engine', color: 'var(--violet)' },
+    { name: 'LLama 3.1 70B', load: 42, type: 'Heavy Duty Inference', color: 'var(--blue)' },
+    { name: 'LLama 3.1 8B', load: 18, type: 'Fast Response Edge', color: 'var(--green)' },
+    { name: 'Mixtral 8x7B', load: 76, type: 'MoE Logic Engine', color: 'var(--violet)' },
   ];
+
+  if (loading) return <div className="ms-content flex items-center justify-center h-full text-[var(--t2)] font-mono">NEURAL_SYNC_IN_PROGRESS...</div>;
 
   return (
     <div className="ms-content" style={{ gap: '24px', animation: 'ms-fade-in 0.8s ease-out' }}>
       {/* KPI Grid */}
-      <div className="ms-grid-analytics">
-        {kpis.map((kpi, i) => (
-          <div key={i} className="ms-glass-panel ms-kpi-card group">
-            <div className="flex items-center justify-between mb-4">
-              <div className="ms-icon-box" style={{ background: `rgba(${kpi.color === 'var(--blue)' ? '59, 130, 246' : '16, 185, 129'}, 0.1)` }}>
-                <kpi.icon style={{ color: kpi.color }} size={20} />
-              </div>
-              <span className="ms-trend-badge">{kpi.trend}</span>
-            </div>
-            <div className="ms-kpi-value">{kpi.value}</div>
-            <div className="ms-kpi-label">{kpi.label}</div>
-            <div className="ms-kpi-progress">
-              <div className="ms-kpi-progress-bar" style={{ width: '70%', background: kpi.color }}></div>
-            </div>
-          </div>
+      <div className="ms-grid-analytics grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {kpiData.map((kpi, i) => (
+          <KpiCard key={i} {...kpi} />
         ))}
       </div>
 

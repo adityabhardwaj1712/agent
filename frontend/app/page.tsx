@@ -39,6 +39,8 @@ import AutonomousView from "./components/AutonomousView";
 
 import { MetricCard, IncidentFeed, DashboardAgentList, ConfigraphWidget } from "./components/DashboardWidgets";
 import FleetDashboard from "./components/FleetDashboard";
+import CopilotChat from "./components/CopilotChat";
+import KnowledgeHub from "./components/KnowledgeHub";
 
 function AppContent() {
   const [activeView, setActiveView] = useState('fleet');
@@ -95,6 +97,7 @@ function AppContent() {
       case 'billing': return 'RESOURCE_REVENUE';
       case 'protocol': return 'COMMUNICATION_MESH';
       case 'traces': return 'OBSERVABILITY_SURFACE';
+      case 'knowledge': return 'RAG_KNOWLEDGE_HUB';
       default: return 'AGENT_CLOUD_OS';
     }
   };
@@ -151,6 +154,7 @@ function AppContent() {
           {activeView === 'marketplace' && <MarketplaceView />}
           {activeView === 'settings' && <SettingsView />}
           {activeView === 'autonomous' && <AutonomousView />}
+          {activeView === 'knowledge' && <KnowledgeHub />}
           
           <AddAgentModal 
             isOpen={isAgentModalOpen} 
@@ -163,6 +167,9 @@ function AppContent() {
             onAdded={handleAdded}
           />
         </div>
+
+        {/* Global Copilot Chat Overlay */}
+        <CopilotChat />
       </div>
     </div>
   );
