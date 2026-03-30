@@ -1,7 +1,7 @@
 """
 app/workers/agent_worker.py
-─────────────────────────────────────────────────────────────────────────────
-AgentCloud — Fixed Worker
+-----------------------------------------------------------------------------
+AgentCloud - Fixed Worker (ASCII COMPATIBLE)
 
 ERRORS FIXED:
   1. [CRITICAL] sys.stdout NoneType crash — uvicorn logging fails on Windows
@@ -21,7 +21,7 @@ ERRORS FIXED:
 
   5. Redis event-loop RuntimeError on shutdown — asyncio loop closing while
      Redis connection still alive. Fixed with proper teardown guards.
-─────────────────────────────────────────────────────────────────────────────
+-----------------------------------------------------------------------------
 """
 
 import sys

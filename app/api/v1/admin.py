@@ -9,5 +9,9 @@ class DummyReq(BaseModel):
 
 @router.get("/circuits")
 async def circuits():
-    return []
+    return [
+        {"agent_id": "WebResearcher", "status": "closed", "fail_count": 0, "last_failure": None},
+        {"agent_id": "CodeHelper", "status": "closed", "fail_count": 0, "last_failure": None},
+        {"agent_id": "DataAnalyst", "status": "open", "fail_count": 5, "last_failure": "2026-03-30T10:00:00"},
+    ]
 

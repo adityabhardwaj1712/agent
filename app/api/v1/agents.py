@@ -7,6 +7,9 @@ from ...schemas.agent_schema import AgentCreate, AgentResponse
 
 from ..deps import get_current_user
 from ...models.user import User
+from ...models.task import Task
+from ...services.guardrail_service import guardrail_service
+from sqlalchemy.future import select
 
 router = APIRouter()
 
@@ -100,12 +103,16 @@ async def get_agent_metrics(
 
 
 @router.get("/{agent_id}/history")
-async def get_agent_history(agent_id: str):
-    return []
+async def get_agent_history(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = select(Task).filter(Task.agent_id == agent_id, Task.user_id == current_user.user_id)
+    result = await db.execute(query)
+    return result.scalars().all()
 
 @router.post("/guardian/validate")
 async def guardian_validate(req: dict):
-    content = req.get("content", "").lower()
-    if "drop table" in content or "delete " in content:
-        return {"is_safe": False}
-    return {"is_safe": True}
+    content = req.get("content", "")
+    return guardrail_service.validate_content(content)

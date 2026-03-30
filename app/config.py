@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     
     # SECRET_KEY is used for JWT hashing
-    SECRET_KEY: str = "agentcloud-secret-key-2026"
+    SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
     JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"

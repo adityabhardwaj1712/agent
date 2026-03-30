@@ -3,33 +3,33 @@
    ═══════════════════════════════════════════════════ */
 
 :root {
-  /* Premium Dark Cyberpunk / Enterprise Tokens */
-  --bg0: #04060d;
-  --bg1: #070b14;
-  --bg2: #0b1020;
-  --bg3: #10192e;
-  --bg4: #162038;
-  --border: rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.1);
-  --text: #e8eeff;
-  --t2: #7a8cb8;
-  --t3: #3d4d72;
+  /* AgentCloud Pro - Unified Command Design Tokens */
+  --bg0: #06090f; /* Ink */
+  --bg1: #0b1019; /* Deep Glass */
+  --bg2: #111827; /* Panel Background */
+  --bg3: #1f2937; /* Component Background */
+  --bg4: #374151; /* Hover State */
+  --border: rgba(255,255,255,0.065);
+  --border2: rgba(255,255,255,0.12);
+  --text: #dde8ff;
+  --t2: #94a3b8;
+  --t3: #64748b;
   
-  /* Accents & Glows */
-  --blue: #3d7fff;
-  --blue2: #1a5fcc;
-  --cyan: #00d4ff;
-  --green: #00f0a0;
-  --red: #ff3d5a;
-  --amber: #ffb020;
-  --violet: #8b5cf6;
-  --pink: #f472b6;
-  --glow-blue: rgba(61,127,255,0.15);
+  /* Accents & Aurora Glows */
+  --blue: #2e6fff;
+  --blue2: #1a56cc;
+  --cyan: #00d2ff;
+  --green: #00ffaa;
+  --red: #ff2a6d; /* Rose */
+  --amber: #ffcc33;
+  --violet: #9b51e0;
+  --pink: #ff2a6d;
+  --glow-cyan: rgba(0,210,255,0.15);
   
   /* Typography */
-  --mono: 'Space Mono', 'JetBrains Mono', monospace;
-  --display: 'Syne', sans-serif;
-  --body: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', 'Space Mono', 'JetBrains Mono', monospace;
+  --display: 'Outfit', 'Syne', sans-serif;
+  --body: 'Inter', 'DM Sans', sans-serif;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }

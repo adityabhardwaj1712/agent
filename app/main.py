@@ -171,10 +171,27 @@ async def add_process_time_header(request: Request, call_next):
 app.include_router(api_router)
 
 
+async def check_pgvector():
+    from .db.database import AsyncSessionLocal
+    from sqlalchemy import text
+    try:
+        async with AsyncSessionLocal() as session:
+            res = await session.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+            return res.scalar() is not None
+    except Exception:
+        return False
+
 @app.get("/")
 @limiter.limit("100/minute")
-def health(request: Request):
-    return {"status": "running", "version": "1.0.0"}
+async def health(request: Request):
+    pgvector_ok = await check_pgvector()
+    return {
+        "status": "running", 
+        "version": "1.0.0",
+        "infrastructure": {
+            "pgvector": "available" if pgvector_ok else "missing"
+        }
+    }
 
 
 @app.get("/metrics")

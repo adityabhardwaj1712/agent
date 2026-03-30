@@ -34,4 +34,20 @@ class GuardrailService:
         
         return final_prompt
 
+    def validate_content(self, content: str) -> dict:
+        """
+        Proactively scans content for malicious patterns (SQLi, Prompt Injection, etc.).
+        """
+        c = content.lower()
+        malicious_patterns = [
+            "drop table", "delete from", "truncate table", "insert into", "--", ";",
+            "ignore previous instructions", "system prompt", "you are now a",
+            "base64 -d", "curl http", "wget http", "chmod +x"
+        ]
+        
+        findings = [p for p in malicious_patterns if p in c]
+        if findings:
+            return {"is_safe": False, "findings": findings}
+        return {"is_safe": True, "findings": []}
+
 guardrail_service = GuardrailService()
