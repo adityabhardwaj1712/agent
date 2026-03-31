@@ -56,3 +56,13 @@ frontend/.env.local
 # Build artifacts
 *.zip
 docs/archive/_reference/*.zip
+
+# Runtime / temp files
+logs/
+dev_logs/
+uploads/
+doctor_report.md
+push_out.txt
+tracked_files.txt
+filter_log.txt
+*.tmp
