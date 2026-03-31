@@ -73,8 +73,54 @@ REPLY ONLY WITH A JSON OBJECT in this format:
         """
         Finds the next 'ready' tasks in the DAG (those with completed parents) and enqueues them.
         """
-        # Logic for traversing the DAG and enqueuing tasks
-        # This will be integrated with the main Orchestrator in Task 4.2
-        pass
+        from .orchestrator import orchestrator, Priority
+        
+        result = await db.execute(select(Goal).where(Goal.goal_id == goal_id))
+        goal = result.scalars().first()
+        if not goal or not goal.workflow_json:
+            return 0
+            
+        dag = json.loads(goal.workflow_json)
+        nodes = dag.get("nodes", [])
+        edges = dag.get("edges", [])
+        
+        # 1. Identify completed node IDs
+        completed_ids = {n["id"] for n in nodes if n.get("status") == "completed"}
+        
+        # 2. Identify ready nodes (idle and all parents completed)
+        ready_nodes = []
+        for node in nodes:
+            if node.get("status") != "idle":
+                continue
+                
+            parents = [e["from"] for e in edges if e["to"] == node["id"]]
+            if all(p in completed_ids for p in parents):
+                ready_nodes.append(node)
+                
+        # 3. Enqueue ready nodes
+        for node in ready_nodes:
+            logger.info(f"Enqueuing DAG node: {node.get('name', node['id'])} (Goal: {goal_id})")
+            
+            # Update status in local DAG object first
+            node["status"] = "running"
+            
+            # Map role/agent if possible
+            agent_id = node.get("agent_id") or "researcher" 
+            
+            await orchestrator.enqueue_task(
+                db=db,
+                payload=node.get("prompt", node.get("label")),
+                user_id=goal.user_id,
+                agent_id=agent_id,
+                priority=Priority.NORMAL,
+                goal_id=goal_id,
+                node_id=node["id"]
+            )
+            
+        # 4. Save updated DAG state
+        goal.workflow_json = json.dumps(dag)
+        await db.commit()
+        
+        return len(ready_nodes)
 
 goal_orchestrator = GoalOrchestrator()

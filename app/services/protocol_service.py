@@ -20,12 +20,13 @@ async def get_protocol_messages(db: AsyncSession, limit: int = 50) -> list[Proto
 
 async def send_protocol_message(db: AsyncSession, data: ProtocolSendRequest) -> str:
     message_id = str(uuid.uuid4())
+    payload_str = data.payload if isinstance(data.payload, str) else json.dumps(data.payload)
     message = ProtocolMessage(
             message_id=message_id,
             from_agent_id=data.from_agent_id,
             to_agent_id=data.to_agent_id,
             message_type=data.type,
-            payload=data.payload,
+            payload=payload_str,
             correlation_id=data.correlation_id,
         )
     db.add(message)

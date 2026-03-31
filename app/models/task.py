@@ -10,6 +10,7 @@ class Task(Base):
     user_id = Column(String, ForeignKey("users.user_id"), index=True)
     agent_id = Column(String, index=True)
     goal_id = Column(String, index=True, nullable=True)
+    node_id = Column(String, index=True, nullable=True) # ID of the node in the DAG
     parent_task_id = Column(String, index=True, nullable=True)
     payload = Column(Text)
     status = Column(String, default="queued")  # queued, processing, completed, failed, pending_approval, deduplicated

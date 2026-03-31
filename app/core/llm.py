@@ -19,7 +19,9 @@ class LLMService:
         self._openai_client: Any = None
         self._anthropic_client: Any = None
         self._gemini_client: Any = None
+        self._gemini_client: Any = None
         self._groq_client: Any = None
+        self._ollama_client: Any = None
 
     # ─── lazy clients ────────────────────────────────────────────────────────
 
@@ -61,6 +63,17 @@ class LLMService:
             self._groq_client = AsyncGroq(api_key=key)
         return self._groq_client
 
+    def _ollama(self):
+        if self._ollama_client is None:
+            import httpx
+            # Use host's Ollama default port if missing
+            base_url = os.getenv("OLLAMA_API_BASE", "http://host.docker.internal:11434")
+            if "host.docker.internal" in base_url and os.name != 'nt':
+                # Simplified fallback for Linux docker environments
+                base_url = "http://172.17.0.1:11434"
+            self._ollama_client = httpx.AsyncClient(base_url=base_url, timeout=120.0)
+        return self._ollama_client
+
     # ─── New Streaming Interface ─────────────────────────────────────────────
 
     async def stream_completion(
@@ -77,6 +90,9 @@ class LLMService:
                 yield chunk
         elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
             async for chunk in self._stream_groq(messages, model, temperature):
+                yield chunk
+        elif model.startswith("ollama/") or model.startswith("gemma"):
+            async for chunk in self._stream_ollama(messages, model, temperature):
                 yield chunk
         else:
             async for chunk in self._stream_openai(messages, model, temperature):
@@ -104,6 +120,8 @@ class LLMService:
             return await self._call_gemini(messages, model, tools, temperature)
         elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
             return await self._call_groq(messages, model, tools, temperature, task_id)
+        elif model.startswith("ollama/") or model.startswith("gemma"):
+            return await self._call_ollama(messages, model, tools, temperature, task_id)
         else:
             return await self._call_openai(messages, model, tools, temperature, task_id)
 
@@ -379,6 +397,77 @@ class LLMService:
             total_tokens=0,
         )
         return text, None, usage
+
+    # ─── Ollama (Gemma 3) ──────────────────────────────────────────────────
+
+    async def _call_ollama(self, messages, model, tools, temperature, task_id=None):
+        import json
+        clean_model = model.replace("ollama/", "")
+        
+        payload = {
+            "model": clean_model,
+            "messages": messages,
+            "options": {"temperature": temperature},
+            "stream": False
+        }
+        
+        client = self._ollama()
+        
+        if task_id and not tools:
+            payload["stream"] = True
+            from ..db.redis_client import get_async_redis_client
+            redis = await get_async_redis_client()
+            chunks = []
+            
+            async with client.stream("POST", "/api/chat", json=payload) as response:
+                async for line in response.aiter_lines():
+                    if line:
+                        data = json.loads(line)
+                        content = data.get("message", {}).get("content", "")
+                        if content:
+                            chunks.append(content)
+                            await redis.publish(f"task_stream:{task_id}", json.dumps({"task_id": task_id, "chunk": content}))
+            return "".join(chunks), None, _Usage(0, 0, 0)
+            
+        # Non-streaming
+        resp = await client.post("/api/chat", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        content = data.get("message", {}).get("content", "")
+        # Ollama usage (eval_count approx completion, prompt_eval_count param prompt)
+        usage = _Usage(
+            prompt_tokens=data.get("prompt_eval_count", 0),
+            completion_tokens=data.get("eval_count", 0),
+            total_tokens=data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
+        )
+        
+        # NOTE: Tool calls for Ollama depend on the model (llama3 supports them, older models don't)
+        # We will return basic text for Gemma 3 as a baseline.
+        return content, None, usage
+
+    async def _stream_ollama(self, messages, model, temperature):
+        import json
+        clean_model = model.replace("ollama/", "")
+        payload = {
+            "model": clean_model,
+            "messages": messages,
+            "options": {"temperature": temperature},
+            "stream": True
+        }
+        
+        try:
+            client = self._ollama()
+            async with client.stream("POST", "/api/chat", json=payload) as response:
+                async for line in response.aiter_lines():
+                    if line:
+                        data = json.loads(line)
+                        content = data.get("message", {}).get("content", "")
+                        if content:
+                            yield content
+        except Exception as e:
+            logger.error(f"Ollama Stream Failed: {e}")
+            yield f"ERROR: {str(e)}"
 
     async def complete(
         self,

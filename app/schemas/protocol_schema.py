@@ -1,12 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 
 
 class ProtocolSendRequest(BaseModel):
     from_agent_id: str
     to_agent_id: str
     type: str
-    payload: str
+    payload: Any
     correlation_id: Optional[str] = None
 
 

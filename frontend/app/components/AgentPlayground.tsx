@@ -31,29 +31,45 @@ export default function AgentPlayground() {
 
   const fetchAgents = async () => {
     try {
-      const data = await apiFetch<any[]>('/agents');
+      const data = await apiFetch<any[]>('/agents/my');
       setAgents(data || []);
+      if (data && data.length > 0 && !activeAgent) {
+        setActiveAgent(data[0]);
+        setSystemPrompt(data[0].description || 'You are a helpful assistant.');
+      }
     } catch (e) {
       console.error('Failed to fetch agents', e);
     }
   };
 
   const handleRun = async () => {
+    if (!activeAgent) {
+      toast('Please select an agent first.', 'err');
+      return;
+    }
+    
     setLoading(true);
+    setResults(null); 
+    
     try {
       const data = await apiFetch<any>('/playground/run', {
         method: 'POST',
         body: JSON.stringify({
-          agent_id: activeAgent?.agent_id,
+          agent_id: activeAgent.agent_id,
           system_prompt: systemPrompt,
-          model_name: activeAgent?.model_name || 'gpt-4o',
-          test_cases: testCases
+          model_name: activeAgent.model_name || 'gpt-4o',
+          test_cases: testCases.filter(tc => tc.input.trim() !== '')
         })
       });
-      setResults(data);
-      toast('Playground session complete!', 'ok');
+      
+      if (data) {
+        setResults(data);
+        toast('Experiment sequence finalized.', 'ok');
+      } else {
+        throw new Error('No data received from playground.');
+      }
     } catch (e: any) {
-      toast('Run failed: ' + e.message, 'err');
+      toast('Execution error: ' + (e.message || 'Unknown error'), 'err');
     } finally {
       setLoading(false);
     }

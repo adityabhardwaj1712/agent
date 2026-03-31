@@ -27,11 +27,12 @@ export default function AddAgentModal({ isOpen, onClose, onAdded }: { isOpen: bo
     try {
       await apiFetch('/agents/register', {
         method: 'POST',
-        body: JSON.stringify({ ...formData, owner_id: 'demo-user' })
+        body: JSON.stringify(formData)
       });
-      toast('Agent registered successfully', 'ok');
+      toast('Neural Agent protocol synchronized.', 'ok');
       onAdded();
       onClose();
+      setFormData({ name: '', role: '', description: '', model_name: 'gpt-4o' });
     } catch (err: any) {
       toast(err.message || 'Registration failed', 'err');
     }

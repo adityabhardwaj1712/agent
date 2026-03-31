@@ -28,8 +28,8 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request, json; resp = urllib.request.urlopen('http://localhost:8000/').read(); status = json.loads(resp); exit(0 if status['status'] == 'running' else 1)\""]
       interval: 15s
       timeout: 10s
-      retries: 15
-      start_period: 30s
+      retries: 25
+      start_period: 60s
 
   worker:
     build:

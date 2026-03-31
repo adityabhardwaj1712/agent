@@ -34,6 +34,7 @@ export default function TaskTable() {
   const [monitoringTaskId, setMonitoringTaskId] = useState<string | null>(null);
 
   const getUserIdFromToken = () => {
+    if (typeof window === "undefined") return null;
     const token = getToken();
     if (!token) return null;
     try {

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-03-30T18:16:09.238424",
+  "metrics": {
+    "period": "2026-03-29 to 2026-03-30",
+    "total_tasks": 0,
+    "failed_tasks": 0,
+    "completed_tasks": 0,
+    "success_rate": "0%",
+    "avg_latency_ms": 0,
+    "top_agents": []
+  },
+  "ai_summary": "No AI summary available."
+}

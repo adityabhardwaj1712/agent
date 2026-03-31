@@ -10,7 +10,7 @@ import {
   ChevronRight, 
   Activity, 
   Zap, 
-  Radio, 
+  Radio as RadioIcon, 
   Target,
   Terminal as TerminalIcon,
   Cpu,
@@ -141,7 +141,7 @@ const AutonomousView: React.FC = () => {
         
         <div className="flex items-center gap-4 mb-8">
           <div className="ms-icon-box" style={{ background: 'rgba(59, 130, 246, 0.15)', width: '48px', height: '48px' }}>
-            <Radio className="text-blue-400" size={24} />
+            <RadioIcon className="text-blue-400" size={24} />
           </div>
           <div>
             <h2 style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.5px' }}>MISSION_COMMAND_V2</h2>

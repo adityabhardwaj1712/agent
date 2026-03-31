@@ -49,6 +49,7 @@ class Orchestrator:
         agent_id: Optional[str] = None, 
         priority: Priority = Priority.NORMAL,
         goal_id: Optional[str] = None, 
+        node_id: Optional[str] = None,
         parent_task_id: Optional[str] = None,
         task_hash: Optional[str] = None,
         model_override: Optional[str] = None
@@ -62,6 +63,7 @@ class Orchestrator:
             agent_id=agent_id,
             payload=payload,
             goal_id=goal_id,
+            node_id=node_id,
             parent_task_id=parent_task_id,
             status="queued",
             task_hash=task_hash,
@@ -80,6 +82,7 @@ class Orchestrator:
             "agent_id": agent_id,
             "priority": int(priority),
             "goal_id": goal_id,
+            "node_id": node_id,
             "parent_task_id": parent_task_id,
             "task_hash": task_hash,
             "model_override": model_override,

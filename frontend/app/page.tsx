@@ -40,6 +40,7 @@ import AgentPlayground from "./components/AgentPlayground";
 
 import { MetricCard, IncidentFeed, DashboardAgentList, ConfigraphWidget } from "./components/DashboardWidgets";
 import FleetDashboard from "./components/FleetDashboard";
+import ProDashboard from "./components/ProDashboard";
 import CopilotChat from "./components/CopilotChat";
 import KnowledgeHub from "./components/KnowledgeHub";
 
@@ -120,28 +121,30 @@ function AppContent() {
           
           <div className="ms-tb-right">
             <div className="ms-pill bg-[rgba(34,211,238,0.05)] border border-[rgba(34,211,238,0.1)]">
-              <div className="ms-dot ms-dot-g animate-pulse"></div>
+              <div className={`ms-dot ms-dot-${stats.active_events > 5 ? 'y' : 'g'} animate-pulse`}></div>
               <span className="text-[10px] font-mono text-[var(--t3)] mr-2">SYS_LOAD:</span>
-              <span style={{ color: 'var(--green)', fontWeight: 800, fontSize: '10px' }}>NOMINAL</span>
+              <span style={{ color: stats.active_events > 5 ? 'var(--amber)' : 'var(--green)', fontWeight: 800, fontSize: '10px' }}>
+                {stats.active_events > 10 ? 'HIGH' : stats.active_events > 5 ? 'MODERATE' : 'NOMINAL'}
+              </span>
             </div>
 
             <div className="ms-pill bg-[rgba(251,191,36,0.05)] border border-[rgba(251,191,36,0.1)]">
               <span className="text-[10px] font-mono text-[var(--t3)] mr-2 text-amber-500">CREDITS:</span>
-              <span style={{ color: 'var(--yellow)', fontWeight: 800, fontSize: '10px' }}>${stats.total_cost || '0.00'}</span>
+              <span style={{ color: 'var(--amber)', fontWeight: 800, fontSize: '10px' }}>${stats.total_cost?.toFixed(4) || '0.0000'}</span>
             </div>
 
             <div className="flex items-center gap-2 ml-4">
-               <button className="ms-btn-icon-sm" onClick={fetchGlobalStats}><RefreshCw size={14} /></button>
-               <button className="ms-btn-icon-sm"><Bell size={14} /></button>
+               <button className="ms-btn-icon-sm" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px' }} onClick={fetchGlobalStats}><RefreshCw size={14} /></button>
+               <button className="ms-btn-icon-sm" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px' }}><Bell size={14} /></button>
                <div className="h-4 w-[1px] bg-[var(--bg3)] mx-2"></div>
-               <div className="ms-avatar-v2">AD</div>
+               <div className="ms-avatar" style={{ width: 28, height: 28, fontSize: 10 }}>AD</div>
             </div>
           </div>
         </header>
 
         {/* Main content */}
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {activeView === 'fleet' && <FleetDashboard />}
+          {activeView === 'fleet' && <ProDashboard />}
 
           {activeView === 'agents' && <AgentGallery />}
           {activeView === 'tasks' && <TaskTable />}

@@ -20,6 +20,8 @@ from .core.middleware import MetricsMiddleware
 
 from .core.logging_config import setup_logging
 from .core.env_validator import validate_or_exit, print_environment_summary
+from .db.base import Base # All models must be imported BEFORE create_all
+from .db.database import engine
 
 # Setup logging
 logger = setup_logging()
@@ -33,6 +35,25 @@ app = FastAPI(title="AgentCloud", version="1.0.0")
 
 @app.on_event("startup")
 async def startup_event():
+    # 0. Ensure tables exist (Migration logic)
+    try:
+        from sqlalchemy import text
+        async with engine.begin() as conn:
+            # Enable vector extension first
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            
+            # Import models to register them with metadata
+            from .models import agent, task, user, goal, trace, protocol, memory, approval, audit, billing
+            await conn.run_sync(Base.metadata.create_all)
+
+            # Explicitly add columns if missing (self-healing migration)
+            # must happen AFTER create_all so tables exist
+            await conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS node_id VARCHAR;"))
+            await conn.execute(text("ALTER TABLE goals ADD COLUMN IF NOT EXISTS workflow_state JSONB;"))
+        logger.info("Database Schema Synchronization & Extensions: OK")
+    except Exception as e:
+        logger.error(f"Schema Sync Failed: {e}")
+
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
     from .services.supervisor import supervisor_service

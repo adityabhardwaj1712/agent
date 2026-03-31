@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { 
-  Radio, 
+  Radio as RadioIcon, 
   Send, 
   User, 
   Cpu, 
@@ -107,7 +107,7 @@ export default function ProtocolView() {
                   className={`flex items-center gap-2 h-full px-2 border-b-2 transition-all ${activeTab === 'feed' ? 'border-[var(--blue)] text-[var(--text)]' : 'border-transparent text-[var(--t3)]'}`}
                   onClick={() => setActiveTab('feed')}
                 >
-                   <Radio size={16} /> 
+                   <RadioIcon size={16} /> 
                    <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: 1 }}>SIGNAL_FEED</span>
                 </button>
                 <button 

@@ -472,16 +472,31 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             logger.debug(f"Slack notify failed (non-critical): {e}")
 
         # ── 16. Goal progress (if task is linked to a goal)
-        if goal_id:
+        if goal_id and task_dict.get("node_id"):
             try:
                 async with AsyncSessionLocal() as db:
                     result = await db.execute(select(Goal).filter(Goal.goal_id == goal_id))
                     goal = result.scalars().first()
-                    if goal:
-                        goal.progress = min(1.0, (goal.progress or 0) + 0.1)
-                        await db.commit()
+                    if goal and goal.workflow_json:
+                        dag = json.loads(goal.workflow_json)
+                        target_node = next((n for n in dag.get("nodes", []) if n["id"] == task_dict["node_id"]), None)
+                        if target_node:
+                            target_node["status"] = "completed"
+                            goal.workflow_json = json.dumps(dag)
+                            
+                            # Calculate total progress
+                            nodes = dag.get("nodes", [])
+                            if nodes:
+                                completed_count = len([n for n in nodes if n.get("status") == "completed"])
+                                goal.progress = completed_count / len(nodes)
+                            
+                            await db.commit()
+                            
+                            # Trigger next steps
+                            from app.services.goal_orchestrator import goal_orchestrator
+                            await goal_orchestrator.execute_dag_step(db, goal_id)
             except Exception as e:
-                logger.warning(f"Goal update failed for goal {goal_id}: {e}")
+                logger.warning(f"Goal DAG update failed for goal {goal_id}: {e}")
 
         # ── 17. Mark completed
         await _mark_completed(task_id, output)

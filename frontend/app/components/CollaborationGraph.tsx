@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, wsUrl } from '../lib/api';
 
 interface Node {
   id: string;
@@ -25,24 +25,51 @@ export default function CollaborationGraph() {
 
   useEffect(() => {
     fetchData();
+    
+    // Real-time protocol bridge
+    const ws = new WebSocket(wsUrl('/protocol/demo-user')); // Assume demo-user for now, but backend should ideally use token
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'PROTOCOL_MESSAGE') {
+          setNodes(prev => {
+            const nodeMap: Record<string, Node> = prev.reduce((acc, n) => ({ ...acc, [n.id]: n }), {});
+            const payload = msg.payload;
+            if (!nodeMap[payload.from_agent_id]) {
+               nodeMap[payload.from_agent_id] = { id: payload.from_agent_id, name: 'Agent_' + payload.from_agent_id.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
+            }
+            if (!nodeMap[payload.to_agent_id]) {
+               nodeMap[payload.to_agent_id] = { id: payload.to_agent_id, name: 'Agent_' + payload.to_agent_id.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
+            }
+            setEdges(prevEdges => [...prevEdges, { source: payload.from_agent_id, target: payload.to_agent_id, type: payload.message_type }]);
+            return Object.values(nodeMap);
+          });
+        }
+      } catch (e) {
+        console.error('WS Signal Error:', e);
+      }
+    };
+    return () => ws.close();
   }, []);
 
   const fetchData = async () => {
     try {
       const messages = await apiFetch<any[]>('/protocol/messages?limit=100');
-      if (!messages) return;
+      if (!messages || messages.length === 0) return;
 
       const nodeMap: Record<string, Node> = {};
       const edgeList: Edge[] = [];
 
       messages.forEach(m => {
-        if (!nodeMap[m.from_agent_id]) {
-          nodeMap[m.from_agent_id] = { id: m.from_agent_id, name: 'Agent_' + m.from_agent_id.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
+        const fromId = m.from_agent_id;
+        const toId = m.to_agent_id;
+        if (!nodeMap[fromId]) {
+          nodeMap[fromId] = { id: fromId, name: 'Agent_' + fromId.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
         }
-        if (!nodeMap[m.to_agent_id]) {
-          nodeMap[m.to_agent_id] = { id: m.to_agent_id, name: 'Agent_' + m.to_agent_id.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
+        if (!nodeMap[toId]) {
+          nodeMap[toId] = { id: toId, name: 'Agent_' + toId.substring(0,4), x: Math.random() * 800, y: Math.random() * 500, vx: 0, vy: 0 };
         }
-        edgeList.push({ source: m.from_agent_id, target: m.to_agent_id, type: m.message_type });
+        edgeList.push({ source: fromId, target: toId, type: m.message_type });
       });
 
       setNodes(Object.values(nodeMap));

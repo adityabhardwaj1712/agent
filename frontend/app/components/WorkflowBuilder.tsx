@@ -61,17 +61,16 @@ const WorkflowBuilder: React.FC = () => {
       setSelectedWfName(name);
       toast(`Protocol Loaded: ${name}`, 'ok');
     } catch (err) {
-      if (name === 'Market Research Pipeline' && nodes.length === 0) {
-        setNodes([
-          { nid: 'n1', name: 'Neural Retrieval', agent: 'WebResearcher', prompt: 'Harvesting latest global market trends...', x: 80, y: 150, status: 'idle' },
-          { nid: 'n2', name: 'Pattern Analysis', agent: 'DataAnalyst', prompt: 'Detecting alpha signals in dataset...', x: 380, y: 150, status: 'idle' },
-          { nid: 'n3', name: 'Synthesis Engine', agent: 'ContentWriter', prompt: 'Generating high-fidelity strategic report...', x: 680, y: 150, status: 'idle' },
-        ]);
-        setEdges([
-          { from: 'n1', to: 'n2' },
-          { from: 'n2', to: 'n3' },
-        ]);
-      }
+      toast(`Failed to load protocol: ${name}`, 'err');
+    }
+  };
+
+  const executeWorkflow = async () => {
+    try {
+      const data = await apiFetch<any>(`/workflows/${selectedWfName}/run`, { method: 'POST' });
+      toast('Neural Protocol Executed: Node progression started.', 'ok');
+    } catch (err) {
+      toast('Execution Failed', 'err');
     }
   };
 
@@ -144,7 +143,11 @@ const WorkflowBuilder: React.FC = () => {
           <button className="ms-btn ms-btn-sm" onClick={saveWorkflow} style={{ background: 'var(--bg2)', borderColor: 'var(--bg3)' }}>
             <Save size={14} className="mr-2" /> Sync State
           </button>
-          <button className="ms-btn ms-btn-p ms-btn-sm" style={{ padding: '0 24px', fontWeight: 700, letterSpacing: '0.5px' }}>
+          <button 
+            className="ms-btn ms-btn-p ms-btn-sm" 
+            style={{ padding: '0 24px', fontWeight: 700, letterSpacing: '0.5px' }}
+            onClick={executeWorkflow}
+          >
             <Play size={14} className="mr-2 fill-current" /> EXECUTE PROTOCOL
           </button>
         </div>
@@ -272,7 +275,7 @@ const WorkflowBuilder: React.FC = () => {
                     e.currentTarget.value = 'Generating workflow...';
                     e.currentTarget.disabled = true;
                     try {
-                      const res = await apiFetch('/copilot/generate-workflow', {
+                      const res = await apiFetch<any>('/copilot/generate-workflow', {
                         method: 'POST',
                         body: JSON.stringify({ prompt: val })
                       });
