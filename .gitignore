@@ -52,3 +52,7 @@ frontend/.env.local
 *.db
 *.pid
 *.cache
+
+# Build artifacts
+*.zip
+docs/archive/_reference/*.zip
