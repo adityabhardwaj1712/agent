@@ -32,31 +32,64 @@ async def upload_file(
         with open(file_path, "wb") as f:
             f.write(file_bytes)
             
-        # Extract text based on file type
+        # 1. Extract text based on file type
         content = ""
         try:
             if file_ext == ".txt":
                 content = file_bytes.decode("utf-8")
             elif file_ext == ".pdf":
-                # For now, simplistic fallback. In prod, we'd use pdfplumber.
-                content = f"PDF_DATA_PLACEHOLDER: {file.filename}\n" + file_bytes.hex()[:1000]
+                import io
+                from pypdf import PdfReader
+                reader = PdfReader(io.BytesIO(file_bytes))
+                text_parts = []
+                for i, page in enumerate(reader.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(f"--- PAGE {i+1} ---\n{page_text}")
+                content = "\n\n".join(text_parts)
             else:
                 content = file_bytes.decode("utf-8", errors="ignore")
-        except Exception:
-            content = f"Could not extract dynamic text from {file.filename}"
+        except Exception as e:
+            logger.error(f"Text extraction failed for {file.filename}: {e}")
+            content = f"Error extracting text from {file.filename}: {str(e)}"
+            
+        if not content.strip():
+            content = f"Empty or unreadable document: {file.filename}"
 
-        # Chunk content for better vector search granularity
-        chunks = [content[i:i+1200] for i in range(0, len(content), 1000)]
+        # 2. Advanced Chunking (Sliding Window)
+        # 1000 chars with 100 char overlap for context continuity
+        chunk_size = 1000
+        overlap = 100
+        chunks = []
         
+        if len(content) <= chunk_size:
+            chunks = [content]
+        else:
+            start = 0
+            while start < len(content):
+                end = start + chunk_size
+                chunks.append(content[start:end])
+                start += (chunk_size - overlap)
+        
+        # 3. Vector Storage via Memory Service
         from ...schemas.memory_schema import MemoryCreate
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
             await memory_service.write_memory(
                 db, 
-                MemoryCreate(agent_id="system", content=f"Source: {file.filename}\n\n{chunk}"),
+                MemoryCreate(
+                    agent_id="system", 
+                    content=f"DOC_LINK: {file.filename} (CHUNK {i+1})\n\n{chunk}"
+                ),
                 user_id=current_user.user_id
             )
         
-        return {"status": "ingested", "file_id": file_id, "filename": file.filename, "chunks": len(chunks)}
+        return {
+            "status": "ingested", 
+            "file_id": file_id, 
+            "filename": file.filename, 
+            "chunks": len(chunks),
+            "size_chars": len(content)
+        }
         
     except Exception as e:
         logger.error(f"Upload failed: {e}")

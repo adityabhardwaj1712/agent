@@ -1,5 +1,6 @@
 import sys
 import os
+import io
 from pathlib import Path
 from loguru import logger
 
@@ -10,6 +11,15 @@ def setup_logging(log_level: str = "INFO"):
     # Remove default logger
     logger.remove()
     
+    # Check if we have a valid stdout
+    has_stdout = sys.stdout is not None and hasattr(sys.stdout, 'write')
+    has_stderr = sys.stderr is not None and hasattr(sys.stderr, 'write')
+    
+    if not has_stdout:
+        sys.stdout = io.StringIO()
+    if not has_stderr:
+        sys.stderr = io.StringIO()
+
     # Create logs directory
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
@@ -19,26 +29,27 @@ def setup_logging(log_level: str = "INFO"):
     is_production = deployment_mode in ["cloud", "byoc", "onprem"]
     
     # Console handler
-    if not is_production:
-        logger.add(
-            sys.stdout,
-            format=(
-                "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-                "<level>{level: <8}</level> | "
-                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
-                "<level>{message}</level>"
-            ),
-            level=log_level,
-            colorize=True,
-        )
-    else:
-        # Structured JSON logging for production
-        logger.add(
-            sys.stdout,
-            format="{message}",
-            level=log_level,
-            serialize=True,
-        )
+    if has_stdout:
+        if not is_production:
+            logger.add(
+                sys.stdout,
+                format=(
+                    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+                    "<level>{level: <8}</level> | "
+                    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+                    "<level>{message}</level>"
+                ),
+                level=log_level,
+                colorize=True,
+            )
+        else:
+            # Structured JSON logging for production
+            logger.add(
+                sys.stdout,
+                format="{message}",
+                level=log_level,
+                serialize=True,
+            )
     
     # File handler for all logs
     logger.add(

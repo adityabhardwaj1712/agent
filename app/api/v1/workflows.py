@@ -1,87 +1,88 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List
+from sqlalchemy import select, delete
 from ...db.database import get_db
-from ...models.workflow import WorkflowDefinition, WorkflowRun
-from ..deps import get_current_user
+from ...models.workflow import WorkflowDefinition
+from ...api.deps import get_current_user
 from ...models.user import User
 from pydantic import BaseModel
-import datetime
+from typing import List, Any, Optional
 
 router = APIRouter()
 
-class WorkflowSchema(BaseModel):
+class WorkflowSave(BaseModel):
     name: str
-    description: str | None = None
-    definition: dict
-
-class WorkflowResponse(WorkflowSchema):
-    id: str
-    created_at: datetime.datetime
-
-    class Config:
-        from_attributes = True
-
-@router.get("/", response_model=List[WorkflowResponse])
-async def list_workflows(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    result = await db.execute(select(WorkflowDefinition).order_by(WorkflowDefinition.updated_at.desc()))
-    return result.scalars().all()
+    description: Optional[str] = None
+    definition: Any # The React Flow nodes and edges JSON
 
 @router.post("/")
 async def save_workflow(
-    wf: WorkflowSchema,
+    wf: WorkflowSave,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(WorkflowDefinition).filter(WorkflowDefinition.name == wf.name))
-    existing = result.scalars().first()
+    # Check if workflow with same name exists for this user
+    existing = await db.execute(
+        select(WorkflowDefinition).filter(
+            WorkflowDefinition.name == wf.name,
+            WorkflowDefinition.user_id == current_user.user_id
+        )
+    )
+    obj = existing.scalar_one_or_none()
     
-    if existing:
-        existing.definition = wf.definition
-        existing.description = wf.description
-        existing.updated_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    if obj:
+        obj.definition = wf.definition
+        obj.description = wf.description
     else:
-        new_wf = WorkflowDefinition(
+        obj = WorkflowDefinition(
             name=wf.name,
             description=wf.description,
             definition=wf.definition,
             user_id=current_user.user_id
         )
-        db.add(new_wf)
+        db.add(obj)
     
     await db.commit()
-    return {"status": "saved"}
+    return {"status": "saved", "id": obj.id, "name": obj.name}
 
-@router.post("/run")
-async def run_workflow(
-    wf: dict,
+@router.get("/")
+async def list_workflows(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    new_run = WorkflowRun(
-        workflow_name=wf.get("name", "unknown"),
-        status="running",
-        user_id=current_user.user_id
+    result = await db.execute(
+        select(WorkflowDefinition).filter(WorkflowDefinition.user_id == current_user.user_id)
     )
-    db.add(new_run)
-    await db.commit()
-    return {"status": "started", "run_id": new_run.run_id}
+    return result.scalars().all()
 
-
-@router.get("/{name}", response_model=WorkflowResponse)
+@router.get("/{wf_id}")
 async def get_workflow(
-    name: str,
+    wf_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(WorkflowDefinition).filter(WorkflowDefinition.name == name))
-    wf = result.scalars().first()
+    result = await db.execute(
+        select(WorkflowDefinition).filter(
+            WorkflowDefinition.id == wf_id,
+            WorkflowDefinition.user_id == current_user.user_id
+        )
+    )
+    wf = result.scalar_one_or_none()
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
     return wf
 
-
+@router.delete("/{wf_id}")
+async def delete_workflow(
+    wf_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    await db.execute(
+        delete(WorkflowDefinition).filter(
+            WorkflowDefinition.id == wf_id,
+            WorkflowDefinition.user_id == current_user.user_id
+        )
+    )
+    await db.commit()
+    return {"status": "deleted"}

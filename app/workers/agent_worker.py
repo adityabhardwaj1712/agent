@@ -41,6 +41,7 @@ import os
 import time
 import uuid
 import hashlib
+import signal
 from loguru import logger
 
 from app.db.database import AsyncSessionLocal
@@ -248,7 +249,8 @@ async def _safe_memory_search(agent_id: str, query: str) -> list:
         return []
     try:
         async with AsyncSessionLocal() as db:
-            return await search_memory(db, agent_id=agent_id, query=query, limit=5)
+            result_dict = await search_memory(db, agent_id=agent_id, query=query, limit=5)
+            return result_dict.get("results", [])
     except Exception as e:
         logger.warning(f"Memory search failed for agent {agent_id}: {e}")
         return []
@@ -442,7 +444,10 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
                     step="execution_complete",
                     input_data={"prompt": prompt},
                     output_data={"output": output},
-                    metadata={"quality": quality_score, "tokens": tokens_used}
+                    metadata={"quality": quality_score, "tokens": tokens_used},
+                    tokens_prompt=llm_response.get("tokens_prompt", 0),
+                    tokens_completion=llm_response.get("tokens_completion", 0),
+                    total_cost=cost
                 )
         except Exception as e:
             logger.warning(f"Axon trace failed: {e}")
@@ -575,8 +580,21 @@ async def run_worker():
     """
     logger.info("AgentCloud Worker starting — priority queue + circuit breaker + event bus")
 
-    # FIX #5: Keep redis_client reference for clean shutdown
     redis_client = None
+
+    def handle_shutdown():
+        logger.warning("Received termination signal. Shutting down worker gracefully...")
+        for task in asyncio.all_tasks():
+            if task is not asyncio.current_task():
+                task.cancel()
+
+    loop = asyncio.get_running_loop()
+    try:
+        loop.add_signal_handler(signal.SIGINT, handle_shutdown)
+        loop.add_signal_handler(signal.SIGTERM, handle_shutdown)
+    except NotImplementedError:
+        # Windows doesn't support add_signal_handler perfectly
+        pass
 
     try:
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")

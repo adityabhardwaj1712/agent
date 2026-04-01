@@ -1,3 +1,10 @@
+export class APIError extends Error {
+  constructor(public status: number, public data: unknown, message: string) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
+
 export type ApiResult<T> = 
   | { ok: true; status: number; data: T }
   | { ok: false; status: number; error: unknown };
@@ -37,15 +44,19 @@ export function clearToken(): void {
 
 export async function apiJson<T>(
   path: string,
-  init?: RequestInit & { json?: unknown }
+  init?: RequestInit & { json?: unknown, timeout?: number }
 ): Promise<ApiResult<T>> {
-  const { json, ...rest } = init || {};
+  const { json, timeout = 30000, ...rest } = init || {};
   const token = getToken();
+
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
 
   let res: Response;
   try {
     res = await fetch(`${apiBase()}${path}`, {
       ...rest,
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -54,7 +65,12 @@ export async function apiJson<T>(
       body: json !== undefined ? JSON.stringify(json) : rest.body,
       cache: "no-store",
     });
-  } catch (networkErr) {
+    clearTimeout(id);
+  } catch (networkErr: any) {
+    clearTimeout(id);
+    if (networkErr.name === 'AbortError') {
+      return { ok: false, status: 408, error: { message: `Request timed out after ${timeout}ms` } };
+    }
     return { ok: false, status: 0, error: { message: "Network error — is the backend running?" } };
   }
 
@@ -70,12 +86,12 @@ export async function apiJson<T>(
   return { ok: true, status: res.status, data: parsed as T };
 }
 
-/** Convenience: returns data or throws a friendly error string */
-export async function apiFetch<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
+/** Convenience: returns data or throws a structured APIError */
+export async function apiFetch<T>(path: string, init?: RequestInit & { json?: unknown, timeout?: number }): Promise<T> {
   const result = await apiJson<T>(path, init);
   if (!result.ok) {
     const msg = (result.error as any)?.detail || (result.error as any)?.message || `HTTP ${result.status}`;
-    throw new Error(msg);
+    throw new APIError(result.status, result.error, msg);
   }
   return result.data;
 }

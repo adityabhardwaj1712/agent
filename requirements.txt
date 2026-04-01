@@ -31,4 +31,6 @@ aiosqlite
 groq
 websockets
 wsproto
+pypdf
+tiktoken
 

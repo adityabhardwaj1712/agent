@@ -20,7 +20,7 @@ async def create_memory(
     """
     return await memory_service.write_memory(db, data, current_user.user_id)
 
-@router.get("/search", response_model=List[MemoryResponse])
+@router.get("/search", response_model=dict)
 async def search_memories(
     agent_id: str,
     query: str,
@@ -31,8 +31,10 @@ async def search_memories(
     Search for semantically similar memories using pgvector.
     """
     # Note: In a real production system, we'd verify agent ownership here.
-    memories = await memory_service.search_memory(db, agent_id, query)
-    return memories
+    search_data = await memory_service.search_memory(db, agent_id, query)
+    # Serialize SQLAlchemy objects because dict response_model bypasses ORM mode mapping
+    search_data["results"] = [MemoryResponse.model_validate(m).model_dump() for m in search_data["results"]]
+    return search_data
 
 @router.post("/upload")
 async def upload_document(

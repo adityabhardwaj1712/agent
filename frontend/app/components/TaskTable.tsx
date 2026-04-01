@@ -21,7 +21,7 @@ import {
 import { apiFetch, getToken } from '../lib/api';
 import { useToast } from './Toast';
 import AddTaskModal from './AddTaskModal';
-import StepMonitor from './StepMonitor';
+import ThoughtStream from './ThoughtStream';
 
 export default function TaskTable() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -84,7 +84,9 @@ export default function TaskTable() {
       } catch (e) {}
     };
 
-    return () => ws.close();
+    return () => {
+      ws.close();
+    };
   }, []);
 
   const getStatusBadge = (status: string) => {
@@ -252,42 +254,15 @@ export default function TaskTable() {
                 onClick={() => setMonitoringTaskId(null)}
                 style={{ position: 'absolute', top: -40, right: 0, color: 'white', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800 }}
              >
-                <X size={18} /> CLOSE_MONITOR
+                <X size={18} /> CLOSE_TRACE
              </button>
-             <StepMonitor taskId={monitoringTaskId} userId={userId} />
+             <div className="h-full bg-[var(--bg1)] rounded-xl border border-[var(--border2)] overflow-hidden">
+                <ThoughtStream taskId={monitoringTaskId} />
+             </div>
           </div>
         </div>
       )}
 
-      <style jsx>{`
-        .ms-task-table-container { flex: 1; overflow-y: auto; }
-        .ms-record-table { width: 100%; border-collapse: collapse; text-align: left; }
-        
-        .ms-record-table th { 
-          padding: 16px 24px; 
-          background: rgba(255,255,255,0.02); 
-          border-bottom: 1px solid var(--bg3); 
-          font-size: 10px; 
-          color: var(--t3); 
-          font-weight: 800; 
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-        }
-        
-        .ms-record-table td { padding: 16px 24px; border-bottom: 1px solid var(--bg3); vertical-align: middle; }
-        .ms-record-table tr:last-child td { border-bottom: none; }
-        .ms-record-table tr:hover { background: rgba(255,255,255,0.015); }
-        
-        .ms-id-label { font-family: var(--mono); font-size: 11px; color: var(--blue); font-weight: 700; background: rgba(59, 130, 246, 0.08); padding: 4px 10px; border-radius: 6px; display: inline-block; }
-        .ms-task-desc { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; }
-        .ms-timestamp { font-size: 11px; font-family: var(--mono); color: var(--t3); display: flex; align-items: center; }
-        
-        .ms-btn-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--bg2); border: 1px solid var(--bg3); color: var(--t3); transition: all 0.2s; }
-        .ms-btn-icon:hover { color: var(--text); border-color: var(--blue); }
-        
-        .ms-btn-icon-sm { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--t3); transition: all 0.2s; }
-        .ms-btn-icon-sm:hover { background: var(--bg3); color: var(--text); }
-      `}</style>
     </div>
   );
 }

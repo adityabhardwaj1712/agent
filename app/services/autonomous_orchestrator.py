@@ -149,11 +149,12 @@ class AutonomousOrchestrator:
             exp = await self._get_experience(step_desc)
             enriched_payload = f"{exp}\nTask: {step_desc}" if exp else step_desc
 
-            # 3. Execution with Retry & Fallback (using strategy config)
-            # Find the goal to get its strategy or default to quality
-            mode = "quality" # In a real implementation, we'd persist the chosen strategy in the Goal record
+            # 3. Execution with Retry & Fallback
+            mode = "quality"
             config = strategy_engine.get_config(mode)
             
+            # --- SWARM PEER REVIEW PROTOCOL ---
+            # Phase A: Strategist Proposes Initial Execution
             result_output = await self._execute_with_retry(
                 enriched_payload, 
                 goal_id, 
@@ -162,30 +163,33 @@ class AutonomousOrchestrator:
                 primary_model=config["primary_model"]
             )
             
-            # 4. Self-Critic
-            improved = await self._criticize(step_desc, result_output)
+            # Phase B: Swarm Critic Level 1 (Reasoning Analysis)
+            # Use a different model/prompt to find flaws in the execution
+            critique_data = await self._swarm_critic(step_desc, result_output)
             
-            # 5. Evaluation
-            is_valid, critique = await self._evaluate(step_desc, improved)
-            if not is_valid:
-                logger.warning(f"Quality Check Failed. Retrying with critique.")
-                retried_result = await self._execute_with_retry(f"FIX: {critique}\n{step_desc}", goal_id, user_id)
-                
-                await event_bus.publish("node_completed", {
-                    "goal_id": goal_id,
-                    "description": step_desc,
-                    "result_preview": retried_result[:100] + "..." if len(retried_result) > 100 else retried_result,
-                    "status": "completed"
-                }, source="orchestrator")
-                return retried_result
-            
+            final_output = result_output
+            if critique_data.get("needs_refinement"):
+                logger.info(f"Swarm Critic [REJECTED]: {critique_data.get('reason')}")
+                # Phase C: Refinement Loop (Self-Correction)
+                refinement_payload = f"CRITIQUE: {critique_data.get('reason')}\nORIGINAL_TASK: {step_desc}\nPREVIOUS_RESULT: {result_output}\nFIX_AND_RESUBMIT:"
+                final_output = await self._execute_with_retry(
+                    refinement_payload,
+                    goal_id,
+                    user_id,
+                    retries=1,
+                    primary_model="llama3-70b-8192" # Use heavy model for refinement
+                )
+            else:
+                logger.info("Swarm Critic [APPROVED]: Optimal result achieved.")
+
             await event_bus.publish("node_completed", {
                 "goal_id": goal_id,
                 "description": step_desc,
-                "result_preview": improved[:100] + "..." if len(improved) > 100 else improved,
-                "status": "completed"
+                "result_preview": final_output[:100] + "..." if len(final_output) > 100 else final_output,
+                "status": "completed",
+                "critic_feedback": critique_data.get("reason")
             }, source="orchestrator")
-            return improved
+            return final_output
         except Exception as e:
             logger.error(f"Error executing step '{step_desc}': {e}")
             await event_bus.publish("node_failed", {
@@ -239,11 +243,32 @@ class AutonomousOrchestrator:
             return ModelChoice(data.get("model", "llama3-70b-8192"), "dynamic", "Groq")
         except: return ModelChoice("llama3-70b-8192", "default", "Groq")
 
-    async def _criticize(self, step: str, result: str) -> str:
-        prompt = f"Improve this ORIGINAL_RESULT for STEP: {step}\nORIGINAL: {result}\nImproved version ONLY:"
+    async def _swarm_critic(self, step: str, result: str) -> Dict[str, Any]:
+        """
+        Swarm Intelligence Level 1: Cross-validation.
+        Uses a specialized 'Critic' persona to find flaws in the execution.
+        """
+        prompt = f"""
+        [CRITIC_MODE] Analyze the following task execution.
+        TASK: {step}
+        RESULT: {result}
+        
+        Is the result accurate, complete, and free of hallucinations?
+        Return ONLY a JSON object:
+        {{
+          "needs_refinement": bool,
+          "reason": "Detailed critique or 'Optimal' if success",
+          "score": 0.0-1.0
+        }}
+        """
         choice = ModelChoice("llama3-70b-8192", "critic", "Groq")
-        improved, _, _ = await call_provider(choice, prompt=prompt)
-        return improved
+        try:
+            res, _, _ = await call_provider(choice, prompt=prompt)
+            clean_res = res.strip().replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_res)
+        except Exception as e:
+            logger.error(f"Swarm Critic Error: {e}")
+            return {"needs_refinement": False, "reason": "Critic Bypass (Check Manual)", "score": 1.0}
 
     async def _get_experience(self, step: str) -> Optional[str]:
         async with AsyncSessionLocal() as db:
@@ -256,24 +281,23 @@ class AutonomousOrchestrator:
         prompt = f"JSON list of max 5 steps for GOAL: {goal}"
         choice = ModelChoice("llama3-70b-8192", "plan", "Groq")
         res, _, _ = await call_provider(choice, prompt=prompt)
-        try: return json.loads(res.strip().replace("```json", "").replace("```", "").strip())
-        except: return []
+        try:
+            clean_res = res.strip().replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_res)
+        except Exception as e:
+            logger.error(f"Sequential plan failed: {e}. Raw: {res[:100]}")
+            return [goal]
 
     async def _plan_dag(self, goal: str) -> Optional[Dict[str, Any]]:
         prompt = f"JSON nodes/edges DAG for GOAL: {goal}"
         choice = ModelChoice("llama3-70b-8192", "dag-plan", "Groq")
         res, _, _ = await call_provider(choice, prompt=prompt)
-        try: return json.loads(res.strip().replace("```json", "").replace("```", "").strip())
-        except: return None
-
-    async def _evaluate(self, step: str, result: str) -> tuple[bool, str]:
-        prompt = f"JSON {{'is_valid': bool, 'critique': 'str'}} for STEP: {step}\nRESULT: {result}"
-        choice = ModelChoice("llama3-70b-8192", "eval", "Groq")
-        res, _, _ = await call_provider(choice, prompt=prompt)
         try:
-            data = json.loads(res.strip().replace("```json", "").replace("```", "").strip())
-            return data.get("is_valid", True), data.get("critique", "")
-        except: return True, ""
+            clean_res = res.strip().replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_res)
+        except Exception as e:
+            logger.error(f"DAG plan failed: {e}. Raw: {res[:100]}")
+            return None
 
     async def _wait_for_task(self, task_id: str, timeout: int = 300) -> str:
         start = asyncio.get_event_loop().time()

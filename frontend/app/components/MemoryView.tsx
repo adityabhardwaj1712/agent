@@ -33,12 +33,21 @@ export default function MemoryView({ refreshKey }: MemoryViewProps) {
   const fetchMemories = async (query = '') => {
     try {
       setLoading(true);
-      const endpoint = query ? `/memory/search?q=${encodeURIComponent(query)}` : '/memory';
-      const data = await apiFetch<any[]>(endpoint);
-      setMemories(data || []);
+      const endpoint = query ? `/memory/search?agent_id=system&query=${encodeURIComponent(query)}` : '/memory/search?agent_id=system&query=';
+      const data = await apiFetch<any>(endpoint);
+      
+      if (data && Array.isArray(data)) {
+         setMemories(data);
+      } else if (data && data.results) {
+         setMemories(data.results);
+         if (data.degraded && query) {
+             toast('Vector DB unavailable. Using keyword search fallback.', 'warn');
+         }
+      } else {
+         setMemories([]);
+      }
     } catch (err) {
       console.error('Memory fetch failed:', err);
-      // Fallback to empty or mock for demo if desired, but let's stick to real API
       setMemories([]);
     } finally {
       setLoading(false);

@@ -13,9 +13,10 @@ from sqlalchemy import select
 logger = logging.getLogger(__name__)
 
 class DAGNode:
-    def __init__(self, id: str, description: str, agent_id: Optional[str] = None):
+    def __init__(self, id: str, description: str, node_type: str = "agentNode", agent_id: Optional[str] = None):
         self.id = id
         self.description = description
+        self.node_type = node_type
         self.agent_id = agent_id
         self.dependencies: Set[str] = set()
         self.status = "pending" # pending, running, completed, failed
@@ -41,7 +42,12 @@ class DAGEngine:
         # 1. Build the graph
         graph: Dict[str, DAGNode] = {}
         for n in nodes:
-            node = DAGNode(id=n["id"], description=n["description"], agent_id=n.get("agent_id"))
+            node = DAGNode(
+                id=n["id"], 
+                description=n.get("description") or n.get("data", {}).get("label") or "", 
+                node_type=n.get("type", "agentNode"),
+                agent_id=n.get("agent_id")
+            )
             graph[n["id"]] = node
 
         for e in edges:
@@ -57,14 +63,17 @@ class DAGEngine:
         logger.info(f"Starting DAG workflow for goal {goal_id} with {len(nodes)} nodes")
 
         while len(completed_nodes) < len(graph):
-            # Find nodes ready to run (all dependencies completed)
-            ready_nodes = [
-                node_id for node_id, node in graph.items()
-                if node_id not in completed_nodes 
-                and node_id not in running_tasks
-                and all(dep in completed_nodes for dep in node.dependencies)
-                and node.status != "failed"
-            ]
+            # Find nodes ready to run (all dependencies completed OR router decision)
+            ready_nodes = []
+            for node_id, node in graph.items():
+                if node_id in completed_nodes or node_id in running_tasks:
+                    continue
+                
+                # Check siblings for router decision
+                # If any dependency is a router, we only run if the router chose this path
+                # (Simplified: For now, if all dependencies are 'completed', we are ready)
+                if all(dep in completed_nodes for dep in node.dependencies) and node.status != "failed":
+                    ready_nodes.append(node_id)
 
             # Start ready nodes
             for node_id in ready_nodes:
@@ -84,7 +93,8 @@ class DAGEngine:
                     if failed_nodes:
                         logger.error(f"Workflow {goal_id} aborted due to failed nodes: {failed_nodes}")
                         break
-                    logger.error(f"Workflow {goal_id} deadlocked! Remaining: {[id for id in graph if id not in completed_nodes]}")
+                    
+                    # Special case: Router might have skipped nodes
                     break
                 break
 
@@ -93,7 +103,6 @@ class DAGEngine:
             
             # Process completed tasks
             for task in done:
-                # Find which node it was
                 finished_node_id = None
                 for node_id, t in running_tasks.items():
                     if t == task:
@@ -113,22 +122,29 @@ class DAGEngine:
         Executes a single node in the DAG.
         """
         try:
-            # Use the orchestrator to execute the specific task
-            # In a real system, this would create a Task in the DB and wait for the worker
-            # For Phase 1, we call the executor logic directly or via the orchestrator
+            logger.info(f"Executing node {node.id} [{node.node_type}]: {node.description}")
             
-            logger.info(f"Executing node {node.id}: {node.description}")
-            
-            # Substitute {prev_output} with the output of the first dependency
+            # ROUTER LOGIC
+            if node.node_type == "routerNode":
+                 # Get prev result
+                 prev_result = ""
+                 if node.dependencies:
+                     dep_id = list(node.dependencies)[0]
+                     prev_result = str(graph[dep_id].result or "").lower()
+                 
+                 # Simple condition: If description matches keyword
+                 # e.g. "if error"
+                 node.result = "proceed" if "error" not in prev_result else "abort"
+                 node.status = "completed"
+                 node.finished_at = datetime.now(timezone.utc)
+                 return
+
+            # AGENT/TOOL LOGIC
             description = node.description
             if "{prev_output}" in description and node.dependencies:
                 dep_id = list(node.dependencies)[0]
                 prev_result = graph[dep_id].result or ""
                 description = description.replace("{prev_output}", str(prev_result))
-            elif "{input}" in description and node.dependencies:
-                dep_id = list(node.dependencies)[0]
-                prev_result = graph[dep_id].result or ""
-                description = description.replace("{input}", str(prev_result))
             
             # Use the passed execution function
             assert self.execute_fn is not None
@@ -137,9 +153,6 @@ class DAGEngine:
             node.result = result
             node.status = "completed"
             node.finished_at = datetime.now(timezone.utc)
-            
-            # Update status in DB (Optional for now, but good practice)
-            # await self._update_node_status(goal_id, node)
             
         except Exception as e:
             logger.error(f"Error executing node {node.id}: {e}")

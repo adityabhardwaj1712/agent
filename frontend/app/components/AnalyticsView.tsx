@@ -15,21 +15,24 @@ const defaultMetrics: AnalyticsSummary = {
 };
 
 const AnalyticsView: React.FC = () => {
-  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [summary, setSummary] = useState<any | null>(null);
   const [timeseries, setTimeseries] = useState<any[]>([]);
+  const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [fleetStatus, setFleetStatus] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('agentcloud_token') : null;
-    if (!token) return;
-
     try {
-      const [sumData, tsData] = await Promise.all([
-        apiFetch<AnalyticsSummary>('/analytics/summary'),
-        apiFetch<any[]>('/analytics/timeseries')
+      const [sumData, tsData, hmData, fleetData] = await Promise.all([
+        apiFetch<any>('/analytics/summary'),
+        apiFetch<any[]>('/analytics/timeseries'),
+        apiFetch<any[]>('/analytics/success-heatmap'),
+        apiFetch<any>('/analytics/fleet-health')
       ]);
       setSummary(sumData);
       setTimeseries(tsData || []);
+      setHeatmap(hmData || []);
+      setFleetStatus(fleetData);
     } catch (err) {
       console.error('Analytics fetch failed:', err);
     } finally {
@@ -39,23 +42,17 @@ const AnalyticsView: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const metrics = summary || defaultMetrics;
 
   const kpiData = [
-    { label: 'Fleet Stability', value: `${metrics.success_rate}%`, icon: Shield, color: 'var(--green)', trend: '+0.2%' },
-    { label: 'Neural Operations', value: metrics.total_tasks.toLocaleString(), icon: Activity, color: 'var(--blue)', trend: '+124' },
-    { label: 'Network Latency', value: `${metrics.avg_latency}ms`, icon: Zap, color: 'var(--amber)', trend: '-2ms' },
-    { label: 'Protocol Cost', value: `$${metrics.total_cost.toFixed(4)}`, icon: TrendingUp, color: 'var(--violet)', trend: '+$0.02' },
-  ];
-
-  const models = [
-    { name: 'LLama 3.1 70B', load: 42, type: 'Heavy Duty Inference', color: 'var(--blue)' },
-    { name: 'LLama 3.1 8B', load: 18, type: 'Fast Response Edge', color: 'var(--green)' },
-    { name: 'Mixtral 8x7B', load: 76, type: 'MoE Logic Engine', color: 'var(--violet)' },
+    { label: 'System Load', value: `${metrics.system_load || 0}%`, icon: Activity, color: metrics.system_load > 80 ? 'var(--red)' : 'var(--blue)', trend: 'NOMINAL' },
+    { label: 'Neural Operations', value: (metrics.total_tasks || 0).toLocaleString(), icon: Zap, color: 'var(--amber)', trend: `+${metrics.active_events || 0}` },
+    { label: 'Fleet Stability', value: `${metrics.success_rate || 0}%`, icon: Shield, color: 'var(--green)', trend: 'STABLE' },
+    { label: 'Protocol Cost', value: `$${(metrics.total_cost || 0).toFixed(4)}`, icon: TrendingUp, color: 'var(--violet)', trend: 'SYNCED' },
   ];
 
   if (loading) return <div className="ms-content flex items-center justify-center h-full text-[var(--t2)] font-mono">NEURAL_SYNC_IN_PROGRESS...</div>;
@@ -75,60 +72,65 @@ const AnalyticsView: React.FC = () => {
           <div className="ms-glass-panel">
             <div className="ms-card-hd" style={{ padding: '16px 20px', borderBottom: '1px solid var(--bg3)' }}>
               <div className="flex items-center gap-3">
-                <Cpu size={18} style={{ color: 'var(--blue)' }} />
-                <span className="text-sm font-bold">Neural Resource Utilization</span>
+                <BarChart3 size={18} style={{ color: 'var(--blue)' }} />
+                <span className="text-sm font-bold">Mission Success Heatmap (24H)</span>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-[10px] text-[var(--t3)]">
-                  <div className="ms-dot ms-dot-g"></div> SYSTEM_OPTIMAL
-                </div>
-                <MoreHorizontal size={14} style={{ color: 'var(--t3)', cursor: 'pointer' }} />
+              <div className="flex items-center gap-4 text-[10px] text-[var(--t3)]">
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-emerald-500"></div> SUCCESS</div>
+                  <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-rose-500"></div> FAIL</div>
               </div>
             </div>
-            <div className="p-6 space-y-10">
-              {models.map((model, i) => (
-                <div key={i} className="space-y-4">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-[13px] font-bold text-[var(--text)]">{model.name}</div>
-                      <div className="text-[9px] text-[var(--t3)] font-mono uppercase tracking-widest">{model.type}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-mono text-[var(--text)]">{model.load}%</div>
-                      <div className="text-[9px] text-[var(--t3)] uppercase">Active Load</div>
-                    </div>
-                  </div>
-                  <div className="ms-progress-bin">
-                    <div 
-                      className="ms-progress-fill" 
-                      style={{ width: `${model.load}%`, background: model.color }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+            <div className="p-6">
+               <div className="flex items-end gap-[6px] h-[200px] px-2">
+                  {heatmap.map((d, i) => {
+                    const total = d.success + d.failure;
+                    const sH = total > 0 ? (d.success / 10) * 100 : 0; // Simple scaling
+                    const fH = total > 0 ? (d.failure / 10) * 100 : 0;
+                    
+                    return (
+                      <div key={i} className="flex-1 flex flex-col justify-end gap-1 group relative">
+                        <div className="w-full bg-rose-500/40 rounded-t-sm" style={{ height: `${Math.min(fH, 100)}%` }}></div>
+                        <div className="w-full bg-emerald-500/60 rounded-sm" style={{ height: `${Math.min(sH, 100)}%` }}></div>
+                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-mono opacity-0 group-hover:opacity-100 transition-all">
+                           {d.hour}
+                        </div>
+                      </div>
+                    );
+                  })}
+               </div>
             </div>
           </div>
 
           <div className="ms-glass-panel" style={{ flex: 1, padding: '24px' }}>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <BarChart3 size={18} style={{ color: 'var(--violet)' }} />
-                <span className="text-sm font-bold">Mission Throughput Topology</span>
+                <Cpu size={18} style={{ color: 'var(--violet)' }} />
+                <span className="text-sm font-bold">Fleet Health Distribution</span>
               </div>
-              <button className="ms-btn-icon"><Download size={14} /></button>
             </div>
-            <div className="flex items-end gap-[8px] h-[240px] px-2">
-              {(timeseries.length > 0 ? timeseries : [40, 65, 45, 95, 70, 35, 85, 60, 98, 75, 45, 65, 90, 55, 80, 95, 45, 65, 35, 55]).map((d, i) => {
-                const h = typeof d === 'number' ? d : (d.value * 5); // Scale value for visual
-                return (
-                  <div 
-                    key={i} 
-                    className="ms-visual-bar"
-                    style={{ height: `${Math.min(h, 100)}%`, background: `linear-gradient(to top, rgba(59, 130, 246, 0.1), var(--blue))` }}
-                    title={d.time ? `${d.time}: ${d.value} tasks` : undefined}
-                  ></div>
-                );
-              })}
+            <div className="flex items-center justify-around h-full">
+               {/* Simple CSS Donut implementation */}
+               <div className="relative w-40 h-40 rounded-full border-8 border-[var(--bg3)] flex items-center justify-center">
+                  <div className="text-center">
+                     <div className="text-2xl font-black text-white">{fleetStatus?.total || 0}</div>
+                     <div className="text-[8px] font-mono text-[var(--t3)] uppercase">Active Agents</div>
+                  </div>
+                  {/* Dynamic ring could be added here with SVG */}
+               </div>
+               <div className="space-y-4">
+                  <div className="flex items-center gap-8 justify-between w-40">
+                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400"></div> <span className="text-[11px]">IDLE</span></div>
+                     <span className="text-[11px] font-mono">{fleetStatus?.idle || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-8 justify-between w-40">
+                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-400"></div> <span className="text-[11px]">RUNNING</span></div>
+                     <span className="text-[11px] font-mono">{fleetStatus?.running || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-8 justify-between w-40 opacity-40">
+                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-zinc-600"></div> <span className="text-[11px]">OFFLINE</span></div>
+                     <span className="text-[11px] font-mono">{fleetStatus?.offline || 0}</span>
+                  </div>
+               </div>
             </div>
           </div>
         </div>

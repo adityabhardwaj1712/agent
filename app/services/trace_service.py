@@ -9,10 +9,13 @@ async def log_trace(
     step: str,
     input_data: dict | None = None,
     output_data: dict | None = None,
-    metadata: dict | None = None
+    metadata: dict | None = None,
+    tokens_prompt: int = 0,
+    tokens_completion: int = 0,
+    total_cost: float = 0.0
 ):
     """
-    AXON Observability: Logs a detailed trace of a single processing step.
+    AXON Observability: Logs a detailed trace of a single processing step with LLMOps metrics.
     """
     trace = Trace(
         task_id=task_id,
@@ -20,7 +23,10 @@ async def log_trace(
         step=step,
         input_data=input_data,
         output_data=output_data,
-        metadata_info=metadata
+        metadata_info=metadata,
+        tokens_prompt=tokens_prompt,
+        tokens_completion=tokens_completion,
+        total_cost=total_cost
     )
     db.add(trace)
     await db.commit()

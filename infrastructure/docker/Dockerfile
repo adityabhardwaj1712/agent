@@ -16,9 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set up entrypoint
-RUN chmod +x /app/docker/docker-entrypoint.sh
+RUN chmod +x /app/infrastructure/docker/docker-entrypoint.sh
 
-ENTRYPOINT ["/app/docker/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/infrastructure/docker/docker-entrypoint.sh"]
 
 # Default command
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

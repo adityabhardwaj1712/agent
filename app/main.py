@@ -31,7 +31,28 @@ print_environment_summary()
 validate_or_exit()
 
 limiter = Limiter(key_func=get_remote_address)
-app = FastAPI(title="AgentCloud", version="1.0.0")
+app = FastAPI(
+    title="AgentCloud Mission Control",
+    description="""
+    🚀 **AgentCloud Enterprise OS**
+    
+    Military-grade multi-agent orchestration platform. 
+    Built for decentralized swarm intelligence and mission-critical autonomy.
+    
+    **Core Directives:**
+    * [RBAC] Role-Based Access Control Enforced
+    * [AXON] High-Fidelity LLMOps Tracing
+    * [SWARM] Decentralized DAG Routing
+    """,
+    version="6.0.0-enterprise",
+    contact={
+        "name": "AgentCloud Command",
+        "url": "https://agentcloud.tactical",
+    },
+    license_info={
+        "name": "Proprietary Tactical License",
+    }
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -40,10 +61,15 @@ async def startup_event():
         from sqlalchemy import text
         async with engine.begin() as conn:
             # Enable vector extension first
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+                logger.info("pgvector extension: AVAILABLE")
+            except Exception as vec_error:
+                logger.warning(f"pgvector extension not available: {vec_error}")
+                logger.warning("Memory/RAG features will use keyword search only")
             
-            # Import models to register them with metadata
-            from .models import agent, task, user, goal, trace, protocol, memory, approval, audit, billing
+            # Import all models via the root __init__ to register them with metadata
+            import app.models  # noqa
             await conn.run_sync(Base.metadata.create_all)
 
             # Explicitly add columns if missing (self-healing migration)
@@ -52,7 +78,8 @@ async def startup_event():
             await conn.execute(text("ALTER TABLE goals ADD COLUMN IF NOT EXISTS workflow_state JSONB;"))
         logger.info("Database Schema Synchronization & Extensions: OK")
     except Exception as e:
-        logger.error(f"Schema Sync Failed: {e}")
+        logger.error(f"CRITICAL: Schema Sync Failed: {e}")
+        raise  # Fail fast on critical startup errors
 
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
@@ -85,8 +112,6 @@ async def startup_event():
             logger.info("AgentCloud Registry Sync: OK")
     except Exception as e:
         logger.error(f"Registry Sync Failed: {e}")
-    except Exception as e:
-        logger.error(f"Failed to seed default agents: {e}")
 
     await automation_service.start()
     await auto_mode_service.start()
@@ -121,10 +146,13 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With", "X-Process-Time"],
 )
 
+from fastapi.middleware.gzip import GZipMiddleware
+
 app.add_middleware(MetricsMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -134,7 +162,7 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     if process_time > 1.0:
-        logger.warning(f"High latency detected: {request.url.path} took {process_time:.2f}s")
+        logger.warning(f"High latency [Tactical Breach]: {request.url.path} took {process_time:.2f}s")
     return response
 
 app.include_router(api_router)

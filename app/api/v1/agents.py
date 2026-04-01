@@ -11,6 +11,7 @@ from ...schemas.agent_schema import AgentCreate, AgentResponse
 from ..deps import get_current_user
 from ...models.user import User
 from ...models.task import Task
+from ...core.rbac import requires_role, Role, admin_only, orchestrator_plus
 from ...services.guardrail_service import guardrail_service
 from sqlalchemy.future import select
 
@@ -29,7 +30,7 @@ async def get_agents(
     # Only return agents owned by the current user
     return await agent_service.list_agents(db, skip=skip, limit=limit, owner_id=current_user.user_id)
 
-@router.post("/", response_model=AgentResponse)
+@router.post("/", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
 async def create_agent(
     agent: AgentCreate, 
     db: AsyncSession = Depends(get_db),
@@ -39,7 +40,7 @@ async def create_agent(
     agent.owner_id = current_user.user_id
     return await agent_service.register_agent(db, agent)
 
-@router.post("/register", response_model=AgentResponse)
+@router.post("/register", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
 async def register_agent(
     agent: AgentCreate, 
     db: AsyncSession = Depends(get_db),
@@ -48,7 +49,7 @@ async def register_agent(
     agent.owner_id = current_user.user_id
     return await agent_service.register_agent(db, agent)
 
-@router.post("/create-from-prompt", response_model=AgentResponse)
+@router.post("/create-from-prompt", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
 async def create_agent_from_prompt(
     req: NLBuilderRequest,
     db: AsyncSession = Depends(get_db),
@@ -97,7 +98,7 @@ async def export_agent(
         "scopes": agent.scopes.split(",") if agent.scopes else []
     }
 
-@router.post("/import", response_model=AgentResponse)
+@router.post("/import", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
 async def import_agent(
     agent: AgentCreate,
     db: AsyncSession = Depends(get_db),
@@ -116,7 +117,7 @@ async def get_agent_optimization_history(
     """
     return await auto_optimizer.get_optimization_history(agent_id)
 
-@router.post("/{agent_id}/optimize")
+@router.post("/{agent_id}/optimize", dependencies=[Depends(orchestrator_plus())])
 async def trigger_agent_optimization(
     agent_id: str,
     db: AsyncSession = Depends(get_db),
@@ -155,7 +156,7 @@ async def get_agent(
         raise HTTPException(status_code=403, detail="Not authorized to access this agent")
     return agent
 
-@router.patch("/{agent_id}", response_model=AgentResponse)
+@router.patch("/{agent_id}", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
 async def update_agent(
     agent_id: str, 
     updates: dict, 
@@ -170,6 +171,20 @@ async def update_agent(
         raise HTTPException(status_code=403, detail="Not authorized to update this agent")
         
     return await agent_service.update_agent(db, agent_id, current_user.user_id, updates)
+
+@router.delete("/{agent_id}", dependencies=[Depends(admin_only())])
+async def delete_agent(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Enterprise Safe-Delete: Only admins can decommission agents from the fleet.
+    """
+    success = await agent_service.delete_agent(db, agent_id, current_user.user_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to delete agent. Verify ownership or status.")
+    return {"status": "decommissioned", "agent_id": agent_id}
 
 @router.get("/{agent_id}/metrics")
 async def get_agent_metrics(

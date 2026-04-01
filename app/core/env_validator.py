@@ -40,18 +40,25 @@ class EnvironmentValidator:
         valid_keys = [
             settings.OPENAI_API_KEY, 
             settings.ANTHROPIC_API_KEY, 
-            settings.GOOGLE_API_KEY
+            settings.GOOGLE_API_KEY,
+            settings.GROQ_API_KEY
         ]
         has_real_key = any(k and k != "sk-placeholder" for k in valid_keys)
         
         if settings.DEPLOYMENT_MODE != "local" and not has_real_key:
-            self.errors.append("Production mode requires at least one valid AI API key (OpenAI, Anthropic, or Google).")
+            self.errors.append("Production mode requires at least one valid AI API key (OpenAI, Anthropic, Google, or Groq).")
         elif not has_real_key:
             self.warnings.append("No real AI API keys detected. Agent reasoning will fail.")
 
+        # Tool Keys
+        if not os.getenv("SERPER_API_KEY"):
+            self.warnings.append("SERPER_API_KEY missing. Web search tools will be disabled.")
+        if not os.getenv("E2B_API_KEY"):
+            self.warnings.append("E2B_API_KEY missing. Cloud Python code execution will be disabled.")
+
     def _validate_cors(self):
-        if settings.DEPLOYMENT_MODE != "local" and settings.CORS_ORIGINS == "*":
-            self.errors.append("Wildcard CORS (CORS_ORIGINS=*) is not allowed in production.")
+        if settings.DEPLOYMENT_MODE != "local" and (settings.CORS_ORIGINS == "*" or not settings.CORS_ORIGINS):
+            self.errors.append("Wildcard or empty CORS_ORIGINS is not allowed in production.")
 
 def validate_or_exit():
     validator = EnvironmentValidator()

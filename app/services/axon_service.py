@@ -3,7 +3,7 @@ from loguru import logger
 
 class AxonService:
     @staticmethod
-    async def advanced_reasoning(task_payload: str, context: str = "", tools: list = None, messages: list = None):
+    async def advanced_reasoning(task_payload: str, context: str = "", tools: list = None, messages: list = None, task_id: str = None):
         """
         AXON: Optimizes execution path and executes real LLM reasoning.
         """
@@ -23,7 +23,7 @@ class AxonService:
         model_choice = select_model(task_payload)
         
         raw_result, tool_calls, usage = await call_provider(
-            model_choice, prompt=task_payload, context=context, tools=tools, messages=messages
+            model_choice, prompt=task_payload, context=context, tools=tools, messages=messages, task_id=task_id
         )
         
         reasoning_meta = f"\n\n---\n📊 AXON Reasoning: Analyzed as {intent} task. Model: {model_choice.name}. Confidence: {confidence*100:.1f}%."

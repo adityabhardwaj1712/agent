@@ -97,6 +97,7 @@ async def call_provider(
     context: str = "",
     tools: list = None,
     messages: list = None,
+    task_id: Optional[str] = None,
 ) -> Tuple[str, list, Any]:
     """
     Execute an LLM call with automatic fallback across providers.
@@ -129,6 +130,7 @@ async def call_provider(
                 messages=messages,
                 model=attempt.name,
                 tools=tools,
+                task_id=task_id,
             )
             if attempt.name != choice.name:
                 logger.info(f"Fell back to {attempt.name} after primary failed")

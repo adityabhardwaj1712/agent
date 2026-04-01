@@ -125,6 +125,59 @@ class LLMService:
         else:
             return await self._call_openai(messages, model, tools, temperature, task_id)
 
+    async def get_ensemble_completion(
+        self,
+        messages: List[dict],
+        models: List[str],
+        synthesizer_model: str = "gpt-4o-mini",
+        temperature: float = 0.7,
+    ) -> dict:
+        """
+        Polls multiple models concurrently and synthesizes their responses into a single output.
+        """
+        import asyncio
+        logger.info(f"Starting ensemble completion with models: {models} -> synth: {synthesizer_model}")
+        
+        # 1. Fire queries concurrently
+        tasks = [
+            self.get_completion(messages, model=m, temperature=temperature)
+            for m in models
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # 2. Collect successful responses
+        valid_responses = []
+        for i, res in enumerate(results):
+            if isinstance(res, Exception):
+                logger.warning(f"Ensemble model {models[i]} failed: {res}")
+            else:
+                content, _, _ = res
+                if content:
+                    valid_responses.append((models[i], content))
+                    
+        if not valid_responses:
+            raise RuntimeError("All models in the ensemble failed to produce a response.")
+            
+        # 3. If only one model succeeded, return its response to save tokens
+        if len(valid_responses) == 1:
+            return {"content": valid_responses[0][1], "ensemble_count": 1, "synthesized": False}
+            
+        # 4. Synthesize
+        synthesis_prompt = "You are a master synthesizer. You are provided with responses from multiple AI models to a user query. Synthesize an optimal final answer gathering the best insights from all of them.\n\n"
+        synthesis_prompt += f"USER QUERY:\n{messages[-1]['content'] if messages else 'N/A'}\n\n"
+        synthesis_prompt += "MODEL RESPONSES:\n"
+        for model_name, content in valid_responses:
+            synthesis_prompt += f"--- {model_name} ---\n{content}\n\n"
+            
+        synth_messages = [{"role": "system", "content": synthesis_prompt}]
+        synth_content, _, _ = await self.get_completion(synth_messages, model=synthesizer_model, temperature=0.3)
+        
+        return {
+            "content": synth_content,
+            "ensemble_count": len(valid_responses),
+            "synthesized": True
+        }
+
     # ─── OpenAI ──────────────────────────────────────────────────────────────
 
     async def _call_openai(self, messages, model, tools, temperature, task_id=None):

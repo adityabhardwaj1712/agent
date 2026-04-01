@@ -37,10 +37,12 @@ async def search_memory(db: AsyncSession, agent_id: str, query: str, limit: int 
         try:
             # Order by vector distance (pgvector)
             stmt = stmt.order_by(Memory.embedding.l2_distance(qvec))
+            is_degraded = False
         except Exception as e:
             logger.warning(f"pgvector search failed, falling back to keyword: {e}")
             # Fallback to content containment
             stmt = stmt.filter(Memory.content.ilike(f"%{query}%"))
+            is_degraded = True
         
         result = await db.execute(stmt.limit(limit))
         memories = result.scalars().all()
@@ -53,9 +55,9 @@ async def search_memory(db: AsyncSession, agent_id: str, query: str, limit: int 
                 Memory.content.ilike(f"%{query}%")
             )
             result_fallback = await db.execute(stmt_fallback.limit(limit))
-            return result_fallback.scalars().all()
+            return {"results": result_fallback.scalars().all(), "search_mode": "fallback", "degraded": True}
             
-        return memories
+        return {"results": memories, "search_mode": "vector" if not is_degraded else "keyword", "degraded": is_degraded}
     except Exception as e:
         logger.error(f"Memory search error: {e}")
-        return []
+        return {"results": [], "search_mode": "error", "degraded": True}

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import Optional
 
 class Settings(BaseSettings):
@@ -8,6 +9,16 @@ class Settings(BaseSettings):
     
     # SECRET_KEY is used for JWT hashing
     SECRET_KEY: str
+
+    @field_validator('SECRET_KEY')
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters")
+        if v in ["secret-key-change-me", "change-me", "secret"]:
+            raise ValueError("SECRET_KEY cannot use default/common values")
+        return v
+
     JWT_ALGORITHM: str = "HS256"
     JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
     JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"

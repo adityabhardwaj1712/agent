@@ -100,7 +100,8 @@ async def copilot_chat(
         
         # 1. RAG Enrichment
         user_query = request.messages[-1].content if request.messages else ""
-        memories = await memory_service.search_memory(db, "system", user_query, limit=3)
+        mem_resp = await memory_service.search_memory(db, "system", user_query, limit=3)
+        memories = mem_resp.get("results", [])
         
         context_str = ""
         if memories:

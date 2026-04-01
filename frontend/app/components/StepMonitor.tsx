@@ -60,9 +60,11 @@ export default function StepMonitor({ taskId, userId, onClose }: StepMonitorProp
     ws.onclose = () => setConnected(false);
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
     };
   }, [taskId, userId]);
 

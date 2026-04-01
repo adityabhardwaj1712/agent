@@ -3,7 +3,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: infrastructure/docker/Dockerfile
     ports:
       - "8000:8000"
     volumes:
@@ -34,7 +34,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: infrastructure/docker/Dockerfile
     volumes:
       - .:/app
     command: sh -c "sleep 10 && PYTHONPATH=/app python -m app.workers.agent_worker"
@@ -89,8 +89,6 @@ services:
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
       - API_BASE_URL=http://api:8000
-
-
     depends_on:
       api:
         condition: service_healthy
@@ -98,7 +96,7 @@ services:
   smoke:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: infrastructure/docker/Dockerfile
     volumes:
       - .:/app
     command: python scripts/smoke.py
@@ -117,7 +115,7 @@ services:
   doctor:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: infrastructure/docker/Dockerfile
     volumes:
       - .:/app
     command: python scripts/doctor.py --fix

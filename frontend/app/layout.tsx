@@ -1,5 +1,6 @@
 import React from "react";
 import "./globals.css";
+import StyledJsxRegistry from "./lib/registry";
 
 export const metadata = {
   title: "AgentCloud | Orchestration Platform",
@@ -24,7 +25,9 @@ export default function RootLayout({
         }} />
       </head>
       <body className="antialiased">
-        {children}
+        <StyledJsxRegistry>
+          {children}
+        </StyledJsxRegistry>
       </body>
     </html>
   );

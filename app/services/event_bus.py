@@ -58,13 +58,17 @@ class RedisEventBus:
         pubsub = self.redis.pubsub()
         await pubsub.subscribe(self.channel)
         
-        async for message in pubsub.listen():
-            if message["type"] == "message":
-                try:
-                    event = json.loads(message["data"])
-                    await callback(event)
-                except Exception as e:
-                    logger.error(f"Error in event bus callback: {e}")
+        try:
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    try:
+                        event = json.loads(message["data"])
+                        await callback(event)
+                    except Exception as e:
+                        logger.error(f"Error in event bus callback: {e}")
+        finally:
+            await pubsub.unsubscribe(self.channel)
+            await pubsub.close()
 
 async def agent_delegate(
     from_agent_id: str,

@@ -49,7 +49,13 @@ export default function CollaborationGraph() {
         console.error('WS Signal Error:', e);
       }
     };
-    return () => ws.close();
+    return () => {
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onopen = null;
+      ws.close();
+    };
   }, []);
 
   const fetchData = async () => {

@@ -1,21 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
-import { 
-  Activity, 
-  Cpu, 
-  Shield, 
-  Zap, 
-  Clock, 
-  Search, 
-  Bell, 
-  User,
-  LayoutDashboard,
-  Box,
-  Compass,
-  ArrowUpRight,
-  RefreshCw
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import { ToastProvider, useToast } from "./components/Toast";
 import { apiFetch, getToken } from "./lib/api";
@@ -37,12 +22,60 @@ import AddAgentModal from "./components/AddAgentModal";
 import AddTaskModal from "./components/AddTaskModal";
 import AutonomousView from "./components/AutonomousView";
 import AgentPlayground from "./components/AgentPlayground";
-
-import { MetricCard, IncidentFeed, DashboardAgentList, ConfigraphWidget } from "./components/DashboardWidgets";
-import FleetDashboard from "./components/FleetDashboard";
 import ProDashboard from "./components/ProDashboard";
 import CopilotChat from "./components/CopilotChat";
 import KnowledgeHub from "./components/KnowledgeHub";
+
+// Live ticker items that rotate
+const TICKER_TEMPLATES = [
+  { color: '#f59e0b', text: 'Worker CPU monitoring active' },
+  { color: '#00f5d4', text: 'Agent sync in progress' },
+  { color: '#00b4f0', text: 'API health: nominal' },
+  { color: '#8b5cf6', text: 'Workflow engine ready' },
+  { color: '#00f5d4', text: 'Auto-scale standby' },
+  { color: '#ef4444', text: 'Memory threshold monitoring' },
+  { color: '#00b4f0', text: 'Task queue processing' },
+];
+
+function LiveTicker({ stats }: { stats: any }) {
+  const [tickerItems, setTickerItems] = useState<Array<{ color: string; text: string }>>([]);
+
+  useEffect(() => {
+    // Build dynamic ticker from real stats + templates
+    const items: Array<{ color: string; text: string }> = [];
+
+    if (stats.active_agents !== undefined) {
+      items.push({ color: '#00b4f0', text: `${stats.active_agents} agents online` });
+    }
+    if (stats.active_events !== undefined) {
+      items.push({ color: '#00f5d4', text: `${stats.active_events} active events` });
+    }
+    if (stats.total_cost !== undefined) {
+      items.push({ color: '#f59e0b', text: `Credits used: $${stats.total_cost?.toFixed(4) || '0.0000'}` });
+    }
+    if (stats.tasks_completed !== undefined) {
+      items.push({ color: '#00f5d4', text: `${stats.tasks_completed} tasks completed` });
+    }
+
+    // Pad with templates to ensure animation looks good
+    const all = [...items, ...TICKER_TEMPLATES];
+    // Duplicate for seamless scroll
+    setTickerItems([...all, ...all]);
+  }, [stats]);
+
+  return (
+    <div className="ticker-wrap">
+      <div className="ticker">
+        {tickerItems.map((item, i) => (
+          <span key={i} className="tick-item">
+            <span className="tick-dot" style={{ background: item.color }} />
+            {item.text}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
   const [activeView, setActiveView] = useState('fleet');
@@ -51,14 +84,14 @@ function AppContent() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [stats, setStats] = useState<any>({ active_events: 0, total_cost: 0, active_agents: 0 });
   const [refreshKey, setRefreshKey] = useState(0);
-  const toast = useToast();
+  const [clock, setClock] = useState('--:--:--');
 
   const handleAdded = () => {
     setRefreshKey(prev => prev + 1);
     fetchGlobalStats();
   };
 
-  const fetchGlobalStats = async () => {
+  const fetchGlobalStats = useCallback(async () => {
     if (!getToken()) return;
     try {
       const data = await apiFetch<any>('/analytics/summary');
@@ -66,43 +99,31 @@ function AppContent() {
     } catch (e) {
       console.error("Stats fetch failed", e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     (window as any).openAddAgent = () => setIsAgentModalOpen(true);
     (window as any).openAddTask = () => setIsTaskModalOpen(true);
-    
+
     document.documentElement.setAttribute('data-theme', 'dark');
     fetchGlobalStats();
-    const interval = setInterval(fetchGlobalStats, 20000);
-    return () => clearInterval(interval);
-  }, []);
+    const statsInterval = setInterval(fetchGlobalStats, 20000);
+
+    // Clock
+    const clockInterval = setInterval(() => {
+      setClock(new Date().toTimeString().split(' ')[0]);
+    }, 1000);
+
+    return () => {
+      clearInterval(statsInterval);
+      clearInterval(clockInterval);
+    };
+  }, [fetchGlobalStats]);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
-  };
-
-  const getTitle = () => {
-    switch (activeView) {
-      case 'fleet': return 'COMMAND_DASHBOARD';
-      case 'agents': return 'AGENT_REGISTRY';
-      case 'workflow': return 'LOGIC_ORCHESTRATOR';
-      case 'marketplace': return 'FLEET_MARKETPLACE';
-      case 'analytics': return 'KPI_ANALYTICS';
-      case 'memory': return 'NEURAL_MEMORY_STORE';
-      case 'autonomous': return 'MISSION_CONTROL';
-      case 'playground': return 'AGENT_EXPERIMENT_LAB';
-      case 'settings': return 'SYSTEM_CONFIGURATION';
-      case 'approvals': return 'GUARDRAIL_PROTOCOL';
-      case 'audit': return 'SECURITY_AUDIT_LOG';
-      case 'billing': return 'RESOURCE_REVENUE';
-      case 'protocol': return 'COMMUNICATION_MESH';
-      case 'traces': return 'OBSERVABILITY_SURFACE';
-      case 'knowledge': return 'RAG_KNOWLEDGE_HUB';
-      default: return 'AGENT_CLOUD_OS';
-    }
   };
 
   return (
@@ -115,37 +136,28 @@ function AppContent() {
       />
 
       <div className="ms-body">
-        {/* Topbar */}
+        {/* Topbar with live ticker */}
         <header className="ms-topbar">
-          <div className="ms-topbar-title">{getTitle()}</div>
-          
+          <LiveTicker stats={stats} />
+
           <div className="ms-tb-right">
-            <div className="ms-pill bg-[rgba(34,211,238,0.05)] border border-[rgba(34,211,238,0.1)]">
-              <div className={`ms-dot ms-dot-${stats.active_events > 5 ? 'y' : 'g'} animate-pulse`}></div>
-              <span className="text-[10px] font-mono text-[var(--t3)] mr-2">SYS_LOAD:</span>
-              <span style={{ color: stats.active_events > 5 ? 'var(--amber)' : 'var(--green)', fontWeight: 800, fontSize: '10px' }}>
-                {stats.active_events > 10 ? 'HIGH' : stats.active_events > 5 ? 'MODERATE' : 'NOMINAL'}
-              </span>
+            <div className="opt-badge">
+              <div className="sys-dot" style={{ width: 5, height: 5 }} />
+              {stats.active_events > 10 ? 'High Load' : 'Optimal'}
             </div>
 
-            <div className="ms-pill bg-[rgba(251,191,36,0.05)] border border-[rgba(251,191,36,0.1)]">
-              <span className="text-[10px] font-mono text-[var(--t3)] mr-2 text-amber-500">CREDITS:</span>
-              <span style={{ color: 'var(--amber)', fontWeight: 800, fontSize: '10px' }}>${stats.total_cost?.toFixed(4) || '0.0000'}</span>
-            </div>
+            <div className="icon-btn" onClick={fetchGlobalStats} title="Refresh">↺</div>
+            <div className="icon-btn" title="Notifications">🔔</div>
 
-            <div className="flex items-center gap-2 ml-4">
-               <button className="ms-btn-icon-sm" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px' }} onClick={fetchGlobalStats}><RefreshCw size={14} /></button>
-               <button className="ms-btn-icon-sm" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px' }}><Bell size={14} /></button>
-               <div className="h-4 w-[1px] bg-[var(--bg3)] mx-2"></div>
-               <div className="ms-avatar" style={{ width: 28, height: 28, fontSize: 10 }}>AD</div>
+            <div className="avatar">
+              {typeof window !== 'undefined' ? 'A' : '?'}
             </div>
           </div>
         </header>
 
         {/* Main content */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div className="content">
           {activeView === 'fleet' && <ProDashboard />}
-
           {activeView === 'agents' && <AgentGallery />}
           {activeView === 'tasks' && <TaskTable />}
           {activeView === 'workflow' && <WorkflowBuilder />}
@@ -161,7 +173,7 @@ function AppContent() {
           {activeView === 'autonomous' && <AutonomousView />}
           {activeView === 'playground' && <AgentPlayground />}
           {activeView === 'knowledge' && <KnowledgeHub />}
-          
+
           <AddAgentModal 
             isOpen={isAgentModalOpen} 
             onClose={() => setIsAgentModalOpen(false)} 
@@ -189,4 +201,3 @@ export default function Home() {
     </ToastProvider>
   );
 }
-

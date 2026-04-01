@@ -16,6 +16,7 @@ import {
   Cpu,
   MoreHorizontal
 } from 'lucide-react';
+import ThoughtStream from './ThoughtStream';
 
 interface Goal {
   goal_id: string;
@@ -105,7 +106,13 @@ const AutonomousView: React.FC = () => {
         } catch (e) { console.error("WS Parse Error", e); }
       };
 
-      return () => ws.close();
+      return () => {
+        ws.onmessage = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onopen = null;
+        ws.close();
+      };
     }
   }, [selectedGoalId]);
 
@@ -279,28 +286,14 @@ const AutonomousView: React.FC = () => {
                       <div className="text-[10px] font-bold text-[var(--t3)] uppercase tracking-widest mb-4 flex items-center gap-2" onClick={() => setSelectedGoalId(goal.goal_id)} style={{ cursor: 'pointer' }}>
                          <TerminalIcon size={12} /> MISSION_TELEMETRY {selectedGoalId === goal.goal_id && <span className="text-[var(--blue)]">(ACTIVE)</span>}
                       </div>
-                      <div className="ms-telemetry-stream">
-                        {selectedGoalId === goal.goal_id && missionLogs.length > 0 ? (
-                          missionLogs.map((log, li) => (
-                            <div key={li} className={`line ${log.st === 'err' ? 'blink' : ''}`}>
-                              <span className="ts">[{log.t}]</span> 
-                              <span className={`tag ${log.st === 'ok' ? 'green' : log.st === 'err' ? 'yellow' : 'blue'}`}>
-                                {log.st.toUpperCase()}
-                              </span> 
-                              {log.msg}
-                            </div>
-                          ))
+                      <div className="ms-telemetry-stream p-0 border-none bg-transparent h-[300px]">
+                        {selectedGoalId ? (
+                           <ThoughtStream taskId={selectedGoalId} />
                         ) : (
-                          <>
-                            <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag blue">INFO</span> Protocol initiation sequence started...</div>
-                            <div className="line"><span className="ts">[{new Date(goal.created_at).toLocaleTimeString()}]</span> <span className="tag violet">NEURAL</span> Context retrieved from Brain-Link.</div>
-                            {selectedGoalId !== goal.goal_id && (
-                              <div className="line italic text-[var(--t3)] mt-4">Click "MISSION_TELEMETRY" to activate stream for this goal.</div>
-                            )}
-                          </>
-                        )}
-                        {goal.status === 'completed' && missionLogs.length === 0 && (
-                          <div className="line"><span className="ts">[{new Date().toLocaleTimeString()}]</span> <span className="tag green">DONE</span> Mission objectives secured.</div>
+                           <div className="flex-center h-full opacity-20 flex-col">
+                              <TerminalIcon size={32} className="mb-4" />
+                              <div className="text-[10px] font-bold tracking-widest uppercase">Select a mission to activate uplink</div>
+                           </div>
                         )}
                       </div>
                     </div>

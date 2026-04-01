@@ -14,7 +14,7 @@ PYTHONPATH=/app python scripts/generate_keys.py
 # but it's safer to check an environment variable.
 if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Running database migrations..."
-    PYTHONPATH=/app alembic upgrade head
+    PYTHONPATH=/app alembic -c infrastructure/alembic/alembic.ini upgrade head
 fi
 
 echo "Initialization complete. Executing: $@"

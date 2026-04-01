@@ -6,6 +6,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  transpilePackages: ["reactflow", "lucide-react", "three", "@react-three/fiber", "@react-three/drei"],
+  swcMinify: false,
 };
 
 module.exports = nextConfig;

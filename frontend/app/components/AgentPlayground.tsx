@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
+import ThoughtStream from './ThoughtStream';
 
 export default function AgentPlayground() {
   const [activeAgent, setActiveAgent] = useState<any>(null);
@@ -23,6 +24,7 @@ export default function AgentPlayground() {
   const [testCases, setTestCases] = useState([{ input: 'How can you help me today?', expected_output: '' }]);
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function AgentPlayground() {
       toast('Execution error: ' + (e.message || 'Unknown error'), 'err');
     } finally {
       setLoading(false);
+      setActiveTaskId(null);
     }
   };
 
@@ -189,23 +192,39 @@ export default function AgentPlayground() {
                    </div>
 
                    <div className="space-y-4">
-                      {results.results.map((res: any, idx: number) => (
-                         <div key={idx} className="ms-card" style={{ background: 'transparent' }}>
-                            <div className="ms-card-hd" style={{ padding: '12px 20px', borderBottom: '1px solid var(--bg3)' }}>
-                               <div className="flex items-center gap-3">
-                                  {res.status === 'success' ? <CheckCircle2 size={14} className="text-[var(--green)]" /> : <AlertCircle size={14} className="text-[var(--red)]" />}
-                                  <span style={{ fontSize: 11, fontWeight: 800 }}>SCENARIO_OUTPUT_#0{idx+1}</span>
-                               </div>
-                               <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--t3)' }}>{res.latency_ms}ms | {res.tokens_used} tokens</div>
-                            </div>
-                            <div className="p-4 bg-[rgba(255,255,255,0.02)]">
-                               <div className="text-[var(--text)] text-[13px] leading-relaxed mb-4">
-                                  {res.actual_output}
-                               </div>
-                               <div style={{ fontSize: 10, color: 'var(--t3)', letterSpacing: '0.5px' }}>[RAW_INFERENCE_COMPLETE]</div>
-                            </div>
-                         </div>
-                      ))}
+                       {results.results.map((res: any, idx: number) => (
+                          <div key={idx} className="ms-card" style={{ background: 'transparent' }}>
+                             <div className="ms-card-hd" style={{ padding: '12px 20px', borderBottom: '1px solid var(--bg3)' }}>
+                                <div className="flex items-center gap-3">
+                                   {res.status === 'success' ? <CheckCircle2 size={14} className="text-[var(--green)]" /> : <AlertCircle size={14} className="text-[var(--red)]" />}
+                                   <span style={{ fontSize: 11, fontWeight: 800 }}>SCENARIO_OUTPUT_#0{idx+1}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                   <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--t3)' }}>{res.latency_ms}ms | {res.tokens_used} tokens</div>
+                                   {res.task_id && (
+                                     <button 
+                                       className="text-[var(--blue)] text-[9px] hover:underline"
+                                       onClick={() => setActiveTaskId(activeTaskId === res.task_id ? null : res.task_id)}
+                                     >
+                                       {activeTaskId === res.task_id ? '[HIDE_TRACE]' : '[VIEW_TRACE]'}
+                                     </button>
+                                   )}
+                                </div>
+                             </div>
+                             <div className="p-4 bg-[rgba(255,255,255,0.02)]">
+                                {activeTaskId === res.task_id ? (
+                                   <div className="h-[300px] mb-4">
+                                      <ThoughtStream taskId={res.task_id} />
+                                   </div>
+                                ) : (
+                                   <div className="text-[var(--text)] text-[13px] leading-relaxed mb-4">
+                                      {res.actual_output}
+                                   </div>
+                                )}
+                                <div style={{ fontSize: 10, color: 'var(--t3)', letterSpacing: '0.5px' }}>[RAW_INFERENCE_COMPLETE]</div>
+                             </div>
+                          </div>
+                       ))}
                    </div>
                 </div>
              )}

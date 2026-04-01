@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, DateTime, Text, JSON, ForeignKey
+import sqlalchemy as sa
 from ..db.base import Base
 import datetime
 import uuid
@@ -13,5 +14,11 @@ class Trace(Base):
     input_data = Column(JSON, nullable=True)
     output_data = Column(JSON, nullable=True)
     metadata_info = Column(JSON, nullable=True)
+    
+    # LLMOps Metrics
+    tokens_prompt = Column(sa.Integer, default=0)
+    tokens_completion = Column(sa.Integer, default=0)
+    total_cost = Column(sa.Float, default=0.0)
+    
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     

@@ -71,7 +71,13 @@ export default function ProtocolView() {
     ws.onopen = () => console.log('Protocol Mesh WebSocket Connected');
     ws.onclose = () => console.log('Protocol Mesh WebSocket Disconnected');
 
-    return () => ws.close();
+    return () => {
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onopen = null;
+      ws.close();
+    };
   }, []);
 
   const send = async () => {

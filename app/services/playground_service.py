@@ -22,6 +22,7 @@ class TestResult(BaseModel):
     tokens_used: int
     cost: float
     status: str # "success", "failure"
+    task_id: Optional[str] = None
 
 class PlaygroundSessionResult(BaseModel):
     session_id: str
@@ -34,6 +35,7 @@ class PlaygroundService:
     async def run_session(self, request: PlaygroundSessionRequest) -> PlaygroundSessionResult:
         session_id = str(uuid.uuid4())
         results = []
+        i = 0
         
         # In a real playground, we'd iterate through test cases
         for test_case in request.test_cases:
@@ -44,10 +46,14 @@ class PlaygroundService:
             messages = [{"role": "system", "content": request.system_prompt or "You are a helpful assistant."}]
             messages.append({"role": "user", "content": test_case.input})
             
+            test_task_id = f"playground_{session_id}_{i}"
+            i += 1
+            
             try:
                 output, tool_calls, meta, usage = await AxonService.advanced_reasoning(
                     task_payload=test_case.input,
-                    messages=messages
+                    messages=messages,
+                    task_id=test_task_id
                 )
                 
                 latency = int((time.perf_counter() - start_time) * 1000)
@@ -61,7 +67,8 @@ class PlaygroundService:
                     latency_ms=latency,
                     tokens_used=tokens,
                     cost=cost,
-                    status="success"
+                    status="success",
+                    task_id=test_task_id
                 ))
             except Exception as e:
                 results.append(TestResult(

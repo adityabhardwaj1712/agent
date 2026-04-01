@@ -57,6 +57,11 @@ async def get_summary(
     except Exception:
         pass
 
+    # 6. System Load Proxy
+    # Simplified: (Active Tasks / Agent Count) * 100
+    active_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "running")) or 0
+    system_load = min(100, round((active_tasks / max(1, agent_count)) * 100, 1)) if agent_count else 0
+    
     return {
         "active_agents": agent_count or 0,
         "tasks_completed": completed_tasks or 0,
@@ -66,7 +71,8 @@ async def get_summary(
         "success_rate": success_rate,
         "total_cost": total_cost,
         "avg_latency": round(float(avg_latency), 1),
-        "active_events": recent_traces_count or 0
+        "active_events": recent_traces_count or 0,
+        "system_load": system_load
     }
 
 @router.get("/timeseries")
@@ -104,6 +110,55 @@ async def get_timeseries(
         data.append({
             "time": h_str,
             "value": row_map.get(current_ptr, 0)
+        })
+        current_ptr += datetime.timedelta(hours=1)
+        
+    return data
+
+@router.get("/success-heatmap")
+async def get_success_heatmap(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns success vs failure distribution for the last 24 hours.
+    """
+    now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    last_24h = now - datetime.timedelta(hours=24)
+    
+    # Successful tasks per hour
+    success_res = await db.execute(
+        select(
+            func.date_trunc('hour', Task.created_at).label('hour'),
+            func.count(Task.task_id).label('count')
+        )
+        .filter(Task.created_at >= last_24h, Task.status == "completed")
+        .group_by('hour')
+        .order_by('hour')
+    )
+    
+    # Failed tasks per hour
+    fail_res = await db.execute(
+        select(
+            func.date_trunc('hour', Task.created_at).label('hour'),
+            func.count(Task.task_id).label('count')
+        )
+        .filter(Task.created_at >= last_24h, Task.status == "failed")
+        .group_by('hour')
+        .order_by('hour')
+    )
+    
+    success_map = {r.hour: r.count for r in success_res.all()}
+    fail_map = {r.hour: r.count for r in fail_res.all()}
+    
+    data = []
+    current_ptr = last_24h.replace(minute=0, second=0, microsecond=0)
+    
+    for i in range(24):
+        data.append({
+            "hour": current_ptr.strftime("%H:00"),
+            "success": success_map.get(current_ptr, 0),
+            "failure": fail_map.get(current_ptr, 0)
         })
         current_ptr += datetime.timedelta(hours=1)
         

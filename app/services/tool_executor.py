@@ -72,10 +72,19 @@ class ToolExecutor:
         )
         try:
             result = await handler(**args)
-            return json.dumps(result)
+            return json.dumps({
+                "status": "success",
+                "tool": tool_name,
+                "result": result
+            })
         except Exception as exc:
             logger.error(f"Tool '{tool_name}' raised: {exc}")
-            return json.dumps({"error": str(exc), "tool": tool_name})
+            return json.dumps({
+                "status": "error",
+                "tool": tool_name,
+                "error": str(exc),
+                "message": f"Execution of {tool_name} failed in sandbox."
+            })
 
 
 # ─── 1. Web Search (Serper.dev) ──────────────────────────────────────────────

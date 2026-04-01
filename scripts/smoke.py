@@ -94,7 +94,7 @@ def main() -> None:
         f"/v1/memory/search?query=smoke&agent_id={agent_id}",
         token=user_token,
     )
-    if code != 200 or not isinstance(search, list):
+    if code != 200 or not isinstance(search, dict) or "results" not in search:
         _fail(f"GET /v1/memory/search failed: {code} {search}")
     print("✓ Memory search passed")
 
