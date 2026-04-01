@@ -15,8 +15,8 @@ import ReactFlow, {
   NodeProps,
   MarkerType
 } from 'reactflow';
-import 'reactflow/dist/style.css';
 import { Bot, Wrench, GitBranch, Zap, Play, Save } from 'lucide-react';
+
 
 // --- Custom Nodes ---
 

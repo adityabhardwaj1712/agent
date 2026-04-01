@@ -30,10 +30,15 @@ class EnvironmentValidator:
     def _validate_jwt_keys(self):
         # Only validate keys if using asymmetric algorithm
         if settings.JWT_ALGORITHM.startswith("RS"):
-            if not Path(settings.JWT_PRIVATE_KEY_PATH).exists():
-                self.errors.append(f"JWT private key missing at {settings.JWT_PRIVATE_KEY_PATH}")
-            if not Path(settings.JWT_PUBLIC_KEY_PATH).exists():
-                self.errors.append(f"JWT public key missing at {settings.JWT_PUBLIC_KEY_PATH}")
+            # Check for direct key content OR file path existence
+            has_private = settings.JWT_PRIVATE_KEY or Path(settings.JWT_PRIVATE_KEY_PATH).exists()
+            has_public = settings.JWT_PUBLIC_KEY or Path(settings.JWT_PUBLIC_KEY_PATH).exists()
+            
+            if not has_private:
+                self.errors.append(f"JWT private key missing. Set JWT_PRIVATE_KEY env-var or provide file at {settings.JWT_PRIVATE_KEY_PATH}")
+            if not has_public:
+                self.errors.append(f"JWT public key missing. Set JWT_PUBLIC_KEY env-var or provide file at {settings.JWT_PUBLIC_KEY_PATH}")
+
     
     def _validate_ai_providers(self):
         # Determine if at least one valid key exists

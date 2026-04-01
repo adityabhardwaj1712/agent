@@ -251,7 +251,8 @@ class AgentCloudDoctor:
             code, body, lat = await self._http("POST", "/v1/auth/register", json_body={
                 "email": test_email,
                 "password": test_password,
-                "name": "Doctor Test User"
+                "name": "Doctor Test User",
+                "role": "ADMIN"
             })
             if code in (200, 201):
                 self._admin_user_id = body.get("user_id")

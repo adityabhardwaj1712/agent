@@ -1,10 +1,9 @@
 import React from "react";
 import "./globals.css";
-import StyledJsxRegistry from "./lib/registry";
 
 export const metadata = {
-  title: "AgentCloud | Orchestration Platform",
-  description: "Next-gen Autonomous Agent Orchestration",
+  title: "AgentCloud — Command Center",
+  description: "Next-gen Autonomous Agent Orchestration Platform",
 };
 
 export default function RootLayout({
@@ -15,19 +14,14 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark">
       <head>
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              const theme = localStorage.getItem('theme') || 'dark';
-              document.documentElement.setAttribute('data-theme', theme);
-            })()
-          `
-        }} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body className="antialiased">
-        <StyledJsxRegistry>
-          {children}
-        </StyledJsxRegistry>
+      <body>
+        {children}
       </body>
     </html>
   );

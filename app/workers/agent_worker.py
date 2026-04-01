@@ -74,7 +74,12 @@ from app.services.tool_executor import ToolExecutor
 from app.services.guardrail_service import guardrail_service
 
 
-_CURRENT_CONTEXT: dict = {}
+from contextvars import ContextVar
+
+# ── Scoped Context for concurrent tasks
+_AGENT_ID_CONTEXT: ContextVar[str] = ContextVar("_AGENT_ID_CONTEXT", default="unknown")
+_USER_ID_CONTEXT: ContextVar[str] = ContextVar("_USER_ID_CONTEXT", default="unknown")
+
 
 # ── Guard 2: pgvector availability flag (set at startup)
 _PGVECTOR_AVAILABLE: bool = True
@@ -82,8 +87,8 @@ _PGVECTOR_AVAILABLE: bool = True
 
 @ToolExecutor.register("delegate_to_agent")
 async def _delegate_tool(to_agent_id: str, task_payload: str) -> dict:
-    from_agent_id = _CURRENT_CONTEXT.get("agent_id", "unknown")
-    user_id = _CURRENT_CONTEXT.get("user_id", "unknown")
+    from_agent_id = _AGENT_ID_CONTEXT.get()
+    user_id = _USER_ID_CONTEXT.get()
     try:
         return await agent_delegate(
             from_agent_id=from_agent_id,
@@ -264,8 +269,9 @@ async def _safe_memory_write(agent_id: str, content: str) -> bool:
     try:
         async with AsyncSessionLocal() as db:
             mem = MemoryCreate(agent_id=agent_id, content=content)
-            await write_memory(db, mem, user_id=_CURRENT_CONTEXT.get("user_id"))
+            await write_memory(db, mem, user_id=_USER_ID_CONTEXT.get())
             return True
+
     except Exception as e:
         logger.warning(f"Memory write failed for agent {agent_id}: {e}")
         return False
@@ -287,10 +293,11 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
 
     logger.info(f"Processing task {task_id} | agent={agent_id} | user={user_id}")
     start_time = time.time()
+    
+    # Set context vars for concurrent tool delegation
+    _AGENT_ID_CONTEXT.set(agent_id or "unknown")
+    _USER_ID_CONTEXT.set(user_id or "unknown")
 
-    # Set context for tool delegation
-    _CURRENT_CONTEXT["agent_id"] = agent_id
-    _CURRENT_CONTEXT["user_id"] = user_id
 
     success = False
     output  = ""

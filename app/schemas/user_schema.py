@@ -5,6 +5,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None
+    role: Optional[str] = "ANALYST"
     is_active: Optional[bool] = True
 
 class UserCreate(UserBase):
@@ -15,6 +16,7 @@ class UserUpdate(UserBase):
 
 class UserInDB(UserBase):
     user_id: str
+    role: str
     stripe_customer_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime

@@ -20,8 +20,14 @@ class Settings(BaseSettings):
         return v
 
     JWT_ALGORITHM: str = "HS256"
+    
+    # Secure Key Loading (Secret env-vars take priority over files)
+    JWT_PRIVATE_KEY: Optional[str] = None
+    JWT_PUBLIC_KEY: Optional[str] = None
+    
     JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
     JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"
+    
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     
@@ -29,20 +35,24 @@ class Settings(BaseSettings):
     
     # CORS Configuration
     CORS_ORIGINS: str = "http://localhost:3000,http://frontend:3000"
-
+    
     # AI Provider Keys (Must be set in .env for production)
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     
+    # Legacy / Compatibility
+    AGENT_PRIVATE_KEY: Optional[str] = None
+    
     # Infrastructure (Phase 9)
     DEPLOYMENT_MODE: str = "cloud" # cloud, byoc, onprem
     DEPLOYMENT_REGION: str = "us-east-1"
-
+    
     # Ecosystem Integrations (Phase 8)
     SLACK_WEBHOOK_URL: Optional[str] = None
     SLACK_BOT_TOKEN: Optional[str] = None
+
     
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

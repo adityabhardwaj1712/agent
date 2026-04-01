@@ -20,6 +20,7 @@ class UserService:
             user_id=str(uuid.uuid4()),
             email=schema.email,
             name=schema.name,
+            role=schema.role,
             hashed_password=get_password_hash(schema.password),
             is_active=True
         )

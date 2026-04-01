@@ -74,8 +74,14 @@ async def startup_event():
 
             # Explicitly add columns if missing (self-healing migration)
             # must happen AFTER create_all so tables exist
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'ANALYST';"))
             await conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS node_id VARCHAR;"))
             await conn.execute(text("ALTER TABLE goals ADD COLUMN IF NOT EXISTS workflow_state JSONB;"))
+            
+            # Traces billing columns
+            await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS tokens_prompt INTEGER DEFAULT 0;"))
+            await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS tokens_completion INTEGER DEFAULT 0;"))
+            await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS total_cost FLOAT DEFAULT 0.0;"))
         logger.info("Database Schema Synchronization & Extensions: OK")
     except Exception as e:
         logger.error(f"CRITICAL: Schema Sync Failed: {e}")
@@ -102,6 +108,7 @@ async def startup_event():
                     user_id="system_default",
                     email="system@agentcloud.com",
                     name="System Default",
+                    role="ADMIN",
                     hashed_password="dummy_system_hash"
                 )
                 session.add(user)

@@ -12,24 +12,15 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { section: 'Main' },
-  { id: 'fleet',      icon: '⊞', label: 'Dashboard' },
-  { id: 'agents',     icon: '🤖', label: 'Agent Fleet', badgeKey: 'agents' },
+  { id: 'dashboard',  icon: '⊞', label: 'Dashboard' },
+  { id: 'fleet',      icon: '🤖', label: 'Agent Fleet', badgeKey: 'agents' },
   { id: 'monitoring', icon: '📈', label: 'Monitoring' },
   { id: 'tasks',      icon: '📋', label: 'Tasks', badgeKey: 'tasks' },
-  { id: 'workflow',   icon: '🚀', label: 'Workflows' },
+  { id: 'workflows',  icon: '🚀', label: 'Workflows' },
   { section: 'AI' },
-  { id: 'playground', icon: '🧪', label: 'Playground' },
-  { id: 'memory',     icon: '🧠', label: 'Memory' },
-  { id: 'knowledge',  icon: '📚', label: 'Knowledge Hub' },
-  { section: 'Operations' },
-  { id: 'protocol',   icon: '📡', label: 'Protocol' },
+  { id: 'analytics',  icon: '📊', label: 'Analytics' },
   { id: 'traces',     icon: '🔍', label: 'Traces' },
-  { id: 'approvals',  icon: '🛡', label: 'Approvals' },
-  { id: 'audit',      icon: '📝', label: 'Audit Log' },
   { section: 'System' },
-  { id: 'marketplace', icon: '🏪', label: 'Marketplace' },
-  { id: 'billing',    icon: '💳', label: 'Billing' },
-  { id: 'autonomous', icon: '🎯', label: 'Mission Control' },
   { id: 'settings',   icon: '⚙', label: 'Settings' },
 ];
 
@@ -76,8 +67,31 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
     return null;
   };
 
+  // Search-based navigation
+  const handleSearch = (q: string) => {
+    setSearchQuery(q);
+    if (!q) return;
+    const ql = q.toLowerCase();
+    const navMap: Record<string, string[]> = {
+      dashboard: ['dash', 'home', 'main', 'overview'],
+      fleet: ['agent', 'fleet', 'worker', 'core'],
+      tasks: ['task', 'queue', 'job'],
+      workflows: ['workflow', 'pipe', 'pipeline'],
+      monitoring: ['monitor', 'metric', 'cpu', 'mem', 'health'],
+      analytics: ['analytics', 'chart', 'throughput'],
+      traces: ['trace', 'span', 'request'],
+      settings: ['settings', 'config', 'security'],
+    };
+    for (const [view, keywords] of Object.entries(navMap)) {
+      if (keywords.some(k => k.includes(ql) || ql.includes(k))) {
+        onViewChange(view);
+        break;
+      }
+    }
+  };
+
   return (
-    <div className="sidebar">
+    <aside className="sidebar">
       {/* Logo */}
       <div className="logo">
         <div className="logo-orb">⚡</div>
@@ -85,13 +99,13 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
       </div>
 
       {/* Search */}
-      <div className="sidebar-search">
+      <div className="sb-search">
         <span style={{ color: 'var(--t3)', fontSize: '11px' }}>⌕</span>
         <input
           type="text"
           placeholder="Search..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
 
@@ -121,16 +135,16 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
+      <div className="sb-footer">
         <div className="sys-status">
           <div className="sys-dot" style={{
             background: systemHealth === 'healthy' ? 'var(--cyan)' :
                          systemHealth === 'degraded' ? 'var(--orange)' : 'var(--t3)'
           }} />
-          {systemHealth === 'healthy' ? 'All Systems Healthy' :
+          {systemHealth === 'healthy' ? 'System Healthy' :
            systemHealth === 'degraded' ? 'System Degraded' : 'Checking...'}
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

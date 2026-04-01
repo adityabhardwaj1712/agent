@@ -39,8 +39,15 @@ class DAGEngine:
         Executes a workflow defined by nodes and edges.
         """
         self.execute_fn = execute_fn
+        
+        # 0. Cycle Detection (Topological Sort / DFS)
+        if self._has_cycle(nodes, edges):
+            logger.error(f"Workflow {goal_id} aborted: Cycle detected in DAG")
+            return {n["id"]: {"status": "failed", "error": "DAG Cycle Detected"} for n in nodes}
+
         # 1. Build the graph
         graph: Dict[str, DAGNode] = {}
+
         for n in nodes:
             node = DAGNode(
                 id=n["id"], 
@@ -160,4 +167,33 @@ class DAGEngine:
             node.status = "failed"
             node.finished_at = datetime.now(timezone.utc)
 
+    def _has_cycle(self, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> bool:
+        """
+        DFS-based cycle detection (White/Gray/Black coloring).
+        """
+        adj = {n["id"]: [] for n in nodes}
+        for e in edges:
+            if e["source"] in adj and e["target"] in adj:
+                adj[e["source"]].append(e["target"])
+                
+        visited: Set[str] = set()
+        rec_stack: Set[str] = set()
+
+        def dfs(u: str) -> bool:
+            visited.add(u)
+            rec_stack.add(u)
+            for v in adj.get(u, []):
+                if v not in visited:
+                    if dfs(v): return True
+                elif v in rec_stack:
+                    return True
+            rec_stack.remove(u)
+            return False
+
+        for node_id in adj:
+            if node_id not in visited:
+                if dfs(node_id): return True
+        return False
+
 dag_engine = DAGEngine()
+

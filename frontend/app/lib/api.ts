@@ -82,8 +82,18 @@ export async function apiJson<T>(
     parsed = { raw: text };
   }
 
-  if (!res.ok) return { ok: false, status: res.status, error: parsed };
+  if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      if (typeof window !== "undefined") {
+         // Optionally trigger a page refresh or event
+         window.dispatchEvent(new Event("unauthorized"));
+      }
+    }
+    return { ok: false, status: res.status, error: parsed };
+  }
   return { ok: true, status: res.status, data: parsed as T };
+
 }
 
 /** Convenience: returns data or throws a structured APIError */
@@ -98,5 +108,13 @@ export async function apiFetch<T>(path: string, init?: RequestInit & { json?: un
 
 export function wsUrl(path: string): string {
   const base = apiBase().replace(/^http/, "ws");
-  return `${base}${path}`;
+  const token = getToken();
+  const url = `${base}${path}`;
+  if (!token) return url;
+  
+  // Use URL object to handle query params robustly
+  const fullUrl = new URL(url);
+  fullUrl.searchParams.set("token", token);
+  return fullUrl.toString();
 }
+

@@ -4,6 +4,7 @@ import json
 from loguru import logger
 from ...db.redis_client import get_async_redis_client
 from ...services.signal_service import signal_service
+from ...core.auth_service import verify_token
 
 
 router = APIRouter()
@@ -30,11 +31,14 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @router.websocket("/fleet")
-async def fleet_ws(websocket: WebSocket):
+async def fleet_ws(websocket: WebSocket, token: str | None = None):
     """
     WebSocket endpoint for real-time fleet telemetry.
-    Subscribes to Redis channels and pushes to the client.
     """
+    if not token or not verify_token(token):
+        await websocket.close(code=4001) # Unauthorized
+        return
+        
     await manager.connect(websocket)
     redis = await get_async_redis_client()
     pubsub = redis.pubsub()
@@ -69,10 +73,14 @@ async def fleet_ws(websocket: WebSocket):
         await pubsub.unsubscribe()
 
 @router.websocket("/protocol/{user_id}")
-async def protocol_ws(websocket: WebSocket, user_id: str):
+async def protocol_ws(websocket: WebSocket, user_id: str, token: str | None = None):
     """
     WebSocket endpoint for real-time inter-agent protocol signals.
     """
+    if not token or not verify_token(token):
+        await websocket.close(code=4001)
+        return
+        
     await signal_service.connect(user_id, websocket)
     
     try:
@@ -101,10 +109,14 @@ async def goal_stream_ws(websocket: WebSocket, goal_id: str):
     await task_stream_ws(websocket, goal_id)
 
 @router.websocket("/task-stream/{task_id}")
-async def task_stream_ws(websocket: WebSocket, task_id: str):
+async def task_stream_ws(websocket: WebSocket, task_id: str, token: str | None = None):
     """
     Subscribes specifically to an in-progress task's live steps and content stream.
     """
+    if not token or not verify_token(token):
+        await websocket.close(code=4001)
+        return
+        
     await websocket.accept()
     redis = await get_async_redis_client()
     pubsub = redis.pubsub()

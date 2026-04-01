@@ -42,10 +42,13 @@ frontend/out/
 *.log
 docker-data/
 
-# Environment & secrets
-.env
-.env.*.local
-frontend/.env.local
+# Security
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env*
+! .env.example
 
 # Misc
 *.sqlite3
