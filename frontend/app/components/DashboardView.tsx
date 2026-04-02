@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../lib/api';
+import { usePolling } from '../lib/usePolling';
+import ThoughtStream from './ThoughtStream';
 
 /* ═══════════════════════════════════════════════════
    DASHBOARD VIEW — Network + KPIs + Activity Log
@@ -51,11 +53,40 @@ function NetworkCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
-  const theme = typeof document !== 'undefined'
-    ? document.documentElement.getAttribute('data-theme') || 'dark'
-    : 'dark';
+  const [nodes, setNodes] = useState<any[]>([]);
 
   useEffect(() => {
+    // Initial fetch of real agents
+    const fetchNodes = async () => {
+      try {
+        const agents = await apiFetch<any[]>('/agents/');
+        if (agents && agents.length > 0) {
+          const mapped = agents.map((a, i) => ({
+            id: a.agent_id,
+            label: a.name,
+            x: 0.1 + Math.random() * 0.8,
+            y: 0.1 + Math.random() * 0.8,
+            z: Math.random() * 0.4,
+            color: a.status === 'online' ? '#10b981' : '#00b4f0',
+            size: a.is_delegate ? 8 : 11,
+            type: a.is_delegate ? 'worker' : 'core'
+          }));
+          setNodes(mapped);
+        } else {
+          // Fallback to static if none
+          setNodes([
+            { id: 'core-a-ing', label: 'Core-A\n(Ingress)', x: 0.5, y: 0.12, z: 0, color: '#00b4f0', size: 12, type: 'core' },
+            { id: 'data-lake', label: 'Data-Lake\n(Storage)', x: 0.22, y: 0.35, z: 0.15, color: '#f59e0b', size: 11, type: 'storage' },
+            { id: 'worker-2', label: 'Worker-2', x: 0.65, y: 0.45, z: 0.25, color: '#10b981', size: 8, type: 'worker' },
+          ]);
+        }
+      } catch (err) { console.error("Mesh Load Error", err); }
+    };
+    fetchNodes();
+  }, []);
+
+  useEffect(() => {
+    if (nodes.length === 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -65,26 +96,18 @@ function NetworkCanvas() {
     canvas.height = canvas.offsetHeight || 380;
     const W = canvas.width, H = canvas.height;
 
-    const nodes = [
-      { id: 'core-a-ing', label: 'Core-A\n(Ingress)', x: 0.5, y: 0.12, z: 0, color: '#00b4f0', size: 12, type: 'core' },
-      { id: 'core-a', label: 'Core-A', x: 0.72, y: 0.22, z: 0.2, color: '#00b4f0', size: 10, type: 'core' },
-      { id: 'waller-a', label: 'Waller-A', x: 0.88, y: 0.32, z: 0.1, color: '#8b5cf6', size: 9, type: 'worker' },
-      { id: 'data-lake', label: 'Data-Lake\n(Storage)', x: 0.22, y: 0.35, z: 0.15, color: '#f59e0b', size: 11, type: 'storage' },
-      { id: 'worker-2', label: 'Worker-2', x: 0.65, y: 0.45, z: 0.25, color: '#10b981', size: 8, type: 'worker' },
-      { id: 'worker-3a', label: 'Worker-3', x: 0.48, y: 0.38, z: 0.18, color: '#10b981', size: 8, type: 'worker' },
-      { id: 'wc1', label: 'Worker Cluster-1\n(Processing)', x: 0.25, y: 0.6, z: 0.3, color: '#ec4899', size: 10, type: 'cluster' },
-      { id: 'worker-3b', label: 'Worker-3', x: 0.15, y: 0.75, z: 0.1, color: '#10b981', size: 7, type: 'worker' },
-      { id: 'worker-1', label: 'Worker-1', x: 0.3, y: 0.88, z: 0.05, color: '#10b981', size: 8, type: 'worker' },
-      { id: 'core-a2', label: 'Core-A', x: 0.5, y: 0.78, z: 0.2, color: '#00b4f0', size: 9, type: 'core' },
-    ];
-
-    const edges: [string, string][] = [
-      ['core-a-ing', 'core-a'], ['core-a-ing', 'data-lake'], ['core-a', 'waller-a'],
-      ['core-a', 'worker-2'], ['core-a', 'worker-3a'], ['data-lake', 'wc1'],
-      ['data-lake', 'worker-3a'], ['wc1', 'worker-3b'], ['wc1', 'worker-1'],
-      ['core-a2', 'worker-1'], ['core-a2', 'core-a-ing'], ['worker-2', 'waller-a'],
-      ['worker-3a', 'worker-2'],
-    ];
+    // Pseudo-edges since we don't have a direct "links" API yet,
+    // we connect nodes that are close or core-to-worker
+    const edges: [string, string][] = [];
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            const di = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+            if (di < 0.4 || (nodes[i].type === 'core' && nodes[j].type === 'worker')) {
+                edges.push([nodes[i].id, nodes[j].id]);
+                if (edges.length > nodes.length * 1.5) break;
+            }
+        }
+    }
 
     const edgeColors = ['rgba(0,180,240,', 'rgba(139,92,246,', 'rgba(16,185,129,', 'rgba(245,158,11,', 'rgba(236,72,153,'];
     let angle = 0;
@@ -158,7 +181,7 @@ function NetworkCanvas() {
       });
 
       // Nodes
-      let newHov: typeof proj[0] | null = null;
+      let newHov: any = null;
       proj.forEach(n => {
         const nx = n.x * W, ny = n.y * H;
         const r = n.size * n.scale;
@@ -199,7 +222,7 @@ function NetworkCanvas() {
         ctx.fillStyle = isDark ? '#e8f4ff' : '#0a1e30';
         ctx.font = `${Math.max(9, 10 * n.scale)}px 'Outfit',sans-serif`;
         ctx.textAlign = 'center';
-        label.forEach((ln, li) => {
+        label.forEach((ln: string, li: number) => {
           ctx.fillText(ln, nx, ny + r + 12 + li * 11);
         });
       });
@@ -227,7 +250,7 @@ function NetworkCanvas() {
       canvas.removeEventListener('mousemove', onMove);
       canvas.removeEventListener('mouseleave', onLeave);
     };
-  }, []);
+  }, [nodes]);
 
   return (
     <div style={{ position: 'relative', height: '380px' }}>
@@ -260,12 +283,29 @@ export default function DashboardView() {
   const [stats, setStats] = useState<DashboardStats>({
     active_agents: 0, total_tasks: 0, success_rate: 0, total_cost: 0, active_events: 0,
   });
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activity] = useState(generateActivity);
 
   const sparkAgents = useRef<HTMLCanvasElement>(null);
   const sparkTp = useRef<HTMLCanvasElement>(null);
   const sparkSr = useRef<HTMLCanvasElement>(null);
   const sparkLat = useRef<HTMLCanvasElement>(null);
+
+  // Fetch stats
+  const fetchStats = async () => {
+    try {
+      const data = await apiFetch<any>('/analytics/summary');
+      if (data) setStats(prev => ({ ...prev, ...data }));
+      
+      // Also fetch most recent task to target for stream
+      const tasks = await apiFetch<any[]>('/tasks/?limit=1');
+      if (tasks && tasks.length > 0) {
+        setActiveTaskId(tasks[0].task_id);
+      }
+    } catch {}
+  };
+
+  usePolling(fetchStats, 20000);
 
   useEffect(() => {
     // Clock
@@ -274,19 +314,10 @@ export default function DashboardView() {
     }, 1000);
     setClock(new Date().toTimeString().split(' ')[0]);
 
-    // Fetch stats
-    const fetchStats = async () => {
-      try {
-        const data = await apiFetch<any>('/analytics/summary');
-        if (data) setStats(prev => ({ ...prev, ...data }));
-      } catch {}
-    };
     fetchStats();
-    const statsInterval = setInterval(fetchStats, 20000);
 
     return () => {
       clearInterval(clockInterval);
-      clearInterval(statsInterval);
     };
   }, []);
 
@@ -364,23 +395,22 @@ export default function DashboardView() {
           <NetworkCanvas />
         </div>
 
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{
             padding: '16px 20px', borderBottom: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <div className="card-title" style={{ margin: 0 }}>Recent Activity</div>
-            <span className="pill pill-blue">{activity.length} events</span>
+            <div className="card-title" style={{ margin: 0 }}>ThoughtStream Hub</div>
+            {activeTaskId && <span className="pill pill-cyan" style={{ fontSize: 9 }}>TRACKING: {activeTaskId.slice(0,8)}</span>}
           </div>
-          <div style={{ padding: '0 20px', overflowY: 'auto', maxHeight: 380 }}>
-            {activity.map((a, i) => (
-              <div key={i} className="log-entry">
-                <span className="log-time">[{a.time}]</span>
-                <span className={`log-tag ${a.tagCls}`}>{a.tag}</span>
-                {a.worker} | Task {a.tid}
-                <div style={{ color: 'var(--t3)', fontSize: 10 }}>Status: Completed</div>
-              </div>
-            ))}
+          <div style={{ flex: 1, minHeight: 320 }}>
+            {activeTaskId ? (
+                <ThoughtStream taskId={activeTaskId} />
+            ) : (
+                <div style={{ padding: 40, textAlign: 'center', opacity: 0.5, fontFamily: 'var(--mono)', fontSize: 11 }}>
+                    NO_ACTIVE_MISSIONS_FOUND
+                </div>
+            )}
           </div>
         </div>
       </div>

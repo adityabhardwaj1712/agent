@@ -131,9 +131,12 @@ class LLMService:
         models: List[str],
         synthesizer_model: str = "gpt-4o-mini",
         temperature: float = 0.7,
+        user_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
     ) -> dict:
         """
         Polls multiple models concurrently and synthesizes their responses into a single output.
+        Tracks aggregate token usage for billing transparency.
         """
         import asyncio
         logger.info(f"Starting ensemble completion with models: {models} -> synth: {synthesizer_model}")
@@ -145,37 +148,77 @@ class LLMService:
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # 2. Collect successful responses
+        # 2. Collect results and track usage
         valid_responses = []
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        
         for i, res in enumerate(results):
             if isinstance(res, Exception):
                 logger.warning(f"Ensemble model {models[i]} failed: {res}")
             else:
-                content, _, _ = res
+                content, _, usage = res
                 if content:
                     valid_responses.append((models[i], content))
+                    if usage:
+                        total_prompt_tokens += usage.prompt_tokens
+                        total_completion_tokens += usage.completion_tokens
                     
         if not valid_responses:
             raise RuntimeError("All models in the ensemble failed to produce a response.")
             
-        # 3. If only one model succeeded, return its response to save tokens
+        # 3. Short-circuit if only one succeeded
         if len(valid_responses) == 1:
-            return {"content": valid_responses[0][1], "ensemble_count": 1, "synthesized": False}
+            return {
+                "content": valid_responses[0][1],
+                "ensemble_count": 1,
+                "synthesized": False,
+                "usage": {
+                    "prompt_tokens": total_prompt_tokens,
+                    "completion_tokens": total_completion_tokens,
+                    "total_tokens": total_prompt_tokens + total_completion_tokens
+                }
+            }
             
-        # 4. Synthesize
-        synthesis_prompt = "You are a master synthesizer. You are provided with responses from multiple AI models to a user query. Synthesize an optimal final answer gathering the best insights from all of them.\n\n"
+        # 4. Synthesis
+        synthesis_prompt = (
+            "You are a master synthesizer. You are provided with responses from multiple AI models to a user query. "
+            "Synthesize an optimal final answer gathering the best insights from all of them while resolving contradictions.\n\n"
+        )
         synthesis_prompt += f"USER QUERY:\n{messages[-1]['content'] if messages else 'N/A'}\n\n"
         synthesis_prompt += "MODEL RESPONSES:\n"
         for model_name, content in valid_responses:
             synthesis_prompt += f"--- {model_name} ---\n{content}\n\n"
             
         synth_messages = [{"role": "system", "content": synthesis_prompt}]
-        synth_content, _, _ = await self.get_completion(synth_messages, model=synthesizer_model, temperature=0.3)
+        synth_content, _, synth_usage = await self.get_completion(synth_messages, model=synthesizer_model, temperature=0.3)
         
+        if synth_usage:
+            total_prompt_tokens += synth_usage.prompt_tokens
+            total_completion_tokens += synth_usage.completion_tokens
+            
+        # 5. Billing integration
+        if user_id and agent_id:
+            try:
+                from ..services.billing_service import billing_service
+                await billing_service.charge(
+                    user_id=user_id,
+                    agent_id=agent_id,
+                    tokens=total_prompt_tokens + total_completion_tokens,
+                    model=f"ensemble({','.join(models)})"
+                )
+            except Exception as e:
+                logger.error(f"Ensemble billing failed: {e}")
+
         return {
             "content": synth_content,
             "ensemble_count": len(valid_responses),
-            "synthesized": True
+            "synthesized": True,
+            "usage": {
+                "prompt_tokens": total_prompt_tokens,
+                "completion_tokens": total_completion_tokens,
+                "total_tokens": total_prompt_tokens + total_completion_tokens
+            }
         }
 
     # ─── OpenAI ──────────────────────────────────────────────────────────────

@@ -6,10 +6,10 @@ from ..config import settings
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    pool_size=20,              # Maintain up to 20 connections
-    max_overflow=10,           # Allow up to 10 extra connections under load
-    pool_pre_ping=True,        # Check connection health before use
-    pool_recycle=3600,         # Recycle connections every hour
+    pool_size=5,               # Optimized for concurrency vs RAM overhead
+    max_overflow=10,           # Allow burst capacity during high-load missions
+    pool_pre_ping=True,        # Tactical heartbeat check before checkout
+    pool_recycle=1800,         # Recycle every 30m for connection freshness
 )
 
 # Use modern async_sessionmaker for improved async compatibility

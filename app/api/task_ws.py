@@ -3,6 +3,8 @@ from loguru import logger
 import asyncio
 import json
 
+from ..core.auth_service import verify_token
+
 router = APIRouter()
 
 # Live Connection Manager
@@ -21,8 +23,13 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @router.websocket("/tasks")
-async def websocket_endpoint(websocket: WebSocket, user_id: str = Query(None)):
+async def websocket_endpoint(websocket: WebSocket, user_id: str = Query(None), token: str = Query(None)):
     logger.info(f"New WebSocket connection request to /ws/tasks for user_id={user_id}")
+    
+    if not token or not verify_token(token):
+        await websocket.close(code=4001) # Unauthorized
+        return
+        
     await manager.connect(websocket)
     
     redis = None

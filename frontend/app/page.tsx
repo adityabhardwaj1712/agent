@@ -3,28 +3,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import { apiFetch, getToken } from './lib/api';
+import { usePolling } from './lib/usePolling';
 
-// ── Clean Views ──
+import dynamic from 'next/dynamic';
+
+// ── Critical Shared Views (Fast Load) ──
 import DashboardView from './components/DashboardView';
 import FleetView from './components/FleetView';
-import MonitoringView from './components/MonitoringView';
 import TasksView from './components/TasksView';
-import WorkflowsView from './components/WorkflowsView';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
-import TracesViewClean from './components/TracesViewClean';
-import SettingsViewClean from './components/SettingsViewClean';
+
+// ── Heavy Modules (Lazy Loaded/RAM Optimized) ──
+const ObservabilityView = dynamic(() => import('./components/ObservabilityView'), { 
+  loading: () => <div className="ms-loader-ring" style={{ margin: '100px auto' }} />
+});
+const WorkflowsView = dynamic(() => import('./components/WorkflowsView'));
+const AnalyticsDashboard = dynamic(() => import('./components/AnalyticsDashboard'));
+const TracesViewClean = dynamic(() => import('./components/TracesViewClean'));
+const SettingsViewClean = dynamic(() => import('./components/SettingsViewClean'));
+
+// ── Power Features (RAM Sensitive) ──
+const AutonomousView = dynamic(() => import('./components/AutonomousView'));
+const KnowledgeHub = dynamic(() => import('./components/KnowledgeHub'));
+const BillingView = dynamic(() => import('./components/BillingView'));
 
 /* ═══════════════════════════════════════════════════
    LIVE TICKER
 ═══════════════════════════════════════════════════ */
 const TICKER_TEMPLATES = [
-  { color: '#f59e0b', text: 'Throughput peak reached' },
-  { color: '#00f5d4', text: 'Agent 49 chorementation updated' },
-  { color: '#00b4f0', text: 'Agent 44 nortimes updated' },
-  { color: '#8b5cf6', text: 'Agent 114 health updated' },
-  { color: '#10b981', text: 'New deployment v2.4.1 live' },
-  { color: '#ef4444', text: 'Worker-7 CPU alert resolved' },
-  { color: '#00f5d4', text: 'Auto-scale triggered Worker Pool 3' },
+  { color: 'var(--orange)', text: 'THROUGHPUT_SURGE: SECTOR_7_PEAK' },
+  { color: 'var(--cyan)', text: 'NEURAL_LINK_ESTABLISHED: UNIT_49' },
+  { color: 'var(--blue)', text: 'CORE_SYNCHRONIZATION_COMPLETE: V2.4.1' },
+  { color: 'var(--purple)', text: 'MEMORY_FRAGMENT_DEFRAGMENTATION: ACTIVE' },
+  { color: 'var(--green)', text: 'MISSION_SUCCESS: OP_SILENT_STORM' },
+  { color: 'var(--red)', text: 'INTRUSION_ATTEMPT_SHIELDED: GATEWAY_01' },
+  { color: 'var(--cyan)', text: 'AUTO_SCALE_TRIGGERED: WORKER_POOL_EPSILON' },
 ];
 
 function LiveTicker({ stats }: { stats: any }) {
@@ -33,25 +45,25 @@ function LiveTicker({ stats }: { stats: any }) {
   useEffect(() => {
     const dynamic: { color: string; text: string }[] = [];
     if (stats.active_agents !== undefined) {
-      dynamic.push({ color: '#00b4f0', text: `${stats.active_agents} agents online` });
+      dynamic.push({ color: 'var(--cyan)', text: `FLEET_STRENGTH: ${stats.active_agents} NODES` });
     }
     if (stats.active_events !== undefined) {
-      dynamic.push({ color: '#00f5d4', text: `${stats.active_events} active events` });
+      dynamic.push({ color: 'var(--green)', text: `ACTIVE_SIGNALS: ${stats.active_events} STREAMING` });
     }
     if (stats.total_cost !== undefined) {
-      dynamic.push({ color: '#f59e0b', text: `Credits used: $${stats.total_cost?.toFixed(4) || '0.0000'}` });
+      dynamic.push({ color: 'var(--orange)', text: `RES_BURN: $${stats.total_cost?.toFixed(3) || '0.000'}` });
     }
     const all = [...dynamic, ...TICKER_TEMPLATES];
-    setItems([...all, ...all]); // duplicate for seamless scroll
+    setItems([...all, ...all]);
   }, [stats]);
 
   return (
-    <div className="ticker-wrap">
+    <div className="ticker-wrap terminal-flicker">
       <div className="ticker">
         {items.map((item, i) => (
-          <span key={i} className="tick-item">
-            <span className="tick-dot" style={{ background: item.color }} />
-            {item.text}
+          <span key={i} className="tick-item" style={{ fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '1px' }}>
+            <span className="tick-dot" style={{ background: item.color, boxShadow: `0 0 5px ${item.color}` }} />
+            {item.text.toUpperCase()}
           </span>
         ))}
       </div>
@@ -67,8 +79,8 @@ function useToastSystem() {
 
   const showToast = useCallback((msg: string, type = 'ok') => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, msg, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+    setToasts(prev => [...prev, { id, msg: msg.toUpperCase(), type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }, []);
 
   const ToastContainer = () => (
@@ -76,14 +88,13 @@ function useToastSystem() {
       {toasts.map(t => (
         <div key={t.id} className={`toast ${t.type === 'err' ? 'error' : t.type === 'info' ? 'info' : ''}`}
           style={{
-            borderLeftColor: t.type === 'ok' ? 'var(--green)' : t.type === 'err' ? 'var(--red)' : 'var(--blue)',
-            borderColor: t.type === 'ok' ? 'rgba(16,185,129,0.3)' : t.type === 'err' ? 'rgba(239,68,68,0.3)' : 'rgba(0,180,240,0.3)',
+            borderLeft: `2px solid ${t.type === 'ok' ? 'var(--green)' : t.type === 'err' ? 'var(--red)' : 'var(--blue)'}`,
+            background: 'var(--bg2)',
+            fontFamily: 'var(--mono)',
+            fontSize: '10px'
           }}>
-          <span style={{
-            color: t.type === 'ok' ? 'var(--green)' : t.type === 'err' ? 'var(--red)' : 'var(--blue)',
-            fontSize: 14,
-          }}>
-            {t.type === 'ok' ? '✓' : t.type === 'err' ? '✕' : 'ℹ'}
+          <span style={{ color: t.type === 'ok' ? 'var(--green)' : t.type === 'err' ? 'var(--red)' : 'var(--blue)' }}>
+            [ {t.type === 'ok' ? 'SUCCESS' : t.type === 'err' ? 'CRITICAL' : 'SIGNAL'} ]
           </span>
           {t.msg}
         </div>
@@ -100,54 +111,55 @@ function useToastSystem() {
 function AddAgentModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: () => void; onAdded: () => void }) {
   const [name, setName] = useState('');
   const [role, setRole] = useState('Worker');
-  const [model, setModel] = useState('claude-sonnet-4-6');
+  const [model, setModel] = useState('gemma-3-4b');
   const [desc, setDesc] = useState('');
 
   const deploy = async () => {
     try {
       await apiFetch('/agents/', {
         method: 'POST',
-        json: { name: name || 'Worker-New', role, model, system_prompt: desc || 'General purpose agent' },
+        json: { name: name || 'UNIT_X', role, model, system_prompt: desc || 'GENERAL_PURPOSE_OPS' },
       });
-      onAdded();
-      onClose();
-    } catch {
-      // Still close if API fails
-      onAdded();
-      onClose();
-    }
+      onAdded(); onClose();
+    } catch { onAdded(); onClose(); }
   };
 
   return (
     <div className={`modal-overlay ${isOpen ? 'open' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-title">Deploy New Agent</div>
-        <div className="modal-sub">Configure and launch a new agent into the fleet</div>
+      <div className="modal" style={{ border: '1px solid var(--cyan)', boxShadow: 'var(--glow-lg)' }}>
+        <div className="scanline"></div>
+        <div className="modal-title" style={{ color: 'var(--cyan)', fontFamily: 'var(--mono)' }}>DECOMPILING_NEW_UNIT...</div>
+        <div className="modal-sub">SECURE_INITIALIZATION_PROTOCOL_V4.2</div>
+        
         <div className="modal-field">
-          <label>Agent Name</label>
-          <input type="text" placeholder="e.g. Worker-32" value={name} onChange={e => setName(e.target.value)} />
+          <label style={{ fontSize: '9px', opacity: 0.6 }}>CALLSIGN_ASSIGNMENT</label>
+          <input type="text" placeholder="e.g. OMEGA_LEADER" value={name} onChange={e => setName(e.target.value)} />
         </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="modal-field">
+            <label style={{ fontSize: '9px', opacity: 0.6 }}>CLASS_STANCE</label>
+            <select value={role} onChange={e => setRole(e.target.value)}>
+              <option>Worker</option><option>Core</option><option>Storage</option><option>Analytics</option>
+            </select>
+          </div>
+          <div className="modal-field">
+            <label style={{ fontSize: '9px', opacity: 0.6 }}>NEURAL_ENGINE</label>
+            <select value={model} onChange={e => setModel(e.target.value)}>
+              <option>gemma-3-4b</option><option>llama-3-70b</option>
+              <option>claude-3-5-sonnet</option><option>gpt-4o-mini</option>
+            </select>
+          </div>
+        </div>
+
         <div className="modal-field">
-          <label>Role</label>
-          <select value={role} onChange={e => setRole(e.target.value)}>
-            <option>Worker</option><option>Core</option><option>Storage</option><option>Analytics</option>
-          </select>
+          <label style={{ fontSize: '9px', opacity: 0.6 }}>MISSION_PARAMETERS</label>
+          <textarea rows={2} placeholder="DEFINE_OBJECTIVES..." value={desc} onChange={e => setDesc(e.target.value)} />
         </div>
-        <div className="modal-field">
-          <label>Model</label>
-          <select value={model} onChange={e => setModel(e.target.value)}>
-            <option>claude-sonnet-4-6</option><option>claude-opus-4-6</option>
-            <option>claude-haiku-4-5</option><option>gpt-4o</option>
-          </select>
-        </div>
-        <div className="modal-field">
-          <label>Description</label>
-          <textarea rows={2} placeholder="Agent purpose..." value={desc}
-            onChange={e => setDesc(e.target.value)} style={{ resize: 'vertical' }} />
-        </div>
+
         <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={deploy}>⚡ Deploy Agent</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>[ ABORT ]</button>
+          <button className="btn btn-primary btn-sm" style={{ background: 'var(--cyan)', color: '#000' }} onClick={deploy}>[ INITIATE_DEPLOYMENT ]</button>
         </div>
       </div>
     </div>
@@ -166,39 +178,38 @@ function AddTaskModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: 
     try {
       await apiFetch('/tasks/', {
         method: 'POST',
-        json: { payload: payload || name || 'New Task', priority: priority.toLowerCase() },
+        json: { payload: payload || name || 'MISSION_SIG', priority: priority.toLowerCase() },
       });
-      onAdded();
-      onClose();
-    } catch {
-      onAdded();
-      onClose();
-    }
+      onAdded(); onClose();
+    } catch { onAdded(); onClose(); }
   };
 
   return (
     <div className={`modal-overlay ${isOpen ? 'open' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-title">Create Task</div>
-        <div className="modal-sub">Dispatch a new task to the agent queue</div>
+      <div className="modal" style={{ border: '1px solid var(--purple)', boxShadow: '0 0 30px rgba(112,0,255,0.3)' }}>
+        <div className="modal-title" style={{ color: 'var(--purple)', fontFamily: 'var(--mono)' }}>ENQUEUE_NEW_MISSION...</div>
+        <div className="modal-sub">PRIORITY_QUEUE_LINK_ESTABLISHED</div>
+        
         <div className="modal-field">
-          <label>Task Name</label>
-          <input type="text" placeholder="e.g. Data Ingestion Pipeline" value={name} onChange={e => setName(e.target.value)} />
+          <label style={{ fontSize: '9px', opacity: 0.6 }}>MISSION_IDENTIFIER</label>
+          <input type="text" placeholder="e.g. DATA_HARVEST_ALPHA" value={name} onChange={e => setName(e.target.value)} />
         </div>
+        
         <div className="modal-field">
-          <label>Priority</label>
+          <label style={{ fontSize: '9px', opacity: 0.6 }}>THREAT_LEVEL_PRIORITY</label>
           <select value={priority} onChange={e => setPriority(e.target.value)}>
             <option>HIGH</option><option>MEDIUM</option><option>LOW</option>
           </select>
         </div>
+
         <div className="modal-field">
-          <label>Payload</label>
-          <textarea rows={3} placeholder="Task payload / prompt..." value={payload}
-            onChange={e => setPayload(e.target.value)} style={{ resize: 'vertical' }} />
+          <label style={{ fontSize: '9px', opacity: 0.6 }}>PAYLOAD_STREAM</label>
+          <textarea rows={3} placeholder="MISSION_COMMANDS..." value={payload} onChange={e => setPayload(e.target.value)} />
         </div>
+
         <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={create}>📋 Create Task</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>[ CANCEL ]</button>
+          <button className="btn btn-primary btn-sm" style={{ background: 'var(--purple)', color: '#fff' }} onClick={create}>[ DISPATCH_MISSION ]</button>
         </div>
       </div>
     </div>
@@ -220,7 +231,7 @@ export default function Home() {
   const handleAdded = () => {
     setRefreshKey(prev => prev + 1);
     fetchGlobalStats();
-    showToast('Operation completed successfully');
+    showToast('COMMAND_EXECUTED_SUCCESSFULLY');
   };
 
   const fetchGlobalStats = useCallback(async () => {
@@ -232,15 +243,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Expose for child components
     (window as any).openAddAgent = () => setIsAgentModalOpen(true);
     (window as any).openAddTask = () => setIsTaskModalOpen(true);
-
     document.documentElement.setAttribute('data-theme', 'dark');
-    fetchGlobalStats();
-    const statsInterval = setInterval(fetchGlobalStats, 20000);
-    return () => clearInterval(statsInterval);
-  }, [fetchGlobalStats]);
+  }, []);
+
+  usePolling(fetchGlobalStats, 15000, true);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -251,12 +259,11 @@ export default function Home() {
   const refreshData = () => {
     fetchGlobalStats();
     setRefreshKey(prev => prev + 1);
-    showToast('Data refreshed', 'info');
+    showToast('RE_SCANNING_SYSTEM_MATRICES', 'info');
   };
 
   return (
     <div className="app">
-      {/* SIDEBAR */}
       <Sidebar
         activeView={activeView}
         onViewChange={setActiveView}
@@ -264,28 +271,31 @@ export default function Home() {
         onToggleTheme={toggleTheme}
       />
 
-      {/* MAIN */}
       <main className="main">
-        {/* TOPBAR */}
         <header className="topbar">
+          <div className="scanline"></div>
           <LiveTicker stats={stats} />
           <div className="tb-right">
-            <div className="opt-badge">
-              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--cyan)' }} />
-              {stats.active_events > 10 ? 'High Load' : 'Optimal'}
+            <div className="opt-badge" style={{ 
+              borderColor: 'var(--border2)', 
+              background: 'rgba(0,242,255,0.05)',
+              color: 'var(--cyan)',
+              fontFamily: 'var(--mono)',
+              fontSize: '9px'
+            }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--cyan)', boxShadow: '0 0 5px var(--cyan)' }} />
+              SIGNAL: {stats.active_events > 15 ? 'HIGH_INTENSITY' : 'OPTIMAL'}
             </div>
-            <div className="icon-btn" onClick={refreshData} title="Refresh">↺</div>
-            <div className="icon-btn notif-badge" title="Notifications">🔔</div>
-            <div className="icon-btn" onClick={toggleTheme} title="Theme">◑</div>
-            <div className="avatar">A</div>
+            <div className="icon-btn" onClick={refreshData} title="RE_SCAN">↺</div>
+            <div className="icon-btn notif-badge" title="ALERTS">🔔</div>
+            <div className="avatar" style={{ border: '1px solid var(--cyan)', boxShadow: 'var(--glow)' }} onClick={() => setIsTaskModalOpen(true)}>+</div>
           </div>
         </header>
 
-        {/* CONTENT */}
-        <div className="content" key={refreshKey}>
+        <div className="content" key={refreshKey} style={{ background: 'var(--bg0)' }}>
           {activeView === 'dashboard' && <DashboardView />}
           {activeView === 'fleet' && <FleetView />}
-          {activeView === 'monitoring' && <MonitoringView />}
+          {activeView === 'monitoring' && <ObservabilityView />}
           {activeView === 'tasks' && <TasksView />}
           {activeView === 'workflows' && <WorkflowsView />}
           {activeView === 'analytics' && <AnalyticsDashboard />}
@@ -294,19 +304,8 @@ export default function Home() {
         </div>
       </main>
 
-      {/* MODALS */}
-      <AddAgentModal
-        isOpen={isAgentModalOpen}
-        onClose={() => setIsAgentModalOpen(false)}
-        onAdded={handleAdded}
-      />
-      <AddTaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-        onAdded={handleAdded}
-      />
-
-      {/* TOASTS */}
+      <AddAgentModal isOpen={isAgentModalOpen} onClose={() => setIsAgentModalOpen(false)} onAdded={handleAdded} />
+      <AddTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} onAdded={handleAdded} />
       <ToastContainer />
     </div>
   );

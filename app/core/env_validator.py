@@ -12,16 +12,12 @@ class EnvironmentValidator:
         self.warnings: List[str] = []
     
     def validate(self) -> Tuple[bool, List[str], List[str]]:
-        self._validate_secrets()
         self._validate_database_config()
         self._validate_jwt_keys()
         self._validate_ai_providers()
         self._validate_cors()
+        self._validate_secret_key()
         return (len(self.errors) == 0, self.errors, self.warnings)
-    
-    def _validate_secrets(self):
-        if settings.SECRET_KEY == "secret-key-change-me":
-            self.errors.append("SECRET_KEY is still default. Please generate a strong key (e.g. openssl rand -hex 32).")
     
     def _validate_database_config(self):
         if "postgres:postgres@" in settings.DATABASE_URL and settings.DEPLOYMENT_MODE != "local":
@@ -64,6 +60,12 @@ class EnvironmentValidator:
     def _validate_cors(self):
         if settings.DEPLOYMENT_MODE != "local" and (settings.CORS_ORIGINS == "*" or not settings.CORS_ORIGINS):
             self.errors.append("Wildcard or empty CORS_ORIGINS is not allowed in production.")
+
+    def _validate_secret_key(self):
+        if not settings.SECRET_KEY or settings.SECRET_KEY == "secret-key-change-me":
+            self.errors.append("SECRET_KEY equals the default 'secret-key-change-me'. Change it in .env.")
+        elif len(settings.SECRET_KEY) < 32:
+            self.errors.append("SECRET_KEY is too short (must be >= 32 chars).")
 
 def validate_or_exit():
     validator = EnvironmentValidator()

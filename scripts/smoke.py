@@ -27,11 +27,17 @@ def request_json(method: str, path: str, token: str | None = None, **kwargs):
 
 
 def main() -> None:
-    # 1) Health
+    # 1) Health (Shallow)
     code, data = request_json("GET", "/")
     if code != 200:
         _fail(f"GET / failed: {code} {data}")
-    print("✓ Health check passed")
+    print("✓ Basic health check passed")
+
+    # 1.5) Health (Ready/Deep)
+    code, data = request_json("GET", "/health/ready")
+    if code != 200 or data.get("status") != "ready":
+        _fail(f"GET /health/ready failed: {code} {data}")
+    print("✓ Infrastructure readiness check passed (DB + Redis)")
 
     # Metrics
     code, _ = request_json("GET", "/metrics")

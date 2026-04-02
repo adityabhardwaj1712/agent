@@ -5,60 +5,45 @@ import { apiFetch } from '../lib/api';
 import { useToast } from './Toast';
 import OptimizationHistory from './OptimizationHistory';
 
-// Sparkline drawing
+// Sparkline drawing (Tactical)
 function drawSparkline(canvas: HTMLCanvasElement, base: number, status: string) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const w = canvas.offsetWidth || 200, h = 36;
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = w; canvas.height = h;
 
-  const color = status === 'online' || status === 'active' ? '#00b4f0'
-    : status === 'degraded' ? '#f59e0b' : '#ef4444';
+  const color = status === 'online' || status === 'active' ? '#00f2ff'
+    : status === 'degraded' ? '#ff9d00' : '#ff0055';
 
   const pts: number[] = [];
   let v = base;
-  for (let i = 0; i < 22; i++) {
-    v = Math.max(3, Math.min(100, v + (Math.random() - 0.5) * 15));
+  for (let i = 0; i < 24; i++) {
+    v = Math.max(5, Math.min(100, v + (Math.random() - 0.5) * 12));
     pts.push(v);
   }
 
   ctx.clearRect(0, 0, w, h);
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, color + '55');
-  g.addColorStop(1, color + '00');
+  g.addColorStop(0, color + '33');
+  g.addColorStop(1, 'transparent');
 
   ctx.beginPath();
   ctx.moveTo(0, h - (pts[0] / 100) * h);
   pts.forEach((p, i) => ctx.lineTo((i / (pts.length - 1)) * w, h - (p / 100) * h));
-  ctx.lineTo(w, h);
-  ctx.lineTo(0, h);
-  ctx.closePath();
-  ctx.fillStyle = g;
-  ctx.fill();
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
 
   ctx.beginPath();
   ctx.moveTo(0, h - (pts[0] / 100) * h);
   pts.forEach((p, i) => ctx.lineTo((i / (pts.length - 1)) * w, h - (p / 100) * h));
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  ctx.lineWidth = 1; ctx.stroke();
 }
 
 function AgentSparkline({ health, status }: { health: number; status: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      drawSparkline(canvasRef.current, health, status);
-    }
-  }, [health, status]);
-
-  return (
-    <div className="spk-wrap">
-      <canvas ref={canvasRef} className="spk" />
-    </div>
-  );
+  useEffect(() => { if (canvasRef.current) drawSparkline(canvasRef.current, health, status); }, [health, status]);
+  return <div className="spk-wrap"><canvas ref={canvasRef} className="spk" /></div>;
 }
 
 export default function AgentGallery() {
@@ -69,19 +54,13 @@ export default function AgentGallery() {
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
-  useEffect(() => {
-    fetchAgents();
-  }, []);
-
+  useEffect(() => { fetchAgents(); }, []);
   const fetchAgents = async () => {
     try {
       const data = await apiFetch<any[]>('/agents');
       setAgents(data || []);
-    } catch (err: any) {
-      toast(err.message || 'Failed to fetch agents', 'err');
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { toast(err.message, 'err'); }
+    finally { setLoading(false); }
   };
 
   const calculateHealth = (agent: any) => {
@@ -89,170 +68,116 @@ export default function AgentGallery() {
     return Math.round(((agent.reputation_score || 98) * 0.4) + (successRate * 0.6));
   };
 
-  const getAgentType = (agent: any): string => {
-    const role = (agent.role || '').toLowerCase();
-    if (role.includes('core') || role.includes('analytics') || role.includes('orchestrat')) return 'Core';
-    if (role.includes('storage') || role.includes('data') || role.includes('memory')) return 'Storage';
-    if (role.includes('ai') || role.includes('ml') || role.includes('model')) return 'AI';
-    return 'Worker';
+  const getAgentType = (agent: any) => {
+    const r = (agent.role || '').toLowerCase();
+    if (r.includes('core') || r.includes('orchestrat')) return 'STRATEGIC';
+    if (r.includes('storage') || r.includes('data')) return 'INTEL';
+    if (r.includes('ai') || r.includes('model')) return 'NEURAL';
+    return 'TACTICAL';
   };
 
-  const getTypeIcon = (type: string) => {
-    return { Core: '⚙', Worker: '🔩', Storage: '🗄', AI: '🧠' }[type] || '🤖';
-  };
+  const getTypeIcon = (t: string) => ({ STRATEGIC: '🛰️', TACTICAL: '🛡️', INTEL: '💾', NEURAL: '🧠' }[t] || '🤖');
+  const getTypeColor = (t: string) => ({ STRATEGIC: '#00f2ff', TACTICAL: '#0088ff', INTEL: '#ff9d00', NEURAL: '#7000ff' }[t] || '#fff');
 
-  const getTypeClass = (type: string) => {
-    return { Core: 'icon-core', Worker: 'icon-worker', Storage: 'icon-storage', AI: 'icon-ai' }[type] || 'icon-worker';
-  };
-
-  const getStatus = (agent: any) => {
-    if (agent.status) return agent.status;
-    const health = calculateHealth(agent);
-    if (health > 80) return 'online';
-    if (health > 50) return 'degraded';
-    return 'offline';
-  };
-
-  const deleteAgent = async (id: string) => {
-    if (!confirm('Terminate this agent?')) return;
-    try {
-      await apiFetch(`/agents/${id}`, { method: 'DELETE' });
-      toast('Agent terminated', 'ok');
-      fetchAgents();
-      if (selectedAgentId === id) setSelectedAgentId(null);
-    } catch (e: any) {
-      toast(e.message, 'err');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: 16 }}>
-        <div style={{ color: 'var(--t3)', letterSpacing: 2, fontSize: 10, fontFamily: 'var(--mono)' }}>SYNCHRONIZING_FLEET_REGISTRY...</div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'60vh', flexDirection:'column', gap:16 }}>
+      <div className="terminal-flicker" style={{ color:'var(--cyan)', letterSpacing:2, fontSize:11, fontFamily:'var(--mono)' }}>SYNCING_FLEET_ARRAY...</div>
+    </div>
+  );
 
   const filteredAgents = agents.filter(a => {
-    const matchesSearch = a.name.toLowerCase().includes(filter.toLowerCase()) ||
-      (a.role || '').toLowerCase().includes(filter.toLowerCase());
-    const matchesType = typeFilter === 'All' || getAgentType(a) === typeFilter;
-    return matchesSearch && matchesType;
+    const m = a.name.toLowerCase().includes(filter.toLowerCase()) || (a.role || '').toLowerCase().includes(filter.toLowerCase());
+    return m && (typeFilter === 'All' || getAgentType(a) === typeFilter.toUpperCase());
   });
 
   return (
-    <div style={{ animation: 'pageIn 0.3s ease' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+    <div className="view-enter" style={{ paddingBottom: 40 }}>
+      {/* Tactical Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 25 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>Agent Fleet</div>
-          <div style={{ fontSize: 12, color: 'var(--t2)', marginTop: 3 }}>
-            {agents.length} agents across {new Set(agents.map(a => getAgentType(a))).size} types
+          <div className="pg-breadcrumb">FLEET_ARRAY // <span>SECTOR_BETA</span></div>
+          <h1 className="pg-title" style={{ color: 'var(--cyan)', textShadow: 'var(--glow)', fontSize: '26px' }}>AGENT_FLEET</h1>
+          <div className="sys-status">
+            <span style={{ fontFamily:'var(--mono)', fontSize:'10px', color:'var(--t2)' }}>
+              {agents.length} NODES_ACTIVE // {new Set(agents.map(getAgentType)).size} CLASS_TYPES
+            </span>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => (window as any).openAddAgent?.()}>+ Add Agent</button>
+        <button className="btn btn-primary btn-sm" style={{ background:'var(--cyan)', color:'#000' }} onClick={() => (window as any).openAddAgent?.()}>[ DEPLOY_NEW_UNIT ]</button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="filter-bar">
-        <div className="fsearch">
-          <span style={{ color: 'var(--t3)', fontSize: 12 }}>⌕</span>
-          <input
-            type="text"
-            placeholder="Search agents..."
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-          />
+      {/* Filter Matrix */}
+      <div style={{ display:'flex', gap:10, marginBottom:20, background:'var(--bg1)', padding:10, borderRadius:8, border:'1px solid var(--border)' }}>
+        <div className="sb-search" style={{ margin:0, flex:1 }}>
+          <span style={{ color:'var(--cyan)', opacity:0.5 }}>❯</span>
+          <input type="text" placeholder="FILTER_BY_CALLSIGN..." value={filter} onChange={e => setFilter(e.target.value)} style={{ textTransform:'uppercase', fontSize:10 }} />
         </div>
-        {['All', 'Core', 'Worker', 'Storage', 'AI'].map(type => (
-          <button
-            key={type}
-            className={`fbtn ${typeFilter === type ? 'active' : ''}`}
-            onClick={() => setTypeFilter(type)}
-          >
-            {type}
+        {['All', 'Strategic', 'Tactical', 'Intel', 'Neural'].map(type => (
+          <button key={type} onClick={() => setTypeFilter(type)} className={`btn btn-ghost btn-sm ${typeFilter === type ? 'active' : ''}`} style={{ 
+            fontSize:9, 
+            borderColor: typeFilter === type ? 'var(--cyan)' : 'transparent',
+            color: typeFilter === type ? 'var(--cyan)' : 'var(--t3)'
+          }}>
+            {type.toUpperCase()}
           </button>
         ))}
       </div>
 
-      {/* Grid layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: selectedAgentId ? '1fr 380px' : '1fr', gap: 16 }}>
-        {/* Agent Cards Grid */}
-        <div className="agents-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: selectedAgentId ? '1fr 360px' : '1fr', gap: 20 }}>
+        <div className="agent-grid">
           {filteredAgents.map(agent => {
-            const type = getAgentType(agent);
-            const health = calculateHealth(agent);
-            const status = getStatus(agent);
-            const isSelected = selectedAgentId === agent.agent_id;
+            const t = getAgentType(agent);
+            const h = calculateHealth(agent);
+            const s = (agent.status || 'online').toLowerCase();
+            const isSel = selectedAgentId === agent.agent_id;
 
             return (
-              <div
-                key={agent.agent_id}
-                className="agent-card"
-                style={isSelected ? { borderColor: 'var(--blue)' } : {}}
-                onClick={() => setSelectedAgentId(isSelected ? null : agent.agent_id)}
-              >
-                <div className="agent-card-hdr">
-                  <div className={`agent-icon ${getTypeClass(type)}`}>
-                    {getTypeIcon(type)}
+              <div key={agent.agent_id} className={`agent-card terminal-flicker ${isSel ? 'active' : ''}`} 
+                   style={{ border: isSel ? '1px solid var(--cyan)' : '1px solid var(--border)', background: isSel ? 'rgba(0,242,255,0.03)' : 'var(--bg2)' }}
+                   onClick={() => setSelectedAgentId(isSel ? null : agent.agent_id)}>
+                <div className="agent-head">
+                  <div style={{ width:36, height:36, borderRadius:6, background:getTypeColor(t)+'22', border:`1px solid ${getTypeColor(t)}44`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+                    {getTypeIcon(t)}
                   </div>
-                  <div className="agent-info">
-                    <div className="agent-name">{agent.name}</div>
-                    <div className="agent-id">{agent.agent_id?.slice(0, 8)}</div>
+                  <div style={{ flex:1, marginLeft:12 }}>
+                    <div className="agent-name" style={{ fontSize:13, fontWeight:800, color:'var(--text)', textTransform:'uppercase' }}>{agent.name}</div>
+                    <div className="agent-id">ID_{agent.agent_id?.slice(0,8).toUpperCase()}</div>
                   </div>
-                  <div className={`sbadge ${status}`}>
-                    <div className="sdot" />
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </div>
+                  <div className={`sys-dot`} style={{ background: s==='online'?'var(--green)':s==='degraded'?'var(--orange)':'var(--red)', boxShadow:s==='online'?'0 0 8px var(--green)':'none' }} />
                 </div>
 
-                <AgentSparkline health={health} status={status} />
+                <AgentSparkline health={h} status={s} />
 
                 <div className="agent-metrics">
-                  <div className="metric">
-                    <div className="metric-val" style={{ color: health > 80 ? 'var(--cyan)' : health > 50 ? 'var(--orange)' : 'var(--red)' }}>
-                      {health}%
-                    </div>
-                    <div className="metric-lbl">Health</div>
+                  <div className="agent-metric">
+                    <div className="agent-metric-val" style={{ color: h>80?'var(--green)':h>50?'var(--orange)':'var(--red)' }}>{h}%</div>
+                    <div className="agent-metric-lbl">INTEGRITY</div>
                   </div>
-                  <div className="metric">
-                    <div className="metric-val">{agent.total_tasks || 0}</div>
-                    <div className="metric-lbl">Tasks</div>
+                  <div className="agent-metric">
+                    <div className="agent-metric-val">{agent.total_tasks || 0}</div>
+                    <div className="agent-metric-lbl">MISSIONS</div>
                   </div>
-                  <div className="metric">
-                    <div className="metric-val">${agent.base_cost || 0}</div>
-                    <div className="metric-lbl">Cost</div>
+                  <div className="agent-metric">
+                    <div className="agent-metric-val" style={{ color:'var(--t3)' }}>${agent.base_cost || 0}</div>
+                    <div className="agent-metric-lbl">RESOURCES</div>
                   </div>
                 </div>
               </div>
             );
           })}
-
-          {filteredAgents.length === 0 && (
-            <div style={{
-              gridColumn: '1 / -1',
-              textAlign: 'center',
-              padding: 60,
-              color: 'var(--t3)',
-              fontSize: 13,
-              fontFamily: 'var(--mono)',
-              letterSpacing: 2
-            }}>
-              NO_AGENTS_FOUND
-            </div>
-          )}
         </div>
 
-        {/* Sidepanel */}
         {selectedAgentId && (
-          <div className="chart-card" style={{ height: 'fit-content' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
-              📋 Agent History: {agents.find(a => a.agent_id === selectedAgentId)?.name}
+          <div className="card" style={{ height:'fit-content', border:'1px solid var(--cyan)', boxShadow:'var(--glow)' }}>
+            <div className="card-hd">
+              <div className="card-title" style={{ color:'var(--cyan)' }}>UNIT_DIAGNOSTICS // {agents.find(a => a.agent_id === selectedAgentId)?.name.toUpperCase()}</div>
             </div>
             <OptimizationHistory agentId={selectedAgentId} />
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button className="btn btn-ghost" style={{ flex: 1, fontSize: 11 }} onClick={() => setSelectedAgentId(null)}>Close</button>
-              <button className="btn btn-danger" style={{ fontSize: 11 }} onClick={() => deleteAgent(selectedAgentId)}>⊗ Terminate</button>
+            <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+              <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={() => setSelectedAgentId(null)}>[ CLOSE_LINK ]</button>
+              <button className="btn btn-danger btn-sm" onClick={() => { if(confirm('INITIATE_TERMINATION_SEQUENCE?')) { apiFetch(`/agents/${selectedAgentId}`, {method:'DELETE'}).then(()=> {toast('UNIT_DECOMISSIONED','ok'); fetchAgents(); setSelectedAgentId(null);}); } }}>
+                [ TERMINATE ]
+              </button>
             </div>
           </div>
         )}

@@ -18,7 +18,7 @@ import {
   Monitor,
   X
 } from 'lucide-react';
-import { apiFetch, getToken } from '../lib/api';
+import { apiFetch, getToken, wsUrl } from '../lib/api';
 import { useToast } from './Toast';
 import AddTaskModal from './AddTaskModal';
 import ThoughtStream from './ThoughtStream';
@@ -75,8 +75,7 @@ export default function TaskTable() {
     fetchTasks();
     
     // Connect to Real-time WebSockets
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//localhost:8000/ws/tasks`);
+    const ws = new WebSocket(wsUrl('/tasks'));
     
     ws.onmessage = (event) => {
       try {

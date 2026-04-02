@@ -166,17 +166,27 @@ class AgentCloudDoctor:
     async def check_infrastructure(self):
         section("1. Infrastructure")
 
-        # 1a. API Health
+        # 1a. API Health (Shallow)
         try:
             code, body, lat = await self._http("GET", "/")
-            if code == 200 and isinstance(body, dict) and body.get("status") == "running":
-                self._record("Infrastructure", "API Health Endpoint", Status.PASS, latency=lat)
+            if code == 200 and isinstance(body, dict) and body.get("status") == "online":
+                self._record("Infrastructure", "API Basic Health", Status.PASS, latency=lat)
             else:
-                self._record("Infrastructure", "API Health Endpoint", Status.FAIL, f"HTTP {code}: {body}")
+                self._record("Infrastructure", "API Basic Health", Status.FAIL, f"HTTP {code}: {body}")
         except Exception as e:
-            self._record("Infrastructure", "API Health Endpoint", Status.FAIL, str(e))
+            self._record("Infrastructure", "API Basic Health", Status.FAIL, str(e))
             fail("API is not reachable — remaining tests will fail!")
             return False
+
+        # 1a.5 API Readiness (Deep)
+        try:
+            code, body, lat = await self._http("GET", "/health/ready")
+            if code == 200 and isinstance(body, dict) and body.get("status") == "ready":
+                self._record("Infrastructure", "API Readiness (DB+Redis)", Status.PASS, latency=lat)
+            else:
+                self._record("Infrastructure", "API Readiness", Status.FAIL, f"HTTP {code}: {body}")
+        except Exception as e:
+            self._record("Infrastructure", "API Readiness", Status.FAIL, str(e))
 
         # 1b. System status (DB + Redis)
         try:

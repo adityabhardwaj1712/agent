@@ -1,10 +1,9 @@
-'use client';
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Clock, ChevronRight } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import { Stats, FleetHealth, Task, Agent } from '../lib/types';
 import NeuralGlobe from './NeuralGlobe';
+import { usePolling } from '../lib/usePolling';
 
 // ─── Sparkline SVG ────────────────────────────────────────────────
 function Sparkline({ data, color, w = 100, h = 32 }: { data: number[], color: string, w?: number, h?: number }) {
@@ -103,11 +102,7 @@ export default function FleetDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-    const timer = setInterval(fetchAll, 8000);
-    return () => clearInterval(timer);
-  }, [fetchAll]);
+  usePolling(fetchAll, 8000, true);
 
   const s = stats || { active_agents: 0, total_tasks: 0, tasks_completed: 0, success_rate: 100, avg_latency: 0, total_cost: 0, error_rate: 0 };
 

@@ -195,12 +195,14 @@ async def replay_dlq(limit: int = 10) -> List[dict]:
     replayed = []
     for entry_id, data in entries:
         try:
-            task_dict = json.loads(data["task_json"])
-            from ..services.orchestrator import QUEUE_KEY, Priority
-            import time as _time
-            score = int(Priority.HIGH) * 1_000_000_000 + int(_time.time() * 1000)
-            await redis.zadd(QUEUE_KEY, {json.dumps(task_dict): score})
-            await redis.xdel(DLQ_STREAM, entry_id)
+            from .orchestrator import orchestrator
+            from arq import create_pool
+            from arq.connections import RedisSettings
+            import os
+
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            arq_pool = await create_pool(RedisSettings.from_dsn(redis_url))
+            await arq_pool.enqueue_job('run_agent_task', task_dict, _job_id=task_dict.get("task_id"))
             replayed.append(task_dict.get("task_id"))
         except Exception as exc:
             logger.error(f"DLQ replay failed for {entry_id}: {exc}")

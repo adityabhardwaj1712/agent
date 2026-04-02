@@ -52,6 +52,7 @@ async def stream_task_output(
     pubsub = redis.pubsub()
     await pubsub.subscribe(f"task_stream:{task_id}")
     await pubsub.subscribe(f"task_status:{task_id}")
+    await pubsub.subscribe(f"task_traces:{task_id}")
     
     async def event_generator():
         try:
@@ -64,7 +65,14 @@ async def stream_task_output(
                         try:
                             parsed = json.loads(data)
                             chunk = parsed.get("chunk", "")
-                            sse_data = json.dumps({"token": chunk, "done": False})
+                            sse_data = json.dumps({"type": "token", "token": chunk, "done": False})
+                            yield f"data: {sse_data}\n\n"
+                        except:
+                            pass
+                    elif channel == f"task_traces:{task_id}":
+                        try:
+                            # Stream raw trace steps (Mission Timeline)
+                            sse_data = json.dumps({"type": "step", "data": json.loads(data), "done": False})
                             yield f"data: {sse_data}\n\n"
                         except:
                             pass
@@ -72,7 +80,7 @@ async def stream_task_output(
                         try:
                             parsed = json.loads(data)
                             if parsed.get("status") in ["completed", "failed"]:
-                                sse_data = json.dumps({"token": "", "done": True})
+                                sse_data = json.dumps({"type": "status", "status": parsed.get("status"), "done": True})
                                 yield f"data: {sse_data}\n\n"
                                 break
                         except:

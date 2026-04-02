@@ -21,57 +21,55 @@ import { Bot, Wrench, GitBranch, Zap, Play, Save } from 'lucide-react';
 // --- Custom Nodes ---
 
 const AgentNode = ({ data }: NodeProps) => (
-  <div className={`ms-glass-panel relative border-[#2e6fff]/30 border-2 min-w-[200px] group ${data.status === 'running' ? 'animate-pulse shadow-[0_0_20px_#2e6fff/20]' : ''}`}>
-    <Handle type="target" position={Position.Top} className="w-4 h-4 bg-[#2e6fff] border-2 border-white/20" />
+  <div className={`card terminal-flicker relative border-2 min-w-[220px] group ${data.status === 'running' ? 'shadow-[0_0_20px_var(--blue)]' : ''}`} 
+       style={{ borderColor: 'var(--blue)', background: 'rgba(0, 136, 255, 0.05)' }}>
+    <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ background: 'var(--blue)', border: '2px solid #000' }} />
     <div className="p-4">
        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-lg bg-[#2e6fff]/20 flex items-center justify-center text-[#2e6fff] border border-[#2e6fff]/30">
-             <Bot size={20} />
+          <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center text-var(--blue) border border-var(--blue)">
+             <Bot size={20} color="var(--blue)" />
           </div>
           <div>
-             <div className="text-[10px] font-black text-[#2e6fff] uppercase tracking-widest leading-none mb-1">Agent_Neural_Link</div>
-             <div className="text-[14px] font-bold text-white tracking-tighter">{data.label}</div>
+             <div className="text-[9px] font-black tracking-widest leading-none mb-1" style={{ color: 'var(--blue)', opacity: 0.6 }}>NEURAL_ORCHESTRATOR</div>
+             <div className="text-[14px] font-extrabold tracking-tight text-white uppercase">{data.label}</div>
           </div>
        </div>
-       <div className="flex items-center justify-between text-[10px] font-mono p-2 rounded bg-black/40 border border-white/5">
-          <span className="text-white/40 uppercase">Engine:</span>
-          <span className="text-[#2e6fff] font-bold italic">{data.model || 'Gemma 3 4B'}</span>
+       <div className="flex items-center justify-between text-[10px] font-mono p-2 rounded bg-black/60 border border-white/5 mb-1">
+          <span style={{ color: 'var(--t3)' }}>MODEL:</span>
+          <span style={{ color: 'var(--cyan)' }}>{data.model || 'GEMMA_3_4B'}</span>
+       </div>
+       <div className="flex items-center justify-between text-[10px] font-mono p-2 rounded bg-black/60 border border-white/5">
+          <span style={{ color: 'var(--t3)' }}>LATENCY:</span>
+          <span style={{ color: 'var(--green)' }}>LOW_Z</span>
        </div>
     </div>
-    <Handle type="source" position={Position.Bottom} className="w-4 h-4 bg-[#2e6fff] border-2 border-white/20" />
-    
-    {/* Status Indicator */}
-    <div className="absolute -top-3 -right-3">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white/10 ${data.status === 'completed' ? 'bg-emerald-500' : data.status === 'running' ? 'bg-amber-500 animate-spin-slow' : 'bg-white/5 opacity-40'}`}>
-           <Zap size={14} className="text-white fill-white/20" />
-        </div>
-    </div>
+    <Handle type="source" position={Position.Bottom} className="w-3 h-3" style={{ background: 'var(--blue)', border: '2px solid #000' }} />
   </div>
 );
 
 const ToolNode = ({ data }: NodeProps) => (
-  <div className="ms-glass-panel border-amber-500/30 border-2 min-w-[180px] bg-amber-500/5">
-    <Handle type="target" position={Position.Top} className="w-4 h-4 bg-amber-500" />
+  <div className="card border-2 min-w-[180px]" style={{ borderColor: 'var(--orange)', background: 'rgba(255, 157, 0, 0.05)' }}>
+    <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ background: 'var(--orange)', border: '2px solid #000' }} />
     <div className="p-3">
        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-amber-500/20 flex items-center justify-center text-amber-500 border border-amber-500/30">
-             <Wrench size={16} />
+          <div className="w-8 h-8 rounded bg-black/40 flex items-center justify-center border border-var(--orange)">
+             <Wrench size={16} color="var(--orange)" />
           </div>
-          <div className="text-[12px] font-black uppercase tracking-[3px] text-white/80">{data.label}</div>
+          <div className="text-[11px] font-black uppercase tracking-[2px] text-white/90">{data.label}</div>
        </div>
     </div>
-    <Handle type="source" position={Position.Bottom} className="w-4 h-4 bg-amber-500" />
+    <Handle type="source" position={Position.Bottom} className="w-3 h-3" style={{ background: 'var(--orange)', border: '2px solid #000' }} />
   </div>
 );
 
 const RouterNode = ({ data }: NodeProps) => (
-  <div className="ms-glass-panel border-violet-500/30 border-2 rotate-45 w-24 h-24 flex items-center justify-center shadow-[0_0_15px_#8b5cf6/20]">
-    <Handle type="target" position={Position.Top} className="w-4 h-4 bg-violet-500 !-top-2" />
+  <div className="card rotate-45 w-20 h-20 flex items-center justify-center border-2" style={{ borderColor: 'var(--purple)', background: 'rgba(112, 0, 255, 0.05)' }}>
+    <Handle type="target" position={Position.Top} className="!-top-1" style={{ background: 'var(--purple)', border: '2px solid #000' }} />
     <div className="-rotate-45 text-center flex flex-col items-center">
-       <GitBranch size={20} className="text-violet-500 mb-1" />
-       <div className="text-[9px] font-black tracking-widest text-[#8b5cf6] uppercase">Router_IX</div>
+       <GitBranch size={20} color="var(--purple)" />
+       <div className="text-[8px] font-black tracking-tighter text-white mt-1 pt-1 opacity-60">IX_GATE</div>
     </div>
-    <Handle type="source" position={Position.Bottom} className="w-4 h-4 bg-violet-500 !-bottom-2" />
+    <Handle type="source" position={Position.Bottom} className="!-bottom-1" style={{ background: 'var(--purple)', border: '2px solid #000' }} />
   </div>
 );
 
@@ -86,32 +84,32 @@ const initialNodes = [
     id: '1', 
     type: 'agentNode', 
     position: { x: 250, y: 50 }, 
-    data: { label: 'Strategist', model: 'Llama 3 70B' } 
+    data: { label: 'STRATEGIST', model: 'LLAMA_3_70B', status: 'idle' } 
   },
   { 
     id: '2', 
     type: 'routerNode', 
-    position: { x: 300, y: 200 }, 
-    data: { label: 'Decision Control' } 
+    position: { x: 310, y: 220 }, 
+    data: { label: 'DECISION_NODE', model: '', status: 'idle' } 
   },
   { 
     id: '3', 
     type: 'agentNode', 
-    position: { x: 100, y: 350 }, 
-    data: { label: 'Researcher', model: 'Gemma 3 4B' } 
+    position: { x: 100, y: 380 }, 
+    data: { label: 'RESEARCHER', model: 'GEMMA_3_4B', status: 'running' } 
   },
   { 
     id: '4', 
     type: 'toolNode', 
-    position: { x: 450, y: 350 }, 
-    data: { label: 'Search_Tool' } 
+    position: { x: 450, y: 380 }, 
+    data: { label: 'WEB_SEARCH', model: '', status: 'idle' } 
   }
 ];
 
 const initialEdges = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, markerEnd: { type: MarkerType.ArrowClosed, color: '#2e6fff' } },
-  { id: 'e2-3', source: '2', target: '3', style: { stroke: '#8b5cf6' } },
-  { id: 'e2-4', source: '2', target: '4', style: { stroke: '#8b5cf6' } },
+  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'var(--blue)' }, markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--blue)' } },
+  { id: 'e2-3', source: '2', target: '3', style: { stroke: 'var(--purple)' }, markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--purple)' } },
+  { id: 'e2-4', source: '2', target: '4', style: { stroke: 'var(--purple)' }, markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--purple)' } },
 ];
 
 export default function WorkflowCanvas() {
@@ -119,15 +117,19 @@ export default function WorkflowCanvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const onConnect = useCallback((params: Edge | Connection) => setEdges((eds: Edge[]) => addEdge(params, eds)), [setEdges]);
+  const onConnect = useCallback((params: Edge | Connection) => setEdges((eds: Edge[]) => addEdge({ ...params, animated: true, style: { stroke: 'var(--cyan)' } }, eds)), [setEdges]);
 
   const addNode = (type: 'agentNode' | 'toolNode' | 'routerNode') => {
-    const id = `${nodes.length + 1}`;
+    const id = `node_${Date.now()}`;
     const newNode = {
       id,
       type,
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
-      data: { label: `New ${type.replace('Node', '')}` },
+      position: { x: 100, y: 100 },
+      data: { 
+        label: `NEW_${type.toUpperCase().replace('NODE', '')}`,
+        model: type === 'agentNode' ? 'GEMMA_3_4B' : '',
+        status: 'idle'
+      },
     };
     setNodes((nds: any[]) => nds.concat(newNode));
   };
@@ -136,57 +138,47 @@ export default function WorkflowCanvas() {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('agentcloud_token');
-      const response = await fetch('/api/v1/workflows/', {
+      await fetch('/api/v1/workflows/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: `Workflow_${Date.now()}`,
+          name: `MISSION_${Date.now()}`,
           definition: { nodes, edges }
         })
       });
-      if (response.ok) {
-        console.log('Workflow saved successfully');
-      }
-    } catch (err) {
-      console.error('Save failed:', err);
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setIsSaving(false); }
   };
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex items-center justify-between p-2 ms-glass-panel">
+      <div className="flex items-center justify-between p-3 border" style={{ borderColor: 'var(--border)', background: 'var(--bg1)', borderRadius: 8 }}>
          <div className="flex gap-2">
-            <button onClick={() => addNode('agentNode')} className="ms-btn ms-btn-sm flex items-center gap-2">
-               <Bot size={14} /> AGENT
+            <button onClick={() => addNode('agentNode')} className="btn btn-ghost btn-sm flex items-center gap-2" style={{ fontSize: 9 }}>
+               <Bot size={14} /> [ +_AGENT ]
             </button>
-            <button onClick={() => addNode('toolNode')} className="ms-btn ms-btn-sm flex items-center gap-2">
-               <Wrench size={14} /> TOOL
+            <button onClick={() => addNode('toolNode')} className="btn btn-ghost btn-sm flex items-center gap-2" style={{ fontSize: 9 }}>
+               <Wrench size={14} /> [ +_TOOL ]
             </button>
-            <button onClick={() => addNode('routerNode')} className="ms-btn ms-btn-sm flex items-center gap-2">
-               <GitBranch size={14} /> ROUTER
+            <button onClick={() => addNode('routerNode')} className="btn btn-ghost btn-sm flex items-center gap-2" style={{ fontSize: 9 }}>
+               <GitBranch size={14} /> [ +_ROUTER ]
             </button>
          </div>
          <div className="flex gap-2">
-            <button className="ms-btn ms-btn-sm bg-emerald-500/20 border-emerald-500/50 flex items-center gap-2 hover:bg-emerald-500/30">
-               <Play size={14} className="text-emerald-500" /> EXECUTE_DAG
+            <button className="btn btn-primary btn-sm" style={{ background: 'var(--green)', color: '#000', fontSize: 9 }}>
+               <Play size={12} fill="#000" /> [ EXECUTE_MISSION ]
             </button>
-            <button 
-              onClick={saveWorkflow}
-              disabled={isSaving}
-              className="ms-btn ms-btn-sm bg-[#2e6fff]/20 border-[#2e6fff]/50 flex items-center gap-2 hover:bg-[#2e6fff]/30 transition-all disabled:opacity-50"
-            >
-               <Save size={14} className="text-[#2e6fff]" /> 
-               {isSaving ? 'SAVING...' : 'SAVE_STUDIO'}
+            <button onClick={saveWorkflow} disabled={isSaving} className="btn btn-primary btn-sm" style={{ background: 'var(--cyan)', color: '#000', fontSize: 9 }}>
+               <Save size={12} fill="#000" /> {isSaving ? '[ SAVING... ]' : '[ COMMIT_CHANGES ]'}
             </button>
          </div>
       </div>
       
-      <div className="flex-1 ms-glass-panel overflow-hidden relative" style={{ background: '#06090f', minHeight: '600px' }}>
+      <div className="flex-1 overflow-hidden relative border" style={{ background: 'var(--bg0)', borderColor: 'var(--border)', borderRadius: 12, minHeight: '600px' }}>
+        <div className="scanline" style={{ borderRadius: 12 }}></div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -196,21 +188,22 @@ export default function WorkflowCanvas() {
           nodeTypes={nodeTypes}
           fitView
         >
-          <Controls className="bg-white/5 border-white/10 fill-white" />
+          <Controls className="bg-black/60 border-white/10 fill-white scale-75 origin-bottom-left" />
           <MiniMap 
-            style={{ background: '#09090b', borderRadius: '8px' }}
-            nodeStrokeColor={(n: any) => '#334155'} 
-            nodeColor={(n: any) => '#1e293b'} 
+            style={{ background: 'var(--bg1)', borderRadius: '4px', border: '1px solid var(--border)' }}
+            nodeStrokeColor={() => 'var(--cyan)'} 
+            nodeColor={() => 'var(--bg2)'} 
+            maskColor="rgba(0,0,0,0.6)"
           />
-          <Background color="#334155/20" gap={20} size={1} />
+          <Background color="var(--border2)" gap={24} size={1} />
         </ReactFlow>
         
-        {/* Overlay HUD */}
-        <div className="absolute top-4 right-4 pointer-events-none">
-           <div className="flex flex-col items-end gap-1">
-              <div className="text-[10px] font-black text-[#2e6fff] tracking-widest uppercase">Visual_Workflow_Orchestration</div>
-              <div className="text-[8px] font-mono text-white/30">STUDIO_REL_V1.2_BETA</div>
-           </div>
+        {/* HUD OVERLAY */}
+        <div className="absolute top-4 right-4 pointer-events-none text-right">
+            <div className="text-[10px] font-black text-var(--cyan) tracking-widest uppercase" style={{ color: 'var(--cyan)', textShadow: 'var(--glow)' }}>
+              MISSION_BUILDER_STUDIO // SECTOR_GAMMA
+            </div>
+            <div className="text-[8px] font-mono text-white/30 tracking-tight">ENCRYPTED_STREAM_V3.1_AES256</div>
         </div>
       </div>
     </div>

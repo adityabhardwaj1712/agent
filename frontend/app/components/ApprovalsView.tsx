@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useToast } from './Toast';
 import { apiFetch } from '../lib/api';
+import { usePolling } from '../lib/usePolling';
 
 export default function ApprovalsView() {
   const [pending, setPending] = useState<any[]>([]);
@@ -34,10 +35,10 @@ export default function ApprovalsView() {
     }
   };
 
+  usePolling(fetchData, 10000);
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   const approve = async (id: string) => {

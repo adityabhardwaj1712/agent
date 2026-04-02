@@ -75,13 +75,26 @@ async def startup_event():
             # Explicitly add columns if missing (self-healing migration)
             # must happen AFTER create_all so tables exist
             await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'ANALYST';"))
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS org_id VARCHAR DEFAULT 'default' NOT NULL;"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_users_org_id ON users (org_id);"))
+            
+            await conn.execute(text("ALTER TABLE agents ADD COLUMN IF NOT EXISTS org_id VARCHAR DEFAULT 'default' NOT NULL;"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_agents_org_id ON agents (org_id);"))
+            
             await conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS node_id VARCHAR;"))
+            await conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS org_id VARCHAR DEFAULT 'default' NOT NULL;"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tasks_org_id ON tasks (org_id);"))
+            
             await conn.execute(text("ALTER TABLE goals ADD COLUMN IF NOT EXISTS workflow_state JSONB;"))
+            await conn.execute(text("ALTER TABLE goals ADD COLUMN IF NOT EXISTS org_id VARCHAR DEFAULT 'default' NOT NULL;"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_goals_org_id ON goals (org_id);"))
             
             # Traces billing columns
             await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS tokens_prompt INTEGER DEFAULT 0;"))
             await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS tokens_completion INTEGER DEFAULT 0;"))
             await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS total_cost FLOAT DEFAULT 0.0;"))
+            await conn.execute(text("ALTER TABLE traces ADD COLUMN IF NOT EXISTS org_id VARCHAR DEFAULT 'default' NOT NULL;"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_traces_org_id ON traces (org_id);"))
         logger.info("Database Schema Synchronization & Extensions: OK")
     except Exception as e:
         logger.error(f"CRITICAL: Schema Sync Failed: {e}")
@@ -124,14 +137,24 @@ async def startup_event():
     await auto_mode_service.start()
     await supervisor_service.start()
     
-    from .workers.agent_worker import run_worker
-    import asyncio
-    asyncio.create_task(run_worker())
-    
-    logger.info("AgentCloud Services Initialized Successfully")
+    logger.info("AgentCloud Services Initialized Successfully [ARQ DISPATCH MODE]")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(f"Tactical Validation Breach at {request.url.path}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "message": "Protocol Validation Failed",
+            "errors": exc.errors(),
+            "path": request.url.path
+        },
+    )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -170,6 +193,14 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     if process_time > 1.0:
         logger.warning(f"High latency [Tactical Breach]: {request.url.path} took {process_time:.2f}s")
+    
+    # Industrial Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:;"
+    
     return response
 
 app.include_router(api_router)
@@ -185,13 +216,56 @@ async def check_pgvector():
     except Exception:
         return False
 
+@app.get("/health/ready")
+@limiter.limit("60/minute")
+async def readiness_check(request: Request):
+    """Deep health check for infrastructure readiness."""
+    checks = {
+        "database": False,
+        "redis": False,
+        "pgvector": False,
+    }
+    
+    # 1. Check DB
+    try:
+        from sqlalchemy import text
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+            checks["database"] = True
+    except Exception as e:
+        logger.error(f"Readiness check failed (DB): {e}")
+
+    # 2. Check Redis
+    try:
+        from .db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
+        await redis.ping()
+        checks["redis"] = True
+    except Exception as e:
+        logger.error(f"Readiness check failed (Redis): {e}")
+
+    # 3. Check pgvector
+    checks["pgvector"] = await check_pgvector()
+
+    is_ready = all([checks["database"], checks["redis"]])
+    status_code = 200 if is_ready else 503
+    
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "ready" if is_ready else "not_ready",
+            "infrastructure": checks,
+            "version": settings.VERSION if hasattr(settings, 'VERSION') else "6.0.0"
+        }
+    )
+
 @app.get("/")
 @limiter.limit("100/minute")
 async def health(request: Request):
     pgvector_ok = await check_pgvector()
     return {
-        "status": "running", 
-        "version": "1.0.0",
+        "status": "online", 
+        "version": "6.0.0-enterprise",
         "infrastructure": {
             "pgvector": "available" if pgvector_ok else "missing"
         }

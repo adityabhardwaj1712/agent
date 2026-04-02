@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/")
 async def health_check(db: AsyncSession = Depends(get_db)):
     """
-    Fleet Health Diagnostic: Verifies core infrastructure integrity.
+    Fleet Health Diagnostic: Verifies core infrastructure integrity including PGVector.
     """
     start_time = time.time()
     
@@ -22,7 +22,17 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
 
-    # 2. Check Redis
+    # 2. Check Vector Engine (pgvector)
+    vector_status = "inactive"
+    try:
+        # Check if extension is installed and active
+        ext_check = await db.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+        if ext_check.scalar():
+            vector_status = "active"
+    except:
+        pass
+
+    # 3. Check Redis
     redis_status = "unhealthy"
     try:
         redis = await get_async_redis_client()
@@ -39,7 +49,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         "infrastructure": {
             "postgres": db_status,
             "redis": redis_status,
-            "vector_engine": "active" # Placeholder for pgvector
+            "vector_engine": vector_status
         },
         "version": "6.0.0-enterprise",
         "timestamp": time.time()

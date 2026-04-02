@@ -10,7 +10,7 @@ class Trace(Base):
     trace_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     task_id = Column(String, index=True)
     agent_id = Column(String, index=True)
-    step = Column(String)  # e.g., "memory_search", "llm_call", "scoring"
+    step = Column(String, index=True)  # e.g., "memory_search", "llm_call", "scoring"
     input_data = Column(JSON, nullable=True)
     output_data = Column(JSON, nullable=True)
     metadata_info = Column(JSON, nullable=True)

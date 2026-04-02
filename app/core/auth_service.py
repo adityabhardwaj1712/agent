@@ -11,7 +11,7 @@ def create_token(agent_id: str, scopes: list[str] | None = None):
     }
     return jwt.encode(
         payload,
-        settings.SECRET_KEY,
+        settings.private_key,
         algorithm=settings.JWT_ALGORITHM
     )
 
@@ -23,7 +23,7 @@ def create_user_token(user_id: str):
     }
     return jwt.encode(
         payload,
-        settings.SECRET_KEY,
+        settings.private_key,
         algorithm=settings.JWT_ALGORITHM
     )
 
@@ -35,13 +35,13 @@ def create_refresh_token(user_id: str):
     }
     return jwt.encode(
         payload,
-        settings.SECRET_KEY,
+        settings.private_key,
         algorithm=settings.JWT_ALGORITHM
     )
 
 def verify_token(token: str):
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, settings.public_key, algorithms=[settings.JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         return None

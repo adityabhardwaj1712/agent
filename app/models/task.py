@@ -13,7 +13,7 @@ class Task(Base):
     node_id = Column(String, index=True, nullable=True) # ID of the node in the DAG
     parent_task_id = Column(String, index=True, nullable=True)
     payload = Column(Text)
-    status = Column(String, default="queued")  # queued, processing, completed, failed, pending_approval, deduplicated
+    status = Column(String, default="queued", index=True)  # queued, processing, completed, failed, pending_approval, deduplicated
     result = Column(Text, nullable=True)
     thought_process = Column(Text, nullable=True)
     input_data = Column(Text, nullable=True)

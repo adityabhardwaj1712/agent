@@ -14,7 +14,7 @@ class Goal(Base):
     user_id = Column(String, ForeignKey("users.user_id"), index=True)
     description = Column(String, nullable=False)
     target_outcome = Column(Text)
-    status = Column(String, default="active") # active, completed, failed
+    status = Column(String, default="active", index=True) # active, completed, failed
     workflow_type = Column(String, default="linear") # linear, dag
     workflow_json = Column(Text) # Stores nodes/edges for DAG
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))

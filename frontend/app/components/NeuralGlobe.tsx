@@ -16,10 +16,8 @@ export default function NeuralGlobe() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let width = canvas.width;
-    let height = canvas.height;
     let rotation = 0;
-    const dots: { x: number; y: number; z: number; r: number }[] = [];
+    const dots: { x: number; y: number; z: number; r: number; neighbors: number[] }[] = [];
     const count = 300;
 
     // Initialize dots on a sphere
@@ -30,83 +28,110 @@ export default function NeuralGlobe() {
         x: Math.cos(theta) * Math.sin(phi),
         y: Math.sin(theta) * Math.sin(phi),
         z: Math.cos(phi),
-        r: 1 + Math.random() * 2
+        r: 1 + Math.random() * 2,
+        neighbors: []
       });
     }
 
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      rotation += 0.005;
+    // Pre-calculate connections (Neural Linkage)
+    // Rigid body: distances don't change during rotation
+    for (let i = 0; i < count; i++) {
+      for (let j = i + 1; j < count; j++) {
+        const dist = Math.sqrt(
+          (dots[i].x - dots[j].x)**2 + 
+          (dots[i].y - dots[j].y)**2 + 
+          (dots[i].z - dots[j].z)**2
+        );
+        if (dist < 0.22) { // Slightly tighter link for performance
+          dots[i].neighbors.push(j);
+        }
+      }
+    }
 
+    let animationFrameId: number;
+
+    const render = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rotation += 0.004;
+
+      const { width, height } = canvas;
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = Math.min(width, height) * 0.4;
+      const radius = Math.min(width, height) * 0.42;
 
-      // Draw atmospheric glow
-      const glow = ctx.createRadialGradient(centerX, centerY, radius * 0.8, centerX, centerY, radius * 1.2);
-      glow.addColorStop(0, 'rgba(46, 111, 255, 0.05)');
-      glow.addColorStop(1, 'rgba(46, 111, 255, 0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, width, height);
-
-      // Projects and draw dots
-      dots.forEach((dot) => {
-        // Rotate around Y axis
+      // Projects all dots first
+      const projected = dots.map(dot => {
         const x = dot.x * Math.cos(rotation) - dot.z * Math.sin(rotation);
         const z = dot.x * Math.sin(rotation) + dot.z * Math.cos(rotation);
         const y = dot.y;
+        const scale = 1.2 / (2.5 - z);
+        return {
+          px: centerX + x * radius * scale,
+          py: centerY + y * radius * scale,
+          z,
+          scale,
+          alpha: (z + 1) / 2
+        };
+      });
 
-        // Simple perspective projection
-        const scale = 1 / (2 - z);
-        const px = centerX + x * radius * scale;
-        const py = centerY + y * radius * scale;
-        const alpha = (z + 1) / 2;
+      // Draw Connections (Optimized: O(n + connections))
+      ctx.lineWidth = 0.8;
+      dots.forEach((dot, i) => {
+        const p1 = projected[i];
+        if (p1.z < -0.4) return; // Cull back-facing linkages early
 
-        if (z > -0.5) { // Only draw front dots for depth
+        dot.neighbors.forEach(ni => {
+          const p2 = projected[ni];
+          if (p2.z < -0.4) return;
+
           ctx.beginPath();
-          ctx.arc(px, py, dot.r * scale, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(46, 111, 255, ${alpha * 0.8})`;
-          ctx.fill();
-          
-          // Add connections for "Neural" look
-          dots.forEach((other) => {
-             const dist = Math.sqrt((dot.x-other.x)**2 + (dot.y-other.y)**2 + (dot.z-other.z)**2);
-             if (dist < 0.25) {
-                const ox = other.x * Math.cos(rotation) - other.z * Math.sin(rotation);
-                const oz = other.x * Math.sin(rotation) + other.z * Math.cos(rotation);
-                const oy = other.y;
-                const oscale = 1 / (2 - oz);
-                const opx = centerX + ox * radius * oscale;
-                const opy = centerY + oy * radius * oscale;
-                
-                ctx.beginPath();
-                ctx.moveTo(px, py);
-                ctx.lineTo(opx, opy);
-                ctx.strokeStyle = `rgba(46, 111, 255, ${alpha * 0.15})`;
-                ctx.stroke();
-             }
-          });
+          ctx.moveTo(p1.px, p1.py);
+          ctx.lineTo(p2.px, p2.py);
+          ctx.strokeStyle = `rgba(46, 111, 235, ${Math.min(p1.alpha, p2.alpha) * 0.12})`;
+          ctx.stroke();
+        });
+      });
+
+      // Draw Dots
+      dots.forEach((dot, i) => {
+        const p = projected[i];
+        if (p.z < -0.6) return; // Cull back dots
+
+        ctx.beginPath();
+        ctx.arc(p.px, p.py, dot.r * p.scale, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(46, 111, 255, ${p.alpha * 0.85})`;
+        ctx.fill();
+        
+        if (p.z > 0.8 && Math.random() > 0.98) { // Neural Pulse effect
+           ctx.beginPath();
+           ctx.arc(p.px, p.py, (dot.r + 4) * p.scale, 0, Math.PI * 2);
+           ctx.strokeStyle = 'rgba(0, 245, 212, 0.4)';
+           ctx.stroke();
         }
       });
 
-      requestAnimationFrame(render);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    const handleResize = () => {
-      if (!canvas) return;
-      canvas.width = canvas.parentElement?.clientWidth || 500;
-      canvas.height = canvas.parentElement?.clientHeight || 500;
-      width = canvas.width;
-      height = canvas.height;
-    };
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        if (canvas) {
+          canvas.width = entry.contentRect.width;
+          canvas.height = entry.contentRect.height;
+        }
+      }
+    });
 
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    const animId = requestAnimationFrame(render);
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+
+    render();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animId);
+      resizeObserver.disconnect();
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 

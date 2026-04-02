@@ -16,17 +16,8 @@ def requires_role(allowed_roles: List[str]):
     FastAPI dependency factory for Role-Based Access Control.
     Usage: @router.get("/", dependencies=[Depends(requires_role([Role.ADMIN]))])
     """
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # This is a bit tricky for a pure decorator in FastAPI endpoints
-            # Better to use it as a Dependency in the router
-            pass
-        return wrapper
-    
-    # Correct FastAPI Dependency Pattern
     async def role_checker(current_user: User = Depends(get_current_user)):
-        user_role = getattr(current_user, "role", "ANALYST")
+        user_role = getattr(current_user, "role", Role.VIEWER)
         if user_role not in allowed_roles:
             logger.warning(f"RBAC Denied: User {current_user.email} (Role: {user_role}) attempted restricted action.")
             raise HTTPException(

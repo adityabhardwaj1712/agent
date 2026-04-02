@@ -72,9 +72,10 @@ class Orchestrator:
         db.add(task)
         await db.commit()
 
-        # 2. Calculate score for ZSET (Priority first, then timestamp)
-        score = int(priority) * 1_000_000_000_000 + int(time.time())
+        from arq import create_pool
+        from arq.connections import RedisSettings
         
+        # 2. Prepare task payload
         task_data = {
             "task_id": task_id,
             "user_id": user_id,
@@ -89,11 +90,17 @@ class Orchestrator:
             "created_at": time.time()
         }
 
-        from ..db.redis_client import get_async_redis_client
-        redis = await get_async_redis_client()
-        await redis.zadd(QUEUE_KEY, {json.dumps(task_data): score})
+        # 3. Enqueue to ARQ
+        try:
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            arq_pool = await create_pool(RedisSettings.from_dsn(redis_url))
+            await arq_pool.enqueue_job('run_agent_task', task_data, _job_id=task_id)
+            logger.info(f"Enqueued ARQ job {task_id} with priority {priority.name}")
+        except Exception as e:
+            logger.error(f"ARQ Enqueue failed for task {task_id}: {e}")
+            # Fallback to local queue if ARQ fails? 
+            # For now, we trust ARQ but log the critical failure.
         
-        logger.info(f"Enqueued task {task_id} with priority {priority.name} (model={model_override})")
         return EnqueueResult(task_id=task_id)
 
     async def execute_task(

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import { useToast } from './Toast';
+import { usePolling } from '../lib/usePolling';
 
 interface AuditEntry {
   log_id: string;
@@ -43,10 +44,10 @@ export default function AuditView() {
     }
   };
 
+  usePolling(fetchAudit, 15000);
+
   useEffect(() => {
     fetchAudit();
-    const interval = setInterval(fetchAudit, 15000);
-    return () => clearInterval(interval);
   }, []);
 
   const timeAgo = (ts: string | null) => {

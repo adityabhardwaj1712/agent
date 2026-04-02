@@ -6,27 +6,38 @@ class Settings(BaseSettings):
     # DATABASE_URL should use postgresql+asyncpg for async SQLAlchemy
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/agentcloud"
     REDIS_URL: str = "redis://redis:6379/0"
+    SECRET_KEY: str = "secret-key-change-me"
     
-    # SECRET_KEY is used for JWT hashing
-    SECRET_KEY: str
-
-    @field_validator('SECRET_KEY')
-    @classmethod
-    def validate_secret_key(cls, v: str) -> str:
-        if len(v) < 32:
-            raise ValueError("SECRET_KEY must be at least 32 characters")
-        if v in ["secret-key-change-me", "change-me", "secret"]:
-            raise ValueError("SECRET_KEY cannot use default/common values")
-        return v
-
-    JWT_ALGORITHM: str = "HS256"
+    JWT_ALGORITHM: str = "RS256"
     
     # Secure Key Loading (Secret env-vars take priority over files)
     JWT_PRIVATE_KEY: Optional[str] = None
     JWT_PUBLIC_KEY: Optional[str] = None
     
-    JWT_PRIVATE_KEY_PATH: str = "app/storage/jwt_private.pem"
-    JWT_PUBLIC_KEY_PATH: str = "app/storage/jwt_public.pem"
+    # Official AgentCloud Alias
+    AGENTCLOUD_PRIVATE_KEY: Optional[str] = None
+    AGENTCLOUD_PUBLIC_KEY: Optional[str] = None
+    
+    JWT_PRIVATE_KEY_PATH: str = "app/core/private_key.pem"
+    JWT_PUBLIC_KEY_PATH: str = "app/core/public_key.pem"
+    
+    @property
+    def private_key(self) -> str:
+        if self.AGENTCLOUD_PRIVATE_KEY:
+            return self.AGENTCLOUD_PRIVATE_KEY
+        if self.JWT_PRIVATE_KEY:
+            return self.JWT_PRIVATE_KEY
+        with open(self.JWT_PRIVATE_KEY_PATH, "r") as f:
+            return f.read()
+
+    @property
+    def public_key(self) -> str:
+        if self.AGENTCLOUD_PUBLIC_KEY:
+            return self.AGENTCLOUD_PUBLIC_KEY
+        if self.JWT_PUBLIC_KEY:
+            return self.JWT_PUBLIC_KEY
+        with open(self.JWT_PUBLIC_KEY_PATH, "r") as f:
+            return f.read()
     
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30

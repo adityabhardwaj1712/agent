@@ -94,6 +94,17 @@ async def protocol_ws(websocket: WebSocket, user_id: str, token: str | None = No
             elif message.get("type") == "SIGNAL":
                 # Handle client-initiated signals if needed
                 pass
+            elif message.get("type") == "TAKEOVER":
+                # Human-In-The-Loop Override Intervention
+                target_agent = message.get("target_agent")
+                logger.info(f"Live Agent Takeover initiated by {user_id} for agent {target_agent}")
+                await signal_service.send_signal(
+                    user_id=user_id,
+                    target_agent=target_agent,
+                    signal_type="OVERRIDE",
+                    payload={"status": "manual_control", "operator": user_id}
+                )
+                await websocket.send_text(json.dumps({"type": "TAKEOVER_ACK", "status": "success"}))
                 
     except WebSocketDisconnect:
         signal_service.disconnect(user_id, websocket)
@@ -102,11 +113,14 @@ async def protocol_ws(websocket: WebSocket, user_id: str, token: str | None = No
         signal_service.disconnect(user_id, websocket)
 
 @router.websocket("/goal-stream/{goal_id}")
-async def goal_stream_ws(websocket: WebSocket, goal_id: str):
+async def goal_stream_ws(websocket: WebSocket, goal_id: str, token: str | None = None):
     """
     Subscribes specifically to an in-progress goal's live steps and content stream.
     """
-    await task_stream_ws(websocket, goal_id)
+    if not token or not verify_token(token):
+        await websocket.close(code=4001)
+        return
+    await task_stream_ws(websocket, goal_id, token)
 
 @router.websocket("/task-stream/{task_id}")
 async def task_stream_ws(websocket: WebSocket, task_id: str, token: str | None = None):

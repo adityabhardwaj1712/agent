@@ -5,6 +5,7 @@ import { Activity, Zap, Shield, TrendingUp, BarChart3, Database, Globe, Cpu, Mor
 import { apiFetch } from '../lib/api';
 import KpiCard from './KpiCard';
 import { AnalyticsSummary } from '../lib/types';
+import { usePolling } from '../lib/usePolling';
 
 const defaultMetrics: AnalyticsSummary = {
   success_rate: 98.4,
@@ -40,10 +41,10 @@ const AnalyticsView: React.FC = () => {
     }
   };
 
+  usePolling(fetchData, 10000);
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   const metrics = summary || defaultMetrics;

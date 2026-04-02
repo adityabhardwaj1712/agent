@@ -30,25 +30,38 @@ async def write_memory(db: AsyncSession, data: MemoryCreate, user_id: str):
 
 async def search_memory(db: AsyncSession, agent_id: str, query: str, limit: int = 5):
     try:
-        qvec = await embed_async(query)
-        # Using execute(select(...)) for async compatibility
+        is_degraded = False
+        qvec = None
+        
+        # 1. Attempt Embedding
+        try:
+            qvec = await embed_async(query)
+        except Exception as e:
+            logger.warning(f"Embedding failed, falling back to pure keyword search: {e}")
+            is_degraded = True
+            
+        # 2. Build Query
         stmt = select(Memory).filter(Memory.agent_id == agent_id)
         
-        try:
-            # Order by vector distance (pgvector)
-            stmt = stmt.order_by(Memory.embedding.l2_distance(qvec))
-            is_degraded = False
-        except Exception as e:
-            logger.warning(f"pgvector search failed, falling back to keyword: {e}")
-            # Fallback to content containment
+        if qvec and not is_degraded:
+            try:
+                # Order by vector distance (pgvector)
+                stmt = stmt.order_by(Memory.embedding.l2_distance(qvec))
+            except Exception as e:
+                logger.warning(f"pgvector search failed, falling back to keyword: {e}")
+                # Fallback to content containment
+                stmt = stmt.filter(Memory.content.ilike(f"%{query}%"))
+                is_degraded = True
+        else:
+            # Direct keyword fallback if embedding or vector logic failed
             stmt = stmt.filter(Memory.content.ilike(f"%{query}%"))
             is_degraded = True
         
         result = await db.execute(stmt.limit(limit))
         memories = result.scalars().all()
         
-        if not memories and query:
-            # Full keyword fallback if no results from initial vector/filtered search
+        if not memories and query and not is_degraded:
+            # Secondary fallback if vector search returned nothing
             logger.info(f"No semantic results for '{query}', trying keyword fallback")
             stmt_fallback = select(Memory).filter(
                 Memory.agent_id == agent_id,

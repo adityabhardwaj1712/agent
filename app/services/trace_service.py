@@ -40,7 +40,10 @@ async def log_trace(
         "step": step,
         "timestamp": str(trace.created_at)
     }
+    # Per-agent for general telemetry
     await redis.publish(f"agent:{agent_id}:traces", json.dumps(event))
+    # Per-task for specific mission streaming
+    await redis.publish(f"task_traces:{task_id}", json.dumps(event))
 async def get_trace_analytics(db: AsyncSession, agent_id: str | None = None, limit: int = 100):
     """
     AXON Analytics: Calculates average tool/step latency from recent traces.

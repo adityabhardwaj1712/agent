@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
+import { usePolling } from '../lib/usePolling';
 import { LineChart, BarChart2, DollarSign, Cpu, Timer, ShieldCheck } from 'lucide-react';
 
 interface MetricCardProps {
@@ -27,20 +28,21 @@ export default function ObservabilityView() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchStats = async () => {
+    try {
+      const res = await apiFetch<any>('/analytics/llmops');
+      setStats(res);
+    } catch (e) {
+      console.error('Failed to fetch LLMOps stats', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  usePolling(fetchStats, 15000);
+
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await apiFetch<any>('/analytics/llmops');
-        setStats(res);
-      } catch (e) {
-        console.error('Failed to fetch LLMOps stats', e);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
-    const interval = setInterval(fetchStats, 15000);
-    return () => clearInterval(interval);
   }, []);
 
   if (loading) return (

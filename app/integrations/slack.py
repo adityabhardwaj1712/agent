@@ -10,7 +10,7 @@ class SlackService:
     """
     
     def __init__(self, bot_token: Optional[str] = None):
-        self.token = bot_token or settings.SECRET_KEY # Placeholder
+        self.token = bot_token or settings.SLACK_BOT_TOKEN or "placeholder-token"
         self.client = WebClient(token=self.token)
 
     async def send_message(self, channel: str, text: str, blocks: Optional[List[Dict]] = None) -> bool:

@@ -14,6 +14,7 @@ import {
   Eye
 } from 'lucide-react';
 import { apiFetch } from '../lib/api';
+import { usePolling } from '../lib/usePolling';
 
 export default function TracesView() {
   const [traces, setTraces] = useState<any[]>([]);
@@ -44,10 +45,10 @@ export default function TracesView() {
     }
   };
 
+  usePolling(fetchTraces, 10000);
+
   useEffect(() => {
     fetchTraces();
-    const interval = setInterval(fetchTraces, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
