@@ -74,6 +74,7 @@ async def get_goal(
         raise HTTPException(status_code=404, detail="Goal not found")
     return goal
 
+@router.get("/{goal_id}/tasks")
 async def get_goal_tasks(goal_id: str, db: AsyncSession = Depends(get_db)):
     """
     Get all tasks/steps related to a specific mission (goal).

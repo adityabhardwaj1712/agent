@@ -63,9 +63,9 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
 @router.post("/logout")
 async def logout(
     token: str = Depends(oauth2_scheme), 
-    payload: dict = Depends(verify_token),
     current_user: User = Depends(get_current_user)
 ):
+    payload = verify_token(token)
     if payload:
         exp = payload.get("exp", 0)
         ttl = max(0, int(exp - time.time()))

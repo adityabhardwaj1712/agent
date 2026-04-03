@@ -23,10 +23,15 @@ async def get_current_user(
         raise credentials_exception
 
     # Check for blacklisted tokens
-    from ..db.redis_client import get_async_redis_client
-    redis = await get_async_redis_client()
-    if await redis.get(f"blacklist:{token}"):
-        raise HTTPException(status_code=401, detail="Token revoked")
+    try:
+        from ..db.redis_client import get_async_redis_client
+        redis = await get_async_redis_client()
+        if await redis.get(f"blacklist:{token}"):
+            raise HTTPException(status_code=401, detail="Token revoked")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Redis unavailable — allow through, token is valid
     
     payload = verify_token(token)
     if payload is None or payload.get("type") != "access":

@@ -17,7 +17,7 @@ async def get_tasks(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return await task_service.list_tasks(db, skip=skip, limit=limit)
+    return await task_service.list_tasks(db, user_id=current_user.user_id, skip=skip, limit=limit)
 
 @router.post("/", response_model=TaskResponse)
 async def create_task(

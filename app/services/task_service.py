@@ -199,6 +199,7 @@ async def get_task_status(db: AsyncSession, task_id: str, user_id: str):
             "retry_count": task.retry_count,
             "priority": task.priority_level,
             "execution_time_ms": task.execution_time_ms,
+            "payload": task.payload,
         }
 
     return {"task_id": task_id, "status": "not_found", "result": None}
