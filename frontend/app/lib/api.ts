@@ -10,11 +10,22 @@ export type ApiResult<T> =
   | { ok: false; status: number; error: unknown };
 
 function apiBase(): string {
-  const base = (typeof window !== "undefined"
-    ? (window as any).__NEXT_PUBLIC_API_BASE_URL
-    : undefined) ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://localhost:8000";
+  // 1. Check if we're in a browser
+  const isBrowser = typeof window !== "undefined";
+  
+  // 2. Priority: Explicit env var > Detected host > localhost
+  let base = (isBrowser ? (window as any).__NEXT_PUBLIC_API_BASE_URL : undefined) ||
+    process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!base && isBrowser) {
+    // Dynamically derive from current page to support IP-based access
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    base = `${protocol}//${hostname}:8000`;
+  }
+  
+  base = base || "http://localhost:8000";
+  
   return base.endsWith('/') ? base + 'v1' : base + '/v1';
 }
 

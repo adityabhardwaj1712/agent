@@ -319,7 +319,7 @@ async def check_pgvector():
     except Exception:
         return False
 
-@app.get("/health/ready")
+@app.get("/health_check")
 @limiter.limit("60/minute")
 async def readiness_check(request: Request):
     """Deep health check for infrastructure readiness."""

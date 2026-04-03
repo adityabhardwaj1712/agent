@@ -254,6 +254,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // 1. Auth Guard
+    if (!getToken()) {
+      window.location.href = '/login';
+      return;
+    }
+
     (window as any).openAddAgent = () => setIsAgentModalOpen(true);
     (window as any).openAddTask = () => setIsTaskModalOpen(true);
     document.documentElement.setAttribute('data-theme', 'dark');

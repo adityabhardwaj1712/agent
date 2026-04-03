@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiFetch, getToken } from '../lib/api';
+import { apiFetch, getToken, clearToken } from '../lib/api';
 import { usePolling } from '../lib/usePolling';
 
 interface SidebarProps {
@@ -51,6 +51,16 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
     } catch {
       setSystemHealth('degraded');
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.warn("Backend logout failed, clearing local session anyway", e);
+    }
+    clearToken();
+    window.location.href = '/login';
   };
 
   usePolling(fetchHealth, 15000);
@@ -197,8 +207,25 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
           </span>
         </div>
         
-        <div style={{ marginTop: '8px', fontSize: '9px', color: 'var(--t3)', fontFamily: 'var(--mono)' }}>
-          SECURE ENCRYPTED NODE: {Math.random().toString(16).substring(2, 10).toUpperCase()}
+        <div style={{ marginTop: '8px', fontSize: '9px', color: 'var(--t3)', fontFamily: 'var(--mono)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>SECURE ENCRYPTED NODE: {Math.random().toString(16).substring(2, 10).toUpperCase()}</span>
+          <button 
+            onClick={handleLogout}
+            style={{ 
+              background: 'rgba(255, 0, 0, 0.1)', 
+              color: 'var(--red)', 
+              border: '1px solid rgba(255, 0, 0, 0.3)',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              letterSpacing: '1px'
+            }}
+            className="hover:bg-[var(--red)] hover:text-white transition-all"
+          >
+            [ TERMINATE_SESSION ]
+          </button>
         </div>
       </div>
     </aside>
