@@ -13,7 +13,8 @@ class Agent(Base):
     description = Column(Text, nullable=True)
     owner_id = Column(String, ForeignKey("users.user_id"), index=True)
     status = Column(String, default="idle", index=True) # running, idle, cooldown, offline
-    
+    # Multi-Tenancy
+    org_id = Column(sa.String, server_default='default', index=True, nullable=False)
     
     # Relationships
     owner = relationship("User", back_populates="agents")

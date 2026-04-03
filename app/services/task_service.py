@@ -299,3 +299,18 @@ async def get_system_suggestions(db: AsyncSession, user_id: str) -> list:
         })
 
     return suggestions
+
+async def cancel_task(db: AsyncSession, task_id: str, user_id: str) -> bool:
+    """Cancel a pending or running task."""
+    result = await db.execute(select(Task).where(Task.task_id == task_id, Task.user_id == user_id))
+    task = result.scalars().first()
+    if not task or task.status in ["completed", "failed", "cancelled"]:
+        return False
+        
+    task.status = "cancelled"
+    task.result = "Task cancelled by user."
+    await db.commit()
+    
+    from .event_bus import event_bus
+    await event_bus.publish("task_cancelled", {"type": "cancel", "task_id": task_id})
+    return True

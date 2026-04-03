@@ -24,9 +24,12 @@ async def upload_file(
     Upload a document (PDF/CSV/TXT), chunk it, and store in vector memory.
     """
     try:
+        user_dir = os.path.join(UPLOAD_DIR, current_user.user_id)
+        os.makedirs(user_dir, exist_ok=True)
+        
         file_id = str(uuid.uuid4())
         file_ext = os.path.splitext(file.filename)[1].lower()
-        file_path = os.path.join(UPLOAD_DIR, f"{file_id}{file_ext}")
+        file_path = os.path.join(user_dir, f"{file_id}{file_ext}")
         
         file_bytes = await file.read()
         with open(file_path, "wb") as f:
@@ -103,13 +106,14 @@ async def list_files(
     List uploaded documents for the current user.
     """
     files = []
-    if os.path.exists(UPLOAD_DIR):
-        for f in os.listdir(UPLOAD_DIR):
+    user_dir = os.path.join(UPLOAD_DIR, current_user.user_id)
+    if os.path.exists(user_dir):
+        for f in os.listdir(user_dir):
             ext = os.path.splitext(f)[1]
             files.append({
                 "file_id": f,
-                "filename": f, # In a real DB, we'd have the original name
+                "filename": f, 
                 "status": "ingested",
-                "uploaded_at": "2026-03-30T10:00:00Z"
+                "uploaded_at": "Present"
             })
     return {"files": files}

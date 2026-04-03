@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Dict
 from ...db.database import get_db
 from ...models.trace import Trace
+from ...models.task import Task
 from ...models.user import User
 from ...api.deps import get_current_user
 from pydantic import BaseModel
@@ -26,11 +27,26 @@ async def list_traces(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Trace).order_by(Trace.created_at.desc()).limit(100))
+    result = await db.execute(
+        select(Trace)
+        .join(Task, Trace.task_id == Task.task_id)
+        .filter(Task.user_id == current_user.user_id)
+        .order_by(Trace.created_at.desc())
+        .limit(100)
+    )
     return result.scalars().all()
 
 @router.get("/{task_id}/flame")
-async def get_flame_graph(task_id: str, db: AsyncSession = Depends(get_db)):
+async def get_flame_graph(
+    task_id: str, 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Authorization: Ensure task belongs to user
+    task_check = await db.execute(select(Task).filter(Task.task_id == task_id, Task.user_id == current_user.user_id))
+    if not task_check.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="Access denied to this task's traces")
+
     result = await db.execute(select(Trace).filter(Trace.task_id == task_id).order_by(Trace.created_at.asc()))
     traces = result.scalars().all()
     

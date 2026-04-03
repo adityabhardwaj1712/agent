@@ -27,4 +27,5 @@ class AuditLog(Base):
 
     timestamp = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), index=True)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
+    org_id = Column(String, server_default='default', index=True, nullable=False)
     

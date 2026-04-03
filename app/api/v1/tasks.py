@@ -38,6 +38,17 @@ async def get_task_status(
 ):
     return await task_service.get_task_status(db, task_id, user_id=current_user.user_id)
 
+@router.post("/{task_id}/cancel")
+async def cancel_task(
+    task_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    success = await task_service.cancel_task(db, task_id, current_user.user_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Task cannot be cancelled or not found")
+    return {"message": "Task cancelled successfully"}
+
 @router.get("/{task_id}/stream")
 async def stream_task_output(
     task_id: str,
@@ -114,7 +125,7 @@ async def analyze_task_failure(
     traces = await get_traces_for_task(db, task_id, limit=5)
     trace_data = json.dumps([{"step": t.step, "input": getattr(t, 'input_data', None), "output": getattr(t, 'output_data', None)} for t in traces])
     
-    prompt = f"Analyze the following failed task and its execution traces to determine the root cause and suggest a fix. Task description: {task_status.description}\n\nTraces: {trace_data}"
+    prompt = f"Analyze the following failed task and its execution traces to determine the root cause and suggest a fix. Task directive: {task_status.get('payload')}\n\nTraces: {trace_data}"
     system = "You are an expert DevOps engineer and AI RCA (Root Cause Analyzer). Return a literal JSON exactly matching schema: {'analysis': 'str', 'fix_suggestion': 'str'} without any markdown formatting."
     
     choice = select_model("analysis")

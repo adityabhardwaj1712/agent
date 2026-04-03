@@ -20,25 +20,33 @@ async def get_summary(
     current_user: User = Depends(get_current_user)
 ):
     # 1. Active Agents count
-    agent_count = await db.scalar(select(func.count(Agent.agent_id)))
+    agent_count = await db.scalar(select(func.count(Agent.agent_id)).filter(Agent.owner_id == current_user.user_id))
     
     # 2. Tasks stats
-    total_tasks = await db.scalar(select(func.count(Task.task_id)))
-    completed_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "completed"))
-    failed_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "failed"))
+    total_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.user_id == current_user.user_id))
+    completed_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "completed", Task.user_id == current_user.user_id))
+    failed_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "failed", Task.user_id == current_user.user_id))
     
     error_rate = 0.0
     if total_tasks > 0:
         error_rate = failed_tasks / total_tasks
     
     # 3. Avg Latency (proxy from execution_time_ms in Task table)
-    avg_latency = await db.scalar(select(func.avg(Task.execution_time_ms))) or 0
+    avg_latency = await db.scalar(select(func.avg(Task.execution_time_ms)).filter(Task.user_id == current_user.user_id)) or 0
     
     # 4. Pending Approvals (for Sidebar badge)
-    pending_approvals = await db.scalar(select(func.count(ApprovalRequest.request_id)).filter(ApprovalRequest.status == "pending"))
+    pending_approvals = await db.scalar(
+        select(func.count(ApprovalRequest.request_id))
+        .join(Task, ApprovalRequest.task_id == Task.task_id)
+        .filter(ApprovalRequest.status == "pending", Task.user_id == current_user.user_id)
+    )
     
     # 5. Recent Traces (for Dashboard Collaboration visual)
-    recent_traces_count = await db.scalar(select(func.count(Trace.trace_id)))
+    recent_traces_count = await db.scalar(
+        select(func.count(Trace.trace_id))
+        .join(Task, Trace.task_id == Task.task_id)
+        .filter(Task.user_id == current_user.user_id)
+    )
 
     # Success rate
     success_rate = 0.0
@@ -59,7 +67,7 @@ async def get_summary(
 
     # 6. System Load Proxy
     # Simplified: (Active Tasks / Agent Count) * 100
-    active_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "running")) or 0
+    active_tasks = await db.scalar(select(func.count(Task.task_id)).filter(Task.status == "running", Task.user_id == current_user.user_id)) or 0
     system_load = min(100, round((active_tasks / max(1, agent_count)) * 100, 1)) if agent_count else 0
     
     return {
@@ -92,7 +100,7 @@ async def get_timeseries(
             func.date_trunc('hour', Task.created_at).label('hour'),
             func.count(Task.task_id).label('count')
         )
-        .filter(Task.created_at >= last_24h)
+        .filter(Task.created_at >= last_24h, Task.user_id == current_user.user_id)
         .group_by('hour')
         .order_by('hour')
     )
@@ -132,7 +140,7 @@ async def get_success_heatmap(
             func.date_trunc('hour', Task.created_at).label('hour'),
             func.count(Task.task_id).label('count')
         )
-        .filter(Task.created_at >= last_24h, Task.status == "completed")
+        .filter(Task.created_at >= last_24h, Task.status == "completed", Task.user_id == current_user.user_id)
         .group_by('hour')
         .order_by('hour')
     )
@@ -143,7 +151,7 @@ async def get_success_heatmap(
             func.date_trunc('hour', Task.created_at).label('hour'),
             func.count(Task.task_id).label('count')
         )
-        .filter(Task.created_at >= last_24h, Task.status == "failed")
+        .filter(Task.created_at >= last_24h, Task.status == "failed", Task.user_id == current_user.user_id)
         .group_by('hour')
         .order_by('hour')
     )
@@ -176,6 +184,7 @@ async def get_metrics(
     # 1. Task distribution by status
     status_counts = await db.execute(
         select(Task.status, func.count(Task.task_id))
+        .filter(Task.user_id == current_user.user_id)
         .group_by(Task.status)
     )
     status_map = {row[0]: row[1] for row in status_counts.all()}
@@ -183,7 +192,7 @@ async def get_metrics(
     # 2. Avg Latency for successful tasks
     avg_latency = await db.scalar(
         select(func.avg(Task.execution_time_ms))
-        .filter(Task.status == "completed")
+        .filter(Task.status == "completed", Task.user_id == current_user.user_id)
     ) or 0
     
     # 3. Agent performance
@@ -191,7 +200,7 @@ async def get_metrics(
         select(Agent.name, func.count(Task.task_id))
         .select_from(Agent)
         .join(Task, Agent.agent_id == Task.agent_id)
-        .filter(Task.status == "completed")
+        .filter(Task.status == "completed", Task.user_id == current_user.user_id)
         .group_by(Agent.name)
         .order_by(func.count(Task.task_id).desc())
         .limit(5)
@@ -221,20 +230,20 @@ async def get_fleet_health(
     """
     Returns agent state distribution for fleet health donut chart.
     """
-    total = await db.scalar(select(func.count(Agent.agent_id))) or 0
+    total = await db.scalar(select(func.count(Agent.agent_id)).filter(Agent.owner_id == current_user.user_id)) or 0
     
     # Count agents by status
     running = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "running")
+        select(func.count(Agent.agent_id)).filter(Agent.status == "running", Agent.owner_id == current_user.user_id)
     ) or 0
     idle = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "idle")
+        select(func.count(Agent.agent_id)).filter(Agent.status == "idle", Agent.owner_id == current_user.user_id)
     ) or 0
     cooldown = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "cooldown")
+        select(func.count(Agent.agent_id)).filter(Agent.status == "cooldown", Agent.owner_id == current_user.user_id)
     ) or 0
     offline = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "offline")
+        select(func.count(Agent.agent_id)).filter(Agent.status == "offline", Agent.owner_id == current_user.user_id)
     ) or 0
     
     # Agents with other/unknown statuses count as idle

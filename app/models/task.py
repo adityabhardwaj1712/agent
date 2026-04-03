@@ -20,6 +20,7 @@ class Task(Base):
     output_data = Column(Text, nullable=True)
     cost = Column(sa.Float, default=0.0)
     model_used = Column(String, nullable=True)
+    org_id = Column(sa.String, server_default='default', index=True, nullable=False)
 
     # --- Productivity Fields ---
     task_hash = Column(String, index=True, nullable=True)       # MD5 of payload+agent for deduplication

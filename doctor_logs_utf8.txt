@@ -1,0 +1,152 @@
+﻿doctor-1  | Starting AgentCloud Initialization...
+doctor-1  | Checking for JWT RSA keys...
+doctor-1  | RSA keys already exist. Skipping generation.
+doctor-1  | Initialization complete. Executing: python scripts/doctor.py --fix
+doctor-1  | /usr/local/lib/python3.11/site-packages/pydantic/_internal/_fields.py:151: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+doctor-1  | 
+doctor-1  | You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+doctor-1  |   warnings.warn(
+doctor-1  | /usr/local/lib/python3.11/site-packages/pydantic/_internal/_fields.py:151: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+doctor-1  | 
+doctor-1  | You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+doctor-1  |   warnings.warn(
+doctor-1  | 
+doctor-1  | [96m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+doctor-1  | [96m[1m  AgentCloud Doctor ΓÇö Full System Diagnostic[0m
+doctor-1  | [96m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+doctor-1  | 
+doctor-1  |   Target API: http://api:8000
+doctor-1  |   Auto-fix:   ON
+doctor-1  |   Started:    2026-04-03T08:22:29.680637
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 1. Infrastructure ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô API Basic Health (32ms)[0m
+doctor-1  |   [92mΓ£ô API Readiness (DB+Redis) (26ms)[0m
+doctor-1  |   [92mΓ£ô PostgreSQL Connection (7ms)[0m
+doctor-1  |   [92mΓ£ô Redis Connection (3ms)[0m
+doctor-1  |   [92mΓ£ô Prometheus Metrics (13ms)[0m
+doctor-1  |   [93mΓÜá Docker Check: docker not available: [Errno 2] No such file or directory: 'docker'[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 2. Authentication & User Management ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô User Registration (365ms)[0m
+doctor-1  |   [92mΓ£ô User Login (JWT) (784ms)[0m
+doctor-1  |   [92mΓ£ô Authenticated Endpoint (/agents/my) (467ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 3. Agent Management ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Create Agent (199ms)[0m
+doctor-1  |   [92mΓ£ô List Agents (1 found) (47ms)[0m
+doctor-1  |   [92mΓ£ô Get Agent by ID (64ms)[0m
+doctor-1  |   [92mΓ£ô Update Agent (55ms)[0m
+doctor-1  |   [92mΓ£ô Agent Metrics (30ms)[0m
+doctor-1  |   [92mΓ£ô Agent Task History (33ms)[0m
+doctor-1  |   [92mΓ£ô Builtin Templates (0 found) (16ms)[0m
+doctor-1  |   [92mΓ£ô Agent Leaderboard (10 agents) (31ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 4. Analytics & Observability ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Analytics Metrics (46ms)[0m
+doctor-1  |   [92mΓ£ô Analytics Summary (Dashboard) (52ms)[0m
+doctor-1  |   [91mΓ£ù Traces List: HTTP 500: {'message': "Internal Error: name 'Task' is not defined", 'path': '/v1/traces/'}[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 5. Marketplace ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô List Templates (12ms)[0m
+doctor-1  |   [92mΓ£ô Featured Agents (38ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 6. Billing & Subscriptions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Subscription Info (57ms)[0m
+doctor-1  |   [92mΓ£ô Usage Report (71ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 7. Workflows & Goals ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Workflows List & Run (75ms)[0m
+doctor-1  |   [92mΓ£ô List Goals (226ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 8. Human-in-the-Loop Approvals ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô List Approvals (160ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 9. Dynamic Tool / Plugin System ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô List Tools (4 found) (9ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 10. Admin & Audit ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Audit Logs (68ms)[0m
+doctor-1  |   [92mΓ£ô Admin Circuits (28ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 13. Security Features ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Guardian Validate (safe=True) (10ms)[0m
+doctor-1  |   [92mΓ£ô Guardian Blocks Malicious Input (9ms)[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 11. Codebase Health ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Python Syntax (132 files)[0m
+doctor-1  | [32m2026-04-03 08:22:39[0m | [1mINFO    [0m | [36mapp.core.logging_config[0m:[36msetup_logging[0m:[36m78[0m | [1mLogging configured with level: INFO[0m
+doctor-1  | 
+doctor-1  | ========================================
+doctor-1  | AgentCloud System Context
+doctor-1  | ----------------------------------------
+doctor-1  | Deployment Mode : local
+doctor-1  | Region          : us-east-1
+doctor-1  | Database        : db:5432/agentcloud
+doctor-1  | Redis           : redis://localhost:6379/0
+doctor-1  | CORS Origins    : http://localhost:3000,http://frontend:3000
+doctor-1  | ========================================
+doctor-1  | 
+doctor-1  |   [Environment WARNING] No real AI API keys detected. Agent reasoning will fail.
+doctor-1  |   [Environment WARNING] SERPER_API_KEY missing. Web search tools will be disabled.
+doctor-1  |   [Environment WARNING] E2B_API_KEY missing. Cloud Python code execution will be disabled.
+doctor-1  | Γ£ô AgentCloud Environment Validation Passed
+doctor-1  |   [92mΓ£ô Import: FastAPI App[0m
+doctor-1  |   [92mΓ£ô Import: API Router[0m
+doctor-1  |   [92mΓ£ô Import: Database Module[0m
+doctor-1  |   [92mΓ£ô Import: Agent Model[0m
+doctor-1  |   [92mΓ£ô Import: User Model[0m
+doctor-1  |   [92mΓ£ô Import: Agent Service[0m
+doctor-1  |   [92mΓ£ô Import: Task Service[0m
+doctor-1  |   [92mΓ£ô Import: Trace Service[0m
+doctor-1  |   [92mΓ£ô .env Required Vars[0m
+doctor-1  |   [92mΓ£ô API Keys Configured[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ 12. Database Tables ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  |   [92mΓ£ô Table: users[0m
+doctor-1  |   [92mΓ£ô Table: agents[0m
+doctor-1  |   [92mΓ£ô Table: tasks[0m
+doctor-1  |   [92mΓ£ô Table: tools[0m
+doctor-1  |   [92mΓ£ô Table: audit_logs[0m
+doctor-1  |   [92mΓ£ô Extra Tables (18)[0m
+doctor-1  |   [92mΓ£ô Rows in 'agents': 44[0m
+doctor-1  |   [92mΓ£ô Rows in 'users': 3[0m
+doctor-1  |   [92mΓ£ô Rows in 'tasks': 1[0m
+doctor-1  | 
+doctor-1  | [94m[1mΓöÇΓöÇ AUTO-FIX: Attempting to resolve issues ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+doctor-1  | 
+doctor-1  | [96m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+doctor-1  | [96m[1m  Diagnostic Complete[0m
+doctor-1  | [96m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+doctor-1  | 
+doctor-1  |   [92mPassed: 50[0m
+doctor-1  |   [91mFailed: 1[0m
+doctor-1  |   [93mWarnings: 1[0m
+doctor-1  |   [1mScore: 96%[0m
+doctor-1  | 
+doctor-1  |   Report saved to: /app/doctor_report.md
+doctor-1  | 
+doctor-1  | Exception terminating connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7e8e2ecd9c60>>
+doctor-1  | Traceback (most recent call last):
+doctor-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 374, in _close_connection
+doctor-1  |     self._dialect.do_terminate(connection)
+doctor-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 1105, in do_terminate
+doctor-1  |     dbapi_connection.terminate()
+doctor-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 898, in terminate
+doctor-1  |     self._connection.terminate()
+doctor-1  |   File "/usr/local/lib/python3.11/site-packages/asyncpg/connection.py", line 1478, in terminate
+doctor-1  |     self._abort()
+doctor-1  |   File "/usr/local/lib/python3.11/site-packages/asyncpg/connection.py", line 1505, in _abort
+doctor-1  |     self._protocol.abort()
+doctor-1  |   File "asyncpg/protocol/protocol.pyx", line 607, in asyncpg.protocol.protocol.BaseProtocol.abort
+doctor-1  |   File "/usr/local/lib/python3.11/asyncio/selector_events.py", line 825, in abort
+doctor-1  |     self._force_close(None)
+doctor-1  |   File "/usr/local/lib/python3.11/asyncio/selector_events.py", line 895, in _force_close
+doctor-1  |     self._loop.call_soon(self._call_connection_lost, exc)
+doctor-1  |   File "/usr/local/lib/python3.11/asyncio/base_events.py", line 762, in call_soon
+doctor-1  |     self._check_closed()
+doctor-1  |   File "/usr/local/lib/python3.11/asyncio/base_events.py", line 520, in _check_closed
+doctor-1  |     raise RuntimeError('Event loop is closed')
+doctor-1  | RuntimeError: Event loop is closed
+doctor-1  | The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7e8e2ecd9c60>>, which will be terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+doctor-1  | sys:1: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <asyncpg.connection.Connection object at 0x7e8e2ecd9c60>>, which will be terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.

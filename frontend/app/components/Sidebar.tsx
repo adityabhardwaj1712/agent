@@ -28,6 +28,9 @@ const NAV_ITEMS = [
   { section: 'Security & Intel' },
   { id: 'memory',     icon: '🧠', label: 'Vector Memory' },
   { id: 'knowledge',  icon: '📚', label: 'Knowledge Hub' },
+  { id: 'audit',      icon: '🛡️', label: 'Admin Audit' },
+  { id: 'marketplace',icon: '🛒', label: 'Marketplace' },
+  { id: 'protocol',   icon: '🔌', label: 'Global Tools' },
   { id: 'settings',   icon: '⚙', label: 'System Control' },
 ];
 

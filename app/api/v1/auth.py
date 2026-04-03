@@ -2,8 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from ...core.auth_service import create_user_token, create_refresh_token, verify_token
+from ...core.security import get_password_hash, verify_password
 from ...db.redis_client import get_async_redis_client
 import time
+import datetime
+from typing import Optional
 
 import uuid
 
@@ -76,3 +79,37 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+
+@router.patch("/me", response_model=UserResponse)
+async def update_profile(
+    updates: ProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if updates.name is not None:
+        current_user.name = updates.name
+        current_user.updated_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.post("/change-password")
+async def change_password(
+    req: ChangePassword,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(req.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    current_user.hashed_password = get_password_hash(req.new_password)
+    await db.commit()
+    return {"message": "Password updated successfully"}

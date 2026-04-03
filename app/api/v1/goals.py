@@ -59,7 +59,7 @@ async def list_goals(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Goal).order_by(Goal.created_at.desc()))
+    result = await db.execute(select(Goal).filter(Goal.user_id == current_user.user_id).order_by(Goal.created_at.desc()))
     return result.scalars().all()
 
 @router.get("/{goal_id}", response_model=GoalResponse)
@@ -68,7 +68,7 @@ async def get_goal(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Goal).filter(Goal.goal_id == goal_id))
+    result = await db.execute(select(Goal).filter(Goal.goal_id == goal_id, Goal.user_id == current_user.user_id))
     goal = result.scalars().first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")

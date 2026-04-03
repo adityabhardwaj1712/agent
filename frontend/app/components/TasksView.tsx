@@ -37,6 +37,14 @@ export default function TasksView() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState('All');
 
+  const cancelTask = async (id: string, e: any) => {
+    e.stopPropagation();
+    try {
+      await apiFetch(`/tasks/${id}/cancel`, { method: 'POST' });
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'failed' } : t)); // using failed or cancelled style
+    } catch {}
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -133,8 +141,7 @@ export default function TasksView() {
                 <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{t.duration}</td>
                 <td><span className={prioCls(t.priority)}>{t.priority.toUpperCase()}</span></td>
                 <td>
-                  {t.status === 'running' && <button className="btn btn-ghost btn-sm btn-icon" title="Pause">⏸</button>}
-                  {(t.status === 'failed' || t.status === 'queued') && <button className="btn btn-ghost btn-sm btn-icon" title="Start">▷</button>}
+                  {(t.status === 'running' || t.status === 'queued') && <button className="btn btn-ghost btn-sm btn-icon" title="Cancel Task" onClick={(e) => cancelTask(t.id, e)}>⏹</button>}
                   {t.status === 'failed' && <button className="btn btn-ghost btn-sm btn-icon" title="Retry">↻</button>}
                 </td>
               </tr>

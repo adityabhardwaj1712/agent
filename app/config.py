@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
+
+    @field_validator("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY", "GROQ_API_KEY", mode="before")
+    @classmethod
+    def clear_placeholders(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        if "xxx" in v.lower() or "placeholder" in v.lower() or "sk-proj-***" in v:
+            return None
+        return v
     
     # Legacy / Compatibility
     AGENT_PRIVATE_KEY: Optional[str] = None

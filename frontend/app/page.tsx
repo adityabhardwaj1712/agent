@@ -19,12 +19,14 @@ const ObservabilityView = dynamic(() => import('./components/ObservabilityView')
 const WorkflowsView = dynamic(() => import('./components/WorkflowsView'));
 const AnalyticsDashboard = dynamic(() => import('./components/AnalyticsDashboard'));
 const TracesViewClean = dynamic(() => import('./components/TracesViewClean'));
-const SettingsViewClean = dynamic(() => import('./components/SettingsViewClean'));
+const SettingsView = dynamic(() => import('./components/SettingsView'));
 
-// ── Power Features (RAM Sensitive) ──
 const AutonomousView = dynamic(() => import('./components/AutonomousView'));
 const KnowledgeHub = dynamic(() => import('./components/KnowledgeHub'));
 const BillingView = dynamic(() => import('./components/BillingView'));
+const MarketplaceView = dynamic(() => import('./components/MarketplaceView'));
+const AuditView = dynamic(() => import('./components/AuditView'));
+const ProtocolView = dynamic(() => import('./components/ProtocolView'));
 
 /* ═══════════════════════════════════════════════════
    LIVE TICKER
@@ -225,7 +227,10 @@ export default function Home() {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [stats, setStats] = useState<any>({ active_events: 0, total_cost: 0, active_agents: 0 });
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifs, setShowNotifs] = useState(false);
   const { showToast, ToastContainer } = useToastSystem();
 
   const handleAdded = () => {
@@ -237,8 +242,14 @@ export default function Home() {
   const fetchGlobalStats = useCallback(async () => {
     if (!getToken()) return;
     try {
+      const authData = await apiFetch<any>('/auth/me');
+      if (authData) setCurrentUser(authData);
+      
       const data = await apiFetch<any>('/analytics/summary');
       if (data) setStats((prev: any) => ({ ...prev, ...data }));
+
+      const notifs = await apiFetch<any[]>('/notifications/');
+      if (notifs) setNotifications(notifs);
     } catch {}
   }, []);
 
@@ -287,8 +298,39 @@ export default function Home() {
               SIGNAL: {stats.active_events > 15 ? 'HIGH_INTENSITY' : 'OPTIMAL'}
             </div>
             <div className="icon-btn" onClick={refreshData} title="RE_SCAN">↺</div>
-            <div className="icon-btn notif-badge" title="ALERTS">🔔</div>
-            <div className="avatar" style={{ border: '1px solid var(--cyan)', boxShadow: 'var(--glow)' }} onClick={() => setIsTaskModalOpen(true)}>+</div>
+            <div style={{ position: 'relative' }}>
+                <div className="icon-btn notif-badge" title="ALERTS" onClick={() => setShowNotifs(!showNotifs)}>
+                    🔔
+                    {notifications.filter(n => !n.is_read).length > 0 && <span className="notif-count" style={{ position: 'absolute', top: -5, right: -5, background: 'var(--red)', color: 'white', fontSize: '9px', padding: '2px 5px', borderRadius: '10px', pointerEvents: 'none' }}>{notifications.filter(n => !n.is_read).length}</span>}
+                </div>
+                {showNotifs && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, width: 300, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, zIndex: 100, boxShadow: 'var(--glow-lg)', maxHeight: 400, overflowY: 'auto' }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                           SYSTEM ALERTS
+                           <button onClick={(e) => {
+                               e.stopPropagation();
+                               apiFetch('/notifications/read-all', { method: 'POST' }).then(() => fetchGlobalStats());
+                           }} style={{ color: 'var(--cyan)' }}>Mark All Read</button>
+                        </div>
+                        {notifications.length === 0 ? (
+                            <div style={{ fontSize: 10, color: 'var(--t3)', textAlign: 'center', padding: 20 }}>NO_ALERTS_DETECTED</div>
+                        ) : (
+                            notifications.map(n => (
+                                <div key={n.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--bg3)', opacity: n.is_read ? 0.6 : 1, cursor: 'pointer' }} onClick={() => {
+                                    apiFetch(`/notifications/${n.id}/read`, { method: 'PATCH' }).then(() => fetchGlobalStats());
+                                }}>
+                                    <div style={{ fontSize: 10, fontWeight: 800, color: n.type === 'error' ? 'var(--red)' : n.type === 'success' ? 'var(--green)' : 'var(--blue)' }}>{n.title.toUpperCase()}</div>
+                                    <div style={{ fontSize: 11, color: 'var(--text)', marginTop: 4 }}>{n.message}</div>
+                                    <div style={{ fontSize: 9, color: 'var(--t3)', marginTop: 4 }}>{new Date(n.created_at).toLocaleString()}</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+            <div className="avatar" style={{ border: '1px solid var(--cyan)', boxShadow: 'var(--glow)', cursor: 'pointer' }} onClick={() => setActiveView('settings')}>
+              {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+            </div>
           </div>
         </header>
 
@@ -300,7 +342,11 @@ export default function Home() {
           {activeView === 'workflows' && <WorkflowsView />}
           {activeView === 'analytics' && <AnalyticsDashboard />}
           {activeView === 'traces' && <TracesViewClean />}
-          {activeView === 'settings' && <SettingsViewClean />}
+          {activeView === 'knowledge' && <KnowledgeHub />}
+          {activeView === 'marketplace' && <MarketplaceView />}
+          {activeView === 'audit' && <AuditView />}
+          {activeView === 'protocol' && <ProtocolView />}
+          {activeView === 'settings' && <SettingsView />}
         </div>
       </main>
 

@@ -13,7 +13,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    role = Column(String, default="ANALYST") # ADMIN, ORCHESTRATOR, ANALYST, VIEWER
+    role = Column(String, default="ADMIN") # ADMIN, ORCHESTRATOR, ANALYST, VIEWER
+    org_id = Column(String, server_default='default', index=True, nullable=False)
     
     # Billing
     stripe_customer_id = Column(String, unique=True, index=True)

@@ -4,6 +4,7 @@ from sqlalchemy import select
 from typing import List
 from ...db.database import get_db
 from ...models.approval import ApprovalRequest
+from ...models.task import Task
 from ..deps import get_current_user
 from ...models.user import User
 from pydantic import BaseModel
@@ -28,7 +29,7 @@ async def list_approvals(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(ApprovalRequest).order_by(ApprovalRequest.created_at.desc()))
+    result = await db.execute(select(ApprovalRequest).join(Task, ApprovalRequest.task_id == Task.task_id).filter(Task.user_id == current_user.user_id).order_by(ApprovalRequest.created_at.desc()))
     return result.scalars().all()
 
 @router.post("/{id}/approve")
@@ -37,7 +38,7 @@ async def approve_request(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(ApprovalRequest).filter(ApprovalRequest.request_id == id))
+    result = await db.execute(select(ApprovalRequest).join(Task, ApprovalRequest.task_id == Task.task_id).filter(ApprovalRequest.request_id == id, Task.user_id == current_user.user_id))
     request = result.scalars().first()
     if not request:
         raise HTTPException(status_code=404, detail="Approval request not found")
@@ -53,7 +54,7 @@ async def reject_request(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(ApprovalRequest).filter(ApprovalRequest.request_id == id))
+    result = await db.execute(select(ApprovalRequest).join(Task, ApprovalRequest.task_id == Task.task_id).filter(ApprovalRequest.request_id == id, Task.user_id == current_user.user_id))
     request = result.scalars().first()
     if not request:
         raise HTTPException(status_code=404, detail="Approval request not found")
