@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, BackgroundTasks
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.database import get_db
-from ..deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -23,10 +23,10 @@ async def create_chain(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from ...services.dag_engine import dag_engine
+    from app.services.dag_engine import dag_engine
     import uuid
     import json
-    from ...services.orchestrator import orchestrator
+    from app.services.orchestrator import orchestrator
     
     goal_id = str(uuid.uuid4())
     nodes = []
@@ -57,7 +57,7 @@ async def create_chain(
     async def run_dag():
         try:
             results = await dag_engine.execute_workflow(goal_id, nodes, edges, execute_step)
-            from ...db.redis_client import get_async_redis_client
+            from app.db.redis_client import get_async_redis_client
             redis = await get_async_redis_client()
             await redis.publish(f"task_updates:{current_user.user_id}", json.dumps({
                 "type": "chain_complete",

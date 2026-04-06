@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from ...db.database import get_db
-from ...services.marketplace_service import marketplace_service
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.services.marketplace_service import marketplace_service
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass
@@ -159,7 +160,7 @@ class Orchestrator:
                             if task.status == "completed":
                                 return task.result or ""
                             if task.status == "failed":
-                                raise Exception(f"Task {task_id} failed: {task.error_message}")
+                                raise Exception(f"Task {task_id} failed: {task.result}")
                 
                 await asyncio.sleep(0.1)
         finally:

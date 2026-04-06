@@ -3,14 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from pydantic import BaseModel
 import datetime
-from ...db.database import get_db
-from ...models.agent import Agent
-from ...models.task import Task
-from ...models.approval import ApprovalRequest
-from ...models.trace import Trace
+from app.db.database import get_db
+from app.models.agent import Agent
+from app.models.task import Task
+from app.models.approval import ApprovalRequest
+from app.models.trace import Trace
 
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -56,7 +56,7 @@ async def get_summary(
     # Total cost from Redis (if available)
     total_cost = 0.0
     try:
-        from ...db.redis_client import get_async_redis_client
+        from app.db.redis_client import get_async_redis_client
         import datetime as dt
         redis = await get_async_redis_client()
         period = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m")

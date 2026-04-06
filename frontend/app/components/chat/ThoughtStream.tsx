@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getToken } from '../lib/api';
+import { getToken } from '../../lib/api';
 
 /**
  * ThoughtStream Hub Component
@@ -34,7 +34,8 @@ export default function ThoughtStream({ taskId, active = true }: ThoughtStreamPr
     if (!taskId || !active) return;
 
     const token = getToken();
-    const baseUrl = (window as any).__NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || `${typeof window !== 'undefined' ? window.location.protocol : 'http:'}//${hostname}:8000`;
     const url = `${baseUrl}/v1/tasks/${taskId}/stream${token ? `?token=${token}` : ''}`;
     
     const es = new EventSource(url);

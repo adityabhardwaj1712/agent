@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from ...db.database import get_db
-from ...services import agent_service
-from ...services.nl_agent_builder import nl_agent_builder
-from ...services.auto_optimizer import auto_optimizer
-from ...schemas.agent_schema import AgentCreate, AgentResponse
+from app.db.database import get_db
+from app.services import agent_service
+from app.services.nl_agent_builder import nl_agent_builder
+from app.services.auto_optimizer import auto_optimizer
+from app.schemas.agent_schema import AgentCreate, AgentResponse
 
-from ..deps import get_current_user
-from ...models.user import User
-from ...models.task import Task
-from ...core.rbac import requires_role, Role, admin_only, orchestrator_plus
-from ...services.guardrail_service import guardrail_service
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.models.task import Task
+from app.core.rbac import requires_role, Role, admin_only, orchestrator_plus
+from app.services.guardrail_service import guardrail_service
 from sqlalchemy.future import select
 
 class NLBuilderRequest(BaseModel):
@@ -77,7 +77,7 @@ async def get_builtin_agents(db: AsyncSession = Depends(get_db)):
 
 @router.get("/templates")
 async def get_agent_templates():
-    from ...services.agent_service import BUILTIN_AGENTS
+    from app.services.agent_service import BUILTIN_AGENTS
     return BUILTIN_AGENTS
 
 @router.get("/{agent_id}/export")
@@ -127,7 +127,7 @@ async def trigger_agent_optimization(
     Manually trigger an AI optimization for an agent's prompt.
     """
     # Fetch recent history
-    from ...services import task_service
+    from app.services import task_service
     history = await task_service.list_tasks(db, user_id=current_user.user_id, limit=20)
     # Filter for this agent if needed, or pass agent_id to list_tasks if supported
     history_dicts = [{"payload": h.payload, "status": h.status} for h in history if h.agent_id == agent_id]

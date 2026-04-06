@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from ...services.playground_service import playground_service, PlaygroundSessionRequest, PlaygroundSessionResult
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.services.playground_service import playground_service, PlaygroundSessionRequest, PlaygroundSessionResult
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 

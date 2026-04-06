@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...db.database import get_db
-from ...api.deps import get_current_user
-from ...services.signal_service import signal_service
-from ...services import protocol_service
-from ...schemas.protocol_schema import ProtocolSendRequest
-from ...models.user import User
+from app.db.database import get_db
+from app.api.deps import get_current_user
+from app.services.signal_service import signal_service
+from app.services import protocol_service
+from app.schemas.protocol_schema import ProtocolSendRequest
+from app.models.user import User
 from datetime import datetime
 
 router = APIRouter()

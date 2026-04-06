@@ -1,21 +1,21 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from ...core.auth_service import create_user_token, create_refresh_token, verify_token
-from ...core.security import get_password_hash, verify_password
-from ...db.redis_client import get_async_redis_client
+from app.core.auth_service import create_user_token, create_refresh_token, verify_token
+from app.core.security import get_password_hash, verify_password
+from app.db.redis_client import get_async_redis_client
 import time
 import datetime
 from typing import Optional
 
 import uuid
 
-from ...services.user_service import user_service
-from ...schemas.user_schema import UserCreate, UserResponse, Token
-from ...db.database import get_db
+from app.services.user_service import user_service
+from app.schemas.user_schema import UserCreate, UserResponse, Token
+from app.db.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...models.user import User
-from ..deps import get_current_user, oauth2_scheme
+from app.models.user import User
+from app.api.deps import get_current_user, oauth2_scheme
 
 router = APIRouter()
 

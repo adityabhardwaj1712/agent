@@ -23,6 +23,8 @@ from .core.env_validator import validate_or_exit, print_environment_summary
 from .db.base import Base # All models must be imported BEFORE create_all
 from .db.database import engine
 
+from contextlib import asynccontextmanager
+
 # Setup logging
 logger = setup_logging()
 
@@ -30,55 +32,29 @@ logger = setup_logging()
 print_environment_summary()
 validate_or_exit()
 
-limiter = Limiter(key_func=get_remote_address)
-app = FastAPI(
-    title="AgentCloud Mission Control",
-    description="""
-    🚀 **AgentCloud Enterprise OS**
-    
-    Military-grade multi-agent orchestration platform. 
-    Built for decentralized swarm intelligence and mission-critical autonomy.
-    
-    **Core Directives:**
-    * [RBAC] Role-Based Access Control Enforced
-    * [AXON] High-Fidelity LLMOps Tracing
-    * [SWARM] Decentralized DAG Routing
-    """,
-    version="6.0.0-enterprise",
-    contact={
-        "name": "AgentCloud Command",
-        "url": "https://agentcloud.tactical",
-    },
-    license_info={
-        "name": "Proprietary Tactical License",
-    }
-)
-
 def get_columns_sync(conn, table_name):
     from sqlalchemy import inspect
     inspector = inspect(conn)
     return [c['name'] for c in inspector.get_columns(table_name)]
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ── STARTUP ──
     # 0. Ensure tables exist (Migration logic)
     try:
         from sqlalchemy import text
         async with engine.begin() as conn:
-            # Enable vector extension first
             try:
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
                 logger.info("pgvector extension: AVAILABLE")
             except Exception as vec_error:
                 logger.warning(f"pgvector extension not available: {vec_error}")
             
-            # Import all models via the root __init__ to register them with metadata
             import app.models  # noqa
             await conn.run_sync(Base.metadata.create_all)
             
         # 1. Granular Self-Healing Migrations (Inspector-Based)
         async with engine.connect() as conn:
-            # Multi-Tenancy (org_id)
             tables = [
                 "users", "agents", "tasks", "goals", "traces", "approval_requests", 
                 "audit_logs", "events", "tools", "memories", "notifications",
@@ -96,7 +72,6 @@ async def startup_event():
                 except Exception as e:
                     logger.debug(f"Skipping org_id for {table}: {e}")
             
-            # -- Users --
             user_cols = {
                 "role": "VARCHAR DEFAULT 'ADMIN'", 
                 "stripe_customer_id": "VARCHAR", 
@@ -113,7 +88,6 @@ async def startup_event():
                 except Exception as e:
                     logger.warning(f"Failed to add users.{col}: {e}")
 
-            # -- Agents --
             agent_cols = {
                 "reputation_score": "DOUBLE PRECISION DEFAULT 50.0", 
                 "total_tasks": "INTEGER DEFAULT 0", 
@@ -138,7 +112,6 @@ async def startup_event():
                 except Exception as e:
                     logger.warning(f"Failed to add agents.{col}: {e}")
 
-            # -- Tasks --
             task_cols = {
                 "retry_count": "INTEGER DEFAULT 0", 
                 "max_retries": "INTEGER DEFAULT 3", 
@@ -153,7 +126,7 @@ async def startup_event():
                 "output_data": "TEXT", 
                 "cost": "DOUBLE PRECISION DEFAULT 0.0", 
                 "parent_task_id": "VARCHAR",
-                "org_id": "VARCHAR DEFAULT 'default' NOT NULL" # Explicitly ensure it's here
+                "org_id": "VARCHAR DEFAULT 'default' NOT NULL"
             }
             for col, spec in task_cols.items():
                 try:
@@ -165,7 +138,6 @@ async def startup_event():
                 except Exception as e:
                     logger.warning(f"Failed to add tasks.{col}: {e}")
 
-            # -- Goals --
             goal_cols = {
                 "workflow_type": "VARCHAR DEFAULT 'linear'", 
                 "workflow_json": "TEXT", 
@@ -182,7 +154,6 @@ async def startup_event():
                 except Exception as e:
                     logger.warning(f"Failed to add goals.{col}: {e}")
 
-            # -- Traces --
             trace_cols = {
                 "tokens_prompt": "INTEGER DEFAULT 0", 
                 "tokens_completion": "INTEGER DEFAULT 0", 
@@ -201,7 +172,6 @@ async def startup_event():
         logger.info("🛡️ System Schema Hardening: ENABLED")
     except Exception as e:
         logger.error(f"CRITICAL: Schema Sync Failed: {e}")
-        pass 
 
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
@@ -212,11 +182,9 @@ async def startup_event():
     import uuid
     from sqlalchemy import select
     
-    # Auto-seed core multi-agent registry via standardized service
     try:
         from .services.agent_service import seed_system_agents
         async with AsyncSessionLocal() as session:
-            # Check for existing system user or create one
             user_res = await session.execute(select(User).filter(User.user_id == "system_default"))
             user = user_res.scalar_one_or_none()
             if not user:
@@ -230,7 +198,6 @@ async def startup_event():
                 session.add(user)
                 await session.commit()
             
-            # Seed the 42-agent roster
             await seed_system_agents(session, "system_default")
             logger.info("AgentCloud Registry Sync: OK")
     except Exception as e:
@@ -241,6 +208,38 @@ async def startup_event():
     await supervisor_service.start()
     
     logger.info("AgentCloud Services Initialized Successfully [ARQ DISPATCH MODE]")
+    
+    yield  # ── APP RUNS HERE ──
+    
+    # ── SHUTDOWN ──
+    logger.info("AgentCloud shutting down...")
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(
+    title="AgentCloud Mission Control",
+    description="""
+    🚀 **AgentCloud Enterprise OS**
+    
+    Military-grade multi-agent orchestration platform. 
+    Built for decentralized swarm intelligence and mission-critical autonomy.
+    
+    **Core Directives:**
+    * [RBAC] Role-Based Access Control Enforced
+    * [AXON] High-Fidelity LLMOps Tracing
+    * [SWARM] Decentralized DAG Routing
+    """,
+    version="6.0.0-enterprise",
+    lifespan=lifespan,
+    contact={
+        "name": "AgentCloud Command",
+        "url": "https://agentcloud.tactical",
+    },
+    license_info={
+        "name": "Proprietary Tactical License",
+    }
+)
+
+
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

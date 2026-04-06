@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from ...db.database import get_db
-from ...services import memory_service
-from ...schemas.memory_schema import MemoryCreate, MemoryResponse
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.services import memory_service
+from app.schemas.memory_schema import MemoryCreate, MemoryResponse
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 

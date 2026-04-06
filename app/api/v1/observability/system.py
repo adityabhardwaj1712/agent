@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 import random
 import time
-from ...db.database import get_db
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -60,7 +60,7 @@ async def get_system_health(
 
     redis_status = "nominal"
     try:
-        from ...db.redis_client import get_async_redis_client
+        from app.db.redis_client import get_async_redis_client
         redis = await get_async_redis_client()
         await redis.ping()
     except:

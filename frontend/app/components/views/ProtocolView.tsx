@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import { apiFetch } from '../../lib/api';
-import CollaborationGraph from './CollaborationGraph';
+import CollaborationGraph from '../visualizations/CollaborationGraph';
 
 
 const AGENTS = ['TaskOrchestrator', 'WebResearcher', 'DataAnalyst', 'CodeHelper', 'ContentWriter', 'SecurityGuardian', 'FleetSummarizer'];

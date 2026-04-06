@@ -4,10 +4,10 @@ from typing import List, Optional
 from pydantic import BaseModel
 import datetime
 
-from ...db.database import get_db
-from ..deps import get_current_user
-from ...models.user import User
-from ...services.api_key_service import api_key_service
+from app.db.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.services.api_key_service import api_key_service
 
 router = APIRouter()
 

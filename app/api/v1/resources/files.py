@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import uuid
 import os
-from ...db.database import get_db
-from ...services import memory_service
-from ...api.deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.services import memory_service
+from app.api.deps import get_current_user
+from app.models.user import User
 from loguru import logger
 
 router = APIRouter()
@@ -75,7 +75,7 @@ async def upload_file(
                 start += (chunk_size - overlap)
         
         # 3. Vector Storage via Memory Service
-        from ...schemas.memory_schema import MemoryCreate
+        from app.schemas.memory_schema import MemoryCreate
         for i, chunk in enumerate(chunks):
             await memory_service.write_memory(
                 db, 

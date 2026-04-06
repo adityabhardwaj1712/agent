@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from ...db.database import get_db
-from ...services import task_service
-from ...schemas.task_schema import TaskCreate, TaskResponse, TaskStatusResponse, GoalCreate, GoalResponse
-from ..deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.services import task_service
+from app.schemas.task_schema import TaskCreate, TaskResponse, TaskStatusResponse, GoalCreate, GoalResponse
+from app.api.deps import get_current_user
+from app.models.user import User
 import asyncio
 
 router = APIRouter()
@@ -25,7 +25,7 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from ...services.event_bus import event_bus
+    from app.services.event_bus import event_bus
     result = await task_service.send_task(db, task, user_id=current_user.user_id)
     await event_bus.publish("task_created", {"type": "task", "task_id": result.task_id})
     return result
@@ -56,7 +56,7 @@ async def stream_task_output(
     current_user: User = Depends(get_current_user)
 ):
     from fastapi.responses import StreamingResponse
-    from ...db.redis_client import get_async_redis_client
+    from app.db.redis_client import get_async_redis_client
     import json
     
     redis = await get_async_redis_client()
@@ -114,8 +114,8 @@ async def analyze_task_failure(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from ...services.trace_service import get_traces_for_task
-    from ...services.model_router import select_model, call_provider
+    from app.services.trace_service import get_traces_for_task
+    from app.services.model_router import select_model, call_provider
     import json
     
     task_status = await task_service.get_task_status(db, task_id, user_id=current_user.user_id)

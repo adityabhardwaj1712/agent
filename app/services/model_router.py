@@ -20,13 +20,13 @@ class ModelChoice:
 # Ordered fallback chains per use-case
 _FALLBACK_CHAINS: dict[str, list[ModelChoice]] = {
     "code": [
-        ModelChoice("claude-sonnet-4-5", "best-in-class coding", "Anthropic"),
+        ModelChoice("claude-sonnet-4-6", "best-in-class coding", "Anthropic"),
         ModelChoice("gpt-4o", "strong code fallback", "OpenAI"),
         ModelChoice("gemini-2.0-flash", "gemini code fallback", "Google"),
     ],
     "analysis": [
         ModelChoice("gpt-4o", "deep analytical reasoning", "OpenAI"),
-        ModelChoice("claude-sonnet-4-5", "anthropic analysis fallback", "Anthropic"),
+        ModelChoice("claude-sonnet-4-6", "anthropic analysis fallback", "Anthropic"),
     ],
     "vision": [
         ModelChoice("gemini-2.0-flash-exp", "multimodal leader", "Google"),
@@ -37,7 +37,7 @@ _FALLBACK_CHAINS: dict[str, list[ModelChoice]] = {
         ModelChoice("claude-haiku-4-5-20251001", "anthropic cheap fallback", "Anthropic"),
     ],
     "productivity": [
-        ModelChoice("claude-sonnet-4-5", "peak developer performance", "Anthropic"),
+        ModelChoice("claude-sonnet-4-6", "peak developer performance", "Anthropic"),
         ModelChoice("gpt-4o", "openai dev fallback", "OpenAI"),
     ],
     "default": [
@@ -46,7 +46,7 @@ _FALLBACK_CHAINS: dict[str, list[ModelChoice]] = {
     ],
     "autonomous": [
         ModelChoice("llama3-70b-8192", "high-speed autonomous planning", "Groq"),
-        ModelChoice("claude-sonnet-4-5", "complex autonomous fallback", "Anthropic"),
+        ModelChoice("claude-sonnet-4-6", "complex autonomous fallback", "Anthropic"),
         ModelChoice("gpt-4o", "openai complex fallback", "OpenAI"),
     ]
 }

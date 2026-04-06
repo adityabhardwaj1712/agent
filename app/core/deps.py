@@ -22,7 +22,7 @@ async def get_current_user(
     if credentials and credentials.credentials:
         payload = verify_token(credentials.credentials)
         if payload and isinstance(payload, dict):
-            user_id = payload.get("user")
+            user_id = payload.get("sub")
             if user_id:
                 result = await db.execute(select(User).filter(User.user_id == user_id))
                 user = result.scalars().first()
@@ -55,7 +55,7 @@ async def get_current_agent(
     if not payload or not isinstance(payload, dict):
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    agent_id = payload.get("agent")
+    agent_id = payload.get("sub")
     if not agent_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
 

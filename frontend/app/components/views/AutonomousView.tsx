@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiFetch, wsUrl } from '../../lib/api';
-import WorkflowGraph from './WorkflowGraph';
+import WorkflowGraph from '../visualizations/WorkflowGraph';
 import { 
   Play, 
   Rocket, 
@@ -16,7 +16,7 @@ import {
   Cpu,
   MoreHorizontal
 } from 'lucide-react';
-import ThoughtStream from './ThoughtStream';
+import ThoughtStream from '../chat/ThoughtStream';
 
 interface Goal {
   goal_id: string;

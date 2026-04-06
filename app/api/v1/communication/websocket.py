@@ -2,9 +2,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 import asyncio
 import json
 from loguru import logger
-from ...db.redis_client import get_async_redis_client
-from ...services.signal_service import signal_service
-from ...core.auth_service import verify_token
+from app.db.redis_client import get_async_redis_client
+from app.services.signal_service import signal_service
+from app.core.auth_service import verify_token
 
 
 router = APIRouter()

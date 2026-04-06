@@ -3,8 +3,8 @@ from typing import Optional
 import json
 import logging
 from pydantic import BaseModel
-from ...config import settings
-from ...services.webhook_service import webhook_service
+from app.config import settings
+from app.services.webhook_service import webhook_service
 
 class OutboundWebhookRequest(BaseModel):
     url: str

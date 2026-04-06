@@ -5,11 +5,11 @@ from typing import Optional, List
 import json
 import asyncio
 
-from ..deps import get_current_user
-from ...models.user import User
-from ...services.model_router import select_model, call_provider
-from ...services import memory_service
-from ...db.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.services.model_router import select_model, call_provider
+from app.services import memory_service
+from app.db.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
@@ -97,7 +97,7 @@ async def copilot_chat(
     Streaming chat endpoint for the Copilot.
     """
     async def chat_generator():
-        from ...core.llm import llm_service
+        from app.core.llm import llm_service
         
         # 1. RAG Enrichment
         user_query = request.messages[-1].content if request.messages else ""

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch, wsUrl } from '../lib/api';
+import { apiFetch, wsUrl } from '../../lib/api';
 
 interface Node {
   id: string;
@@ -21,7 +21,7 @@ export default function CollaborationGraph() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number>(null);
+  const requestRef = useRef<number | null>(null);
 
   useEffect(() => {
     fetchData();

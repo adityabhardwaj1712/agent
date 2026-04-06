@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 import json
 import uuid
-from ...db.database import get_db
-from ...models.workflow import WorkflowDefinition
-from ...models.goal import Goal
-from ...api.deps import get_current_user
-from ...models.user import User
-from ...services.autonomous_orchestrator import autonomous_orchestrator
+from app.db.database import get_db
+from app.models.workflow import WorkflowDefinition
+from app.models.goal import Goal
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.services.autonomous_orchestrator import autonomous_orchestrator
 from pydantic import BaseModel
 from typing import List, Any, Optional
 

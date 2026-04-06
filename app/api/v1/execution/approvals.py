@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
-from ...db.database import get_db
-from ...models.approval import ApprovalRequest
-from ...models.task import Task
-from ..deps import get_current_user
-from ...models.user import User
+from app.db.database import get_db
+from app.models.approval import ApprovalRequest
+from app.models.task import Task
+from app.api.deps import get_current_user
+from app.models.user import User
 from pydantic import BaseModel
 import datetime
 
