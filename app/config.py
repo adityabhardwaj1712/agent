@@ -7,6 +7,15 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/agentcloud"
     REDIS_URL: str = "redis://redis:6379/0"
     SECRET_KEY: str = "secret-key-change-me"
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters for secure signing.")
+        if "change-me" in v.lower():
+            raise ValueError("SECRET_KEY contains the 'change-me' placeholder. Please provide a real secret.")
+        return v
     
     JWT_ALGORITHM: str = "RS256"
     

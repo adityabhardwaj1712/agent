@@ -1,32 +1,34 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar from './components/layout/Sidebar';
+import AddAgentModal from './components/modals/AddAgentModal';
+import AddTaskModal from './components/modals/AddTaskModal';
 import { apiFetch, getToken } from './lib/api';
 import { usePolling } from './lib/usePolling';
 
 import dynamic from 'next/dynamic';
 
 // ── Critical Shared Views (Fast Load) ──
-import DashboardView from './components/DashboardView';
-import FleetView from './components/FleetView';
-import TasksView from './components/TasksView';
+import DashboardView from './components/dashboard/DashboardView';
+import FleetView from './components/views/FleetView';
+import TasksView from './components/views/TasksView';
 
 // ── Heavy Modules (Lazy Loaded/RAM Optimized) ──
-const ObservabilityView = dynamic(() => import('./components/ObservabilityView'), { 
+const ObservabilityView = dynamic(() => import('./components/views/ObservabilityView'), { 
   loading: () => <div className="ms-loader-ring" style={{ margin: '100px auto' }} />
 });
-const WorkflowsView = dynamic(() => import('./components/WorkflowsView'));
-const AnalyticsDashboard = dynamic(() => import('./components/AnalyticsDashboard'));
-const TracesViewClean = dynamic(() => import('./components/TracesViewClean'));
-const SettingsView = dynamic(() => import('./components/SettingsView'));
+const WorkflowsView = dynamic(() => import('./components/views/WorkflowsView'));
+const AnalyticsDashboard = dynamic(() => import('./components/dashboard/AnalyticsDashboard'));
+const TracesViewClean = dynamic(() => import('./components/views/TracesViewClean'));
+const SettingsView = dynamic(() => import('./components/views/SettingsView'));
 
-const AutonomousView = dynamic(() => import('./components/AutonomousView'));
-const KnowledgeHub = dynamic(() => import('./components/KnowledgeHub'));
-const BillingView = dynamic(() => import('./components/BillingView'));
-const MarketplaceView = dynamic(() => import('./components/MarketplaceView'));
-const AuditView = dynamic(() => import('./components/AuditView'));
-const ProtocolView = dynamic(() => import('./components/ProtocolView'));
+const AutonomousView = dynamic(() => import('./components/views/AutonomousView'));
+const KnowledgeHub = dynamic(() => import('./components/views/KnowledgeHub'));
+const BillingView = dynamic(() => import('./components/views/BillingView'));
+const MarketplaceView = dynamic(() => import('./components/views/MarketplaceView'));
+const AuditView = dynamic(() => import('./components/views/AuditView'));
+const ProtocolView = dynamic(() => import('./components/views/ProtocolView'));
 
 /* ═══════════════════════════════════════════════════
    LIVE TICKER
@@ -107,116 +109,7 @@ function useToastSystem() {
   return { showToast, ToastContainer };
 }
 
-/* ═══════════════════════════════════════════════════
-   ADD AGENT MODAL
-═══════════════════════════════════════════════════ */
-function AddAgentModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: () => void; onAdded: () => void }) {
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('Worker');
-  const [model, setModel] = useState('gemma-3-4b');
-  const [desc, setDesc] = useState('');
 
-  const deploy = async () => {
-    try {
-      await apiFetch('/agents/', {
-        method: 'POST',
-        json: { name: name || 'UNIT_X', role, model, system_prompt: desc || 'GENERAL_PURPOSE_OPS' },
-      });
-      onAdded(); onClose();
-    } catch { onAdded(); onClose(); }
-  };
-
-  return (
-    <div className={`modal-overlay ${isOpen ? 'open' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ border: '1px solid var(--cyan)', boxShadow: 'var(--glow-lg)' }}>
-        <div className="scanline"></div>
-        <div className="modal-title" style={{ color: 'var(--cyan)', fontFamily: 'var(--mono)' }}>DECOMPILING_NEW_UNIT...</div>
-        <div className="modal-sub">SECURE_INITIALIZATION_PROTOCOL_V4.2</div>
-        
-        <div className="modal-field">
-          <label style={{ fontSize: '9px', opacity: 0.6 }}>CALLSIGN_ASSIGNMENT</label>
-          <input type="text" placeholder="e.g. OMEGA_LEADER" value={name} onChange={e => setName(e.target.value)} />
-        </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div className="modal-field">
-            <label style={{ fontSize: '9px', opacity: 0.6 }}>CLASS_STANCE</label>
-            <select value={role} onChange={e => setRole(e.target.value)}>
-              <option>Worker</option><option>Core</option><option>Storage</option><option>Analytics</option>
-            </select>
-          </div>
-          <div className="modal-field">
-            <label style={{ fontSize: '9px', opacity: 0.6 }}>NEURAL_ENGINE</label>
-            <select value={model} onChange={e => setModel(e.target.value)}>
-              <option>gemma-3-4b</option><option>llama-3-70b</option>
-              <option>claude-3-5-sonnet</option><option>gpt-4o-mini</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="modal-field">
-          <label style={{ fontSize: '9px', opacity: 0.6 }}>MISSION_PARAMETERS</label>
-          <textarea rows={2} placeholder="DEFINE_OBJECTIVES..." value={desc} onChange={e => setDesc(e.target.value)} />
-        </div>
-
-        <div className="modal-actions">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>[ ABORT ]</button>
-          <button className="btn btn-primary btn-sm" style={{ background: 'var(--cyan)', color: '#000' }} onClick={deploy}>[ INITIATE_DEPLOYMENT ]</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════
-   ADD TASK MODAL
-═══════════════════════════════════════════════════ */
-function AddTaskModal({ isOpen, onClose, onAdded }: { isOpen: boolean; onClose: () => void; onAdded: () => void }) {
-  const [name, setName] = useState('');
-  const [priority, setPriority] = useState('MEDIUM');
-  const [payload, setPayload] = useState('');
-
-  const create = async () => {
-    try {
-      await apiFetch('/tasks/', {
-        method: 'POST',
-        json: { payload: payload || name || 'MISSION_SIG', priority: priority.toLowerCase() },
-      });
-      onAdded(); onClose();
-    } catch { onAdded(); onClose(); }
-  };
-
-  return (
-    <div className={`modal-overlay ${isOpen ? 'open' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ border: '1px solid var(--purple)', boxShadow: '0 0 30px rgba(112,0,255,0.3)' }}>
-        <div className="modal-title" style={{ color: 'var(--purple)', fontFamily: 'var(--mono)' }}>ENQUEUE_NEW_MISSION...</div>
-        <div className="modal-sub">PRIORITY_QUEUE_LINK_ESTABLISHED</div>
-        
-        <div className="modal-field">
-          <label style={{ fontSize: '9px', opacity: 0.6 }}>MISSION_IDENTIFIER</label>
-          <input type="text" placeholder="e.g. DATA_HARVEST_ALPHA" value={name} onChange={e => setName(e.target.value)} />
-        </div>
-        
-        <div className="modal-field">
-          <label style={{ fontSize: '9px', opacity: 0.6 }}>THREAT_LEVEL_PRIORITY</label>
-          <select value={priority} onChange={e => setPriority(e.target.value)}>
-            <option>HIGH</option><option>MEDIUM</option><option>LOW</option>
-          </select>
-        </div>
-
-        <div className="modal-field">
-          <label style={{ fontSize: '9px', opacity: 0.6 }}>PAYLOAD_STREAM</label>
-          <textarea rows={3} placeholder="MISSION_COMMANDS..." value={payload} onChange={e => setPayload(e.target.value)} />
-        </div>
-
-        <div className="modal-actions">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>[ CANCEL ]</button>
-          <button className="btn btn-primary btn-sm" style={{ background: 'var(--purple)', color: '#fff' }} onClick={create}>[ DISPATCH_MISSION ]</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════════════
    MAIN APP
@@ -342,6 +235,7 @@ export default function Home() {
 
         <div className="content" key={refreshKey} style={{ background: 'var(--bg0)' }}>
           {activeView === 'dashboard' && <DashboardView />}
+          {activeView === 'autonomous' && <AutonomousView />}
           {activeView === 'fleet' && <FleetView />}
           {activeView === 'monitoring' && <ObservabilityView />}
           {activeView === 'tasks' && <TasksView />}

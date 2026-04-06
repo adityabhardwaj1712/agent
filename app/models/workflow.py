@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, JSON, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, JSON, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 import datetime
@@ -8,10 +8,12 @@ class WorkflowDefinition(Base):
     __tablename__ = "workflow_definitions"
     
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String, index=True, unique=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
     definition = Column(JSON, nullable=False) # Nodes and edges
     user_id = Column(String, index=True, nullable=False)
+
+    __table_args__ = (UniqueConstraint("name", "user_id", name="uq_wf_name_user"),)
     
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))
     updated_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None))

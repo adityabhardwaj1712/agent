@@ -7,6 +7,7 @@ class ApprovalRequest(Base):
     __tablename__ = "approval_requests"
 
     request_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, index=True, nullable=False)
     task_id = Column(String, index=True)
     agent_id = Column(String, index=True)
     goal_id = Column(String, index=True, nullable=True)
