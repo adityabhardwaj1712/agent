@@ -13,7 +13,7 @@ from ..db.redis_client import get_async_redis_client
 
 class CircuitState(str, Enum):
     CLOSED    = "closed"       # Normal operation
-    OPEN      = "open"         # Paused — rejecting tasks
+    OPEN      = "open"         # Paused ? rejecting tasks
     HALF_OPEN = "half_open"    # Recovery probe
 
 
@@ -28,7 +28,7 @@ class CircuitStats:
     last_state_change: float = 0.0
     cooldown_seconds: int = 300          # 5 min default
     failure_threshold: int = 3           # failures before OPEN
-    quality_threshold: float = 0.3       # avg quality below this → OPEN
+    quality_threshold: float = 0.3       # avg quality below this ? OPEN
     quality_window: int = 5              # tasks to average for quality check
 
 
@@ -68,7 +68,7 @@ class CircuitBreaker:
                 stats.state = CircuitState.HALF_OPEN
                 stats.last_state_change = now
                 await self._save_stats(stats)
-                logger.info(f"Circuit for agent {agent_id}: OPEN → HALF_OPEN (probe)")
+                logger.info(f"Circuit for agent {agent_id}: OPEN ? HALF_OPEN (probe)")
                 await self._notify_state_change(agent_id, CircuitState.HALF_OPEN)
                 return True    # Allow the probe task
             return False       # Still in cooldown
@@ -89,7 +89,7 @@ class CircuitBreaker:
             stats.state = CircuitState.CLOSED
             stats.cooldown_seconds = 300    # Reset cooldown
             stats.last_state_change = time.time()
-            logger.info(f"Circuit for agent {agent_id}: HALF_OPEN → CLOSED (recovered)")
+            logger.info(f"Circuit for agent {agent_id}: HALF_OPEN ? CLOSED (recovered)")
             await self._notify_state_change(agent_id, CircuitState.CLOSED)
 
         await self._save_stats(stats)
@@ -119,7 +119,7 @@ class CircuitBreaker:
                 stats.cooldown_seconds = min(stats.cooldown_seconds * 2, 3600)  # exponential backoff
             stats.state = CircuitState.OPEN
             stats.last_state_change = time.time()
-            logger.warning(f"Circuit for agent {agent_id}: OPEN — {reason}")
+            logger.warning(f"Circuit for agent {agent_id}: OPEN ? {reason}")
             await self._notify_state_change(agent_id, CircuitState.OPEN, reason)
 
         await self._save_stats(stats)
@@ -132,7 +132,7 @@ class CircuitBreaker:
         if state == CircuitState.CLOSED:
             stats.consecutive_failures = 0
         await self._save_stats(stats)
-        logger.info(f"Circuit for agent {agent_id}: {old_state} → {state} (manual override)")
+        logger.info(f"Circuit for agent {agent_id}: {old_state} ? {state} (manual override)")
 
     async def get_all_circuit_stats(self) -> List[dict]:
         redis = await get_async_redis_client()
@@ -164,9 +164,9 @@ class CircuitBreaker:
     ):
         try:
             from ..services.slack_service import slack_service
-            emoji = {"closed": "✅", "open": "🔴", "half_open": "🟡"}.get(new_state.value, "⚪")
+            emoji = {"closed": "?", "open": "?", "half_open": "?"}.get(new_state.value, "?")
             await slack_service.send_notification(
-                f"{emoji} *Circuit Breaker* — Agent `{agent_id[:8]}`\n"
+                f"{emoji} *Circuit Breaker* ? Agent `{agent_id[:8]}`\n"
                 f"State: `{new_state.value.upper()}`"
                 + (f"\nReason: {reason}" if reason else "")
             )
@@ -186,7 +186,7 @@ async def send_to_dlq(task_dict: dict, reason: str = "circuit_open"):
         "timestamp": str(time.time()),
         "task_json": json.dumps(task_dict),
     }, maxlen=10_000)
-    logger.warning(f"Task {task_dict.get('task_id')} → DLQ (reason: {reason})")
+    logger.warning(f"Task {task_dict.get('task_id')} ? DLQ (reason: {reason})")
 
 
 async def replay_dlq(limit: int = 10) -> List[dict]:

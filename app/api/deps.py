@@ -37,7 +37,7 @@ async def get_current_user(
         raise
     except Exception as e:
         logger.error(f"Redis connectivity error in auth guard (ignoring for resilience): {str(e)}")
-        pass  # Redis unavailable — allow through, token is valid
+        pass  # Redis unavailable ? allow through, token is valid
     
     payload = verify_token(token)
     if payload is None:

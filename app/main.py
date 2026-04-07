@@ -39,7 +39,7 @@ def get_columns_sync(conn, table_name):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── STARTUP ──
+    # -- STARTUP --
     # 0. Ensure tables exist (Migration logic)
     try:
         from sqlalchemy import text
@@ -186,7 +186,7 @@ async def lifespan(app: FastAPI):
                 except Exception as e:
                     logger.warning(f"Failed to add traces.{col}: {e}")
             
-        logger.info("🛡️ System Schema Hardening: ENABLED")
+        logger.info("[SHIELD] System Schema Hardening: ENABLED")
     except Exception as e:
         logger.error(f"CRITICAL: Schema Sync Failed: {e}")
 
@@ -226,16 +226,16 @@ async def lifespan(app: FastAPI):
     
     logger.info("AgentCloud Services Initialized Successfully [ARQ DISPATCH MODE]")
     
-    yield  # ── APP RUNS HERE ──
+    yield  # -- APP RUNS HERE --
     
-    # ── SHUTDOWN ──
+    # -- SHUTDOWN --
     logger.info("AgentCloud shutting down...")
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="AgentCloud Mission Control",
     description="""
-    🚀 **AgentCloud Enterprise OS**
+    [ROCKET] **AgentCloud Enterprise OS**
     
     Military-grade multi-agent orchestration platform. 
     Built for decentralized swarm intelligence and mission-critical autonomy.

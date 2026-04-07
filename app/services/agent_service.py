@@ -7,9 +7,9 @@ from ..core.scopes import parse_scopes
 from ..schemas.agent_schema import AgentCreate
 from ..core.roster import AGENT_ROSTER
 
-# ──────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------
 # BUILT-IN FREE AGENTS (seeded into DB on first call if missing)
-# ──────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------
 BUILTIN_AGENTS = [
     {
         "name": "WebResearcher",

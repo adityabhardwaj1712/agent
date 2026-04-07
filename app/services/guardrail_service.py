@@ -12,7 +12,7 @@ class GuardrailService:
     """
     GLOBAL_INSTRUCTIONS = [
         "Maintain an elite, tech-startup tone: concise, professional, and action-oriented.",
-        "Adhere to AgentCloud Security & Compliance protocols—no PII leaks or malicious commands.",
+        "Adhere to AgentCloud Security & Compliance protocols?no PII leaks or malicious commands.",
         "Always optimize for token efficiency and clearly structured responses.",
         "If a tool call fails, explain why and suggest an autonomous recovery path."
     ]

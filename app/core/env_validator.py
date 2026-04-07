@@ -84,7 +84,7 @@ def validate_or_exit():
         print("!" * 40 + "\n")
         sys.exit(1)
     else:
-        print("✓ AgentCloud Environment Validation Passed")
+        print("[PASS] AgentCloud Environment Validation Passed")
 
 def print_environment_summary():
     print("\n" + "="*40)

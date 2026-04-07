@@ -10,9 +10,9 @@ class LLMService:
     """
     Unified LLM Service.  One interface, three providers.
     Provider is selected by model name prefix:
-      gpt-*         → OpenAI
-      claude-*      → Anthropic
-      gemini-*      → Google Gemini
+      gpt-*         ? OpenAI
+      claude-*      ? Anthropic
+      gemini-*      ? Google Gemini
     """
 
     def __init__(self):
@@ -23,7 +23,7 @@ class LLMService:
         self._groq_client: Any = None
         self._ollama_client: Any = None
 
-    # ─── lazy clients ────────────────────────────────────────────────────────
+    # --- lazy clients --------------------------------------------------------
 
     def _openai(self):
         if self._openai_client is None:
@@ -74,7 +74,7 @@ class LLMService:
             self._ollama_client = httpx.AsyncClient(base_url=base_url, timeout=120.0)
         return self._ollama_client
 
-    # ─── New Streaming Interface ─────────────────────────────────────────────
+    # --- New Streaming Interface ---------------------------------------------
 
     async def stream_completion(
         self,
@@ -98,7 +98,7 @@ class LLMService:
             async for chunk in self._stream_openai(messages, model, temperature):
                 yield chunk
 
-    # ─── provider dispatch ───────────────────────────────────────────────────
+    # --- provider dispatch ---------------------------------------------------
 
     async def get_completion(
         self,
@@ -112,7 +112,7 @@ class LLMService:
         Returns (content, tool_calls, usage).
         Automatically routes to the right provider based on model name.
         """
-        logger.debug(f"LLM call → model={model} msgs={len(messages)}")
+        logger.debug(f"LLM call ? model={model} msgs={len(messages)}")
 
         if model.startswith("claude-"):
             return await self._call_anthropic(messages, model, tools, temperature, task_id)
@@ -221,7 +221,7 @@ class LLMService:
             }
         }
 
-    # ─── OpenAI ──────────────────────────────────────────────────────────────
+    # --- OpenAI --------------------------------------------------------------
 
     async def _call_openai(self, messages, model, tools, temperature, task_id=None):
         kwargs: dict = {
@@ -278,7 +278,7 @@ class LLMService:
             logger.error(f"OpenAI Stream Failed: {e}")
             yield f"ERROR: {str(e)}"
 
-    # ─── Groq ────────────────────────────────────────────────────────────────
+    # --- Groq ----------------------------------------------------------------
 
     async def _call_groq(self, messages, model, tools, temperature, task_id=None):
         kwargs: dict = {
@@ -329,13 +329,13 @@ class LLMService:
             logger.error(f"Groq Stream Failed: {e}")
             yield f"ERROR: {str(e)}"
 
-    # ─── Anthropic ───────────────────────────────────────────────────────────
+    # --- Anthropic -----------------------------------------------------------
 
     async def _call_anthropic(self, messages, model, tools, temperature, task_id=None):
         """
-        Translates the OpenAI message format → Anthropic format.
+        Translates the OpenAI message format ? Anthropic format.
         System messages are extracted and passed separately.
-        Tool definitions are translated from OpenAI schema → Anthropic schema.
+        Tool definitions are translated from OpenAI schema ? Anthropic schema.
         """
         system = ""
         anthropic_messages = []
@@ -346,7 +346,7 @@ class LLMService:
             if role == "system":
                 system = content
             elif role == "tool":
-                # Map OpenAI tool result → Anthropic tool_result block
+                # Map OpenAI tool result ? Anthropic tool_result block
                 anthropic_messages.append({
                     "role": "user",
                     "content": [{
@@ -446,7 +446,7 @@ class LLMService:
             logger.error(f"Anthropic Stream Failed: {e}")
             yield f"ERROR: {str(e)}"
 
-    # ─── Google Gemini ────────────────────────────────────────────────────────
+    # --- Google Gemini --------------------------------------------------------
 
     async def _call_gemini(self, messages, model, tools, temperature):
         """
@@ -494,7 +494,7 @@ class LLMService:
         )
         return text, None, usage
 
-    # ─── Ollama (Gemma 3) ──────────────────────────────────────────────────
+    # --- Ollama (Gemma 3) --------------------------------------------------
 
     async def _call_ollama(self, messages, model, tools, temperature, task_id=None):
         import json
@@ -582,7 +582,7 @@ class LLMService:
         }
 
 
-# ─── Shim types so the rest of the codebase stays unchanged ──────────────────
+# --- Shim types so the rest of the codebase stays unchanged ------------------
 
 import json as _json
 from dataclasses import dataclass

@@ -26,7 +26,7 @@ class AxonService:
             model_choice, prompt=task_payload, context=context, tools=tools, messages=messages, task_id=task_id
         )
         
-        reasoning_meta = f"\n\n---\n📊 AXON Reasoning: Analyzed as {intent} task. Model: {model_choice.name}. Confidence: {confidence*100:.1f}%."
+        reasoning_meta = f"\n\n---\n? AXON Reasoning: Analyzed as {intent} task. Model: {model_choice.name}. Confidence: {confidence*100:.1f}%."
         return raw_result, tool_calls, reasoning_meta, usage
 
     @staticmethod

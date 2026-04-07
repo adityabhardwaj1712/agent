@@ -13,7 +13,7 @@ from .billing_service import billing_service
 from .orchestrator import orchestrator, Priority
 
 
-# ─── Productivity Engine ──────────────────────────────────────────────────────
+# --- Productivity Engine ------------------------------------------------------
 
 def _compute_task_hash(payload: str, agent_id: str = None) -> str:
     """Generate a deterministic hash for deduplication. Normalizes input for better hits."""
@@ -65,7 +65,7 @@ async def _set_result_cache(payload: str, result: str, ttl: int = 3600) -> None:
         logger.debug(f"Cache set failed (non-fatal): {e}")
 
 
-# ─── Smart Agent Selection ────────────────────────────────────────────────────
+# --- Smart Agent Selection ----------------------------------------------------
 
 async def _select_best_agent(db: AsyncSession, user_id: str) -> Agent | None:
     """Pick the agent with the best performance-to-cost ratio."""
@@ -87,14 +87,14 @@ async def _select_best_agent(db: AsyncSession, user_id: str) -> Agent | None:
 
         agents_sorted = sorted(agents, key=_score, reverse=True)
         best = agents_sorted[0]
-        logger.info(f"Smart routing → selected agent '{best.name}' (score={_score(best):.1f})")
+        logger.info(f"Smart routing ? selected agent '{best.name}' (score={_score(best):.1f})")
         return best
     except Exception as e:
         logger.warning(f"Smart routing failed, will use provided agent_id: {e}")
         return None
 
 
-# ─── Core Task Service ────────────────────────────────────────────────────────
+# --- Core Task Service --------------------------------------------------------
 
 async def send_task(db: AsyncSession, data: TaskCreate, user_id: str):
     task_hash = _compute_task_hash(data.payload, data.agent_id)
@@ -103,13 +103,13 @@ async def send_task(db: AsyncSession, data: TaskCreate, user_id: str):
     if not await billing_service.check_limits(db, user_id, "tasks_per_month"):
         raise PermissionError("Plan task limit reached")
 
-    # 2. DEDUPLICATION — skip if identical completed task exists
+    # 2. DEDUPLICATION ? skip if identical completed task exists
     existing = await _check_dedup(db, task_hash)
     if existing and existing.result:
-        logger.info(f"Dedup HIT → returning cached task {existing.task_id}")
+        logger.info(f"Dedup HIT ? returning cached task {existing.task_id}")
         return existing
 
-    # 3. RESULT CACHE — check Redis for fast cached results
+    # 3. RESULT CACHE ? check Redis for fast cached results
     cached_result = await _check_result_cache(data.payload or "")
     if cached_result:
         # Create a lightweight "cached" task record
@@ -126,10 +126,10 @@ async def send_task(db: AsyncSession, data: TaskCreate, user_id: str):
         )
         db.add(cached_task)
         await db.commit()
-        logger.info(f"Cache HIT → created instant task {cached_task.task_id}")
+        logger.info(f"Cache HIT ? created instant task {cached_task.task_id}")
         return cached_task
 
-    # 4. SMART AGENT SELECTION — auto-pick best agent if none specified
+    # 4. SMART AGENT SELECTION ? auto-pick best agent if none specified
     agent_id = data.agent_id
     if not agent_id:
         best_agent = await _select_best_agent(db, user_id)

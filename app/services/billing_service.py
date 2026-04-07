@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Stripe
 if not settings.STRIPE_SECRET_KEY:
-    logger.warning("STRIPE_SECRET_KEY not set — billing features will be disabled (mock mode).")
+    logger.warning("STRIPE_SECRET_KEY not set ? billing features will be disabled (mock mode).")
 else:
     stripe.api_key = settings.STRIPE_SECRET_KEY
 

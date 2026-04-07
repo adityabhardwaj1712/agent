@@ -87,7 +87,7 @@ def select_model(payload: str) -> ModelChoice:
             logger.debug(f"Model selected: {choice.name} ({choice.reason})")
             return choice
     # Last resort: first model in the chain regardless
-    logger.warning("No API keys configured — using first model in chain (will fail without keys)")
+    logger.warning("No API keys configured ? using first model in chain (will fail without keys)")
     return chain[0]
 
 
@@ -140,4 +140,4 @@ async def call_provider(
             last_error = exc
 
     logger.error(f"All providers exhausted: {last_error}")
-    return f"AXON Critical Failure — all providers exhausted: {last_error!s:.120}", [], None
+    return f"AXON Critical Failure ? all providers exhausted: {last_error!s:.120}", [], None

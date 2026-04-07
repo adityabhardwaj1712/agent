@@ -19,6 +19,7 @@ services:
       - RUN_MIGRATIONS=true
       - DEPLOYMENT_MODE=local
       - DEPLOYMENT_REGION=us-east-1
+      - PYTHONUTF8=1
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +46,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app
       - SECRET_KEY=${SECRET_KEY}
+      - PYTHONUTF8=1
     depends_on:
       db:
         condition: service_healthy
@@ -104,6 +106,7 @@ services:
       - .env
     environment:
       - API_BASE_URL=http://api:8000
+      - PYTHONUTF8=1
     depends_on:
       api:
         condition: service_healthy
@@ -124,6 +127,7 @@ services:
     environment:
       - API_BASE_URL=http://api:8000
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/agentcloud
+      - PYTHONUTF8=1
     depends_on:
       api:
         condition: service_healthy

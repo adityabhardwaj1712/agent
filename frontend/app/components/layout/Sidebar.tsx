@@ -14,6 +14,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { section: 'Strategic Operations' },
   { id: 'dashboard',  icon: '⊞', label: 'Command Center' },
+  { id: 'mission-control', icon: '🌌', label: 'Tactical (3D)', isStatic: true },
   { id: 'autonomous', icon: '🎯', label: 'Autonomous Missions' },
   { id: 'analytics',  icon: '📊', label: 'Signal Intelligence' },
   
@@ -160,11 +161,18 @@ export default function Sidebar({ activeView, onViewChange, theme, onToggleTheme
             <div
               key={item.id}
               className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => item.id && onViewChange(item.id)}
               style={{
                 border: activeView === item.id ? '1px solid var(--border2)' : '1px solid transparent',
                 borderRadius: '4px',
-                margin: '2px 12px'
+                margin: '2px 12px',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if ('isStatic' in item && item.isStatic) {
+                  window.open('/mission-control.html', '_blank');
+                } else if (item.id) {
+                  onViewChange(item.id);
+                }
               }}
             >
               <span className="nav-icon" style={{ 

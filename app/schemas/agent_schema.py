@@ -33,7 +33,7 @@ class AgentResponse(BaseModel):
     failed_tasks: int = 0
     token: Optional[str] = None
 
-    # FIX: Convert comma-separated string scopes → List[str]
+    # FIX: Convert comma-separated string scopes ? List[str]
     @field_validator("scopes", mode="before")
     @classmethod
     def parse_scopes_field(cls, v):

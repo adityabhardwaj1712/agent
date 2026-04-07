@@ -614,7 +614,7 @@ class AgentCloudDoctor:
         # 11c. .env integrity
         env_path = PROJECT_ROOT / ".env"
         if env_path.exists():
-            env_text = env_path.read_text()
+            env_text = env_path.read_text(encoding="utf-8")
             required_vars = ["DATABASE_URL", "REDIS_URL", "SECRET_KEY"]
             missing = [v for v in required_vars if v not in env_text]
             if missing:
@@ -765,7 +765,8 @@ class AgentCloudDoctor:
                     "REDIS_URL=redis://localhost:6379/0\n"
                     "SECRET_KEY=auto-generated-change-me\n"
                     "DEPLOYMENT_MODE=local\n"
-                    "OPENAI_API_KEY=sk-placeholder\n"
+                    "OPENAI_API_KEY=sk-placeholder\n",
+                    encoding="utf-8"
                 )
                 ok("Created .env with defaults")
                 self.report.fixes_applied.append("Created .env file with defaults")

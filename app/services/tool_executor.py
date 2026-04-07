@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ToolExecutor:
-    """AXON Execution Engine — real implementations, real results."""
+    """AXON Execution Engine ? real implementations, real results."""
 
     _registry: Dict[str, Callable] = {}
     SENSITIVE_TOOLS = ["shell_execute", "github_create_issue", "slack_message", "python_interpreter"]
@@ -87,7 +87,7 @@ class ToolExecutor:
             })
 
 
-# ─── 1. Web Search (Serper.dev) ──────────────────────────────────────────────
+# --- 1. Web Search (Serper.dev) ----------------------------------------------
 
 @ToolExecutor.register("google_search")
 async def google_search(query: str, num_results: int = 5) -> dict:
@@ -124,7 +124,7 @@ async def google_search(query: str, num_results: int = 5) -> dict:
     }
 
 
-# ─── 1.5. Web Search (Free DuckDuckGo/Google Wrapper) ───────────────────────
+# --- 1.5. Web Search (Free DuckDuckGo/Google Wrapper) -----------------------
 
 @ToolExecutor.register("web_search")
 async def web_search(query: str, num_results: int = 5) -> dict:
@@ -178,7 +178,7 @@ async def web_search(query: str, num_results: int = 5) -> dict:
         return {"error": f"Web search failed: {str(e)}", "query": query}
 
 
-# ─── 2. Web Fetch ────────────────────────────────────────────────────────────
+# --- 2. Web Fetch ------------------------------------------------------------
 
 @ToolExecutor.register("web_fetch")
 async def web_fetch(url: str, max_chars: int = 4000) -> dict:
@@ -193,7 +193,7 @@ async def web_fetch(url: str, max_chars: int = 4000) -> dict:
         content_type = resp.headers.get("content-type", "")
 
     if "html" in content_type:
-        # Very lightweight HTML → text stripping (no BeautifulSoup dependency)
+        # Very lightweight HTML ? text stripping (no BeautifulSoup dependency)
         import re
         text = re.sub(r"<script[^>]*>.*?</script>", "", resp.text, flags=re.DOTALL | re.IGNORECASE)
         text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
@@ -205,7 +205,7 @@ async def web_fetch(url: str, max_chars: int = 4000) -> dict:
     return {"url": url, "content": text[:max_chars], "truncated": len(text) > max_chars}
 
 
-# ─── 3. Python Interpreter (E2B cloud sandbox) ───────────────────────────────
+# --- 3. Python Interpreter (E2B cloud sandbox) -------------------------------
 
 @ToolExecutor.register("python_interpreter")
 async def python_interpreter(code: str, timeout: int = 30) -> dict:
@@ -239,7 +239,7 @@ async def python_interpreter(code: str, timeout: int = 30) -> dict:
     return await loop.run_in_executor(None, _run)
 
 
-# ─── 4. Shell Execute (E2B sandbox) ─────────────────────────────────────────
+# --- 4. Shell Execute (E2B sandbox) -----------------------------------------
 
 @ToolExecutor.register("shell_execute")
 async def shell_execute(command: str, timeout: int = 30) -> dict:
@@ -271,7 +271,7 @@ async def shell_execute(command: str, timeout: int = 30) -> dict:
     return await asyncio.get_event_loop().run_in_executor(None, _run)
 
 
-# ─── 5. GitHub — create issue ────────────────────────────────────────────────
+# --- 5. GitHub ? create issue ------------------------------------------------
 
 @ToolExecutor.register("github_create_issue")
 async def github_create_issue(repo: str, title: str, body: str, labels: list = None) -> dict:
@@ -299,7 +299,7 @@ async def github_create_issue(repo: str, title: str, body: str, labels: list = N
     return {"status": "created", "issue_number": data["number"], "url": data["html_url"]}
 
 
-# ─── 6. GitHub — search code ─────────────────────────────────────────────────
+# --- 6. GitHub ? search code -------------------------------------------------
 
 @ToolExecutor.register("github_search_code")
 async def github_search_code(query: str, language: Optional[str] = None, limit: int = 5) -> dict:
@@ -325,7 +325,7 @@ async def github_search_code(query: str, language: Optional[str] = None, limit: 
     return {"query": q, "total": data.get("total_count"), "results": items}
 
 
-# ─── 7. Send Slack message ───────────────────────────────────────────────────
+# --- 7. Send Slack message ---------------------------------------------------
 
 @ToolExecutor.register("slack_message")
 async def slack_message(channel: str, text: str) -> dict:
@@ -335,7 +335,7 @@ async def slack_message(channel: str, text: str) -> dict:
     return {"status": "sent", "channel": channel}
 
 
-# ─── 8. Calculator (safe eval) ───────────────────────────────────────────────
+# --- 8. Calculator (safe eval) -----------------------------------------------
 
 @ToolExecutor.register("calculate")
 async def calculate(expression: str) -> dict:
@@ -363,7 +363,7 @@ async def calculate(expression: str) -> dict:
     except Exception as exc:
         return {"error": str(exc), "expression": expression}
 
-# ─── 9. Local Python Sandbox ───────────────────────────────────────────────
+# --- 9. Local Python Sandbox -----------------------------------------------
 
 @ToolExecutor.register("run_python")
 async def run_python(code: str) -> dict:

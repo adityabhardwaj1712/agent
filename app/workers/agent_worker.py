@@ -8,7 +8,7 @@ AgentCloud - Fixed Worker (ASCII COMPATIBLE)
 import sys
 import io
 
-# ── Guard 1: Prevent uvicorn logging crash on non-TTY environments (Windows)
+# -- Guard 1: Prevent uvicorn logging crash on non-TTY environments (Windows)
 if sys.stdout is None:
     sys.stdout = io.StringIO()
 if sys.stderr is None:
@@ -56,14 +56,14 @@ from app.services.guardrail_service import guardrail_service
 
 from contextvars import ContextVar
 
-# ── Scoped Context for concurrent tasks
+# -- Scoped Context for concurrent tasks
 _AGENT_ID_CONTEXT: ContextVar[str] = ContextVar("_AGENT_ID_CONTEXT", default="unknown")
 _USER_ID_CONTEXT: ContextVar[str] = ContextVar("_USER_ID_CONTEXT", default="unknown")
 
-# ── pgvector availability flag
+# -- pgvector availability flag
 _PGVECTOR_AVAILABLE: bool = True
 
-# ── Termination Control
+# -- Termination Control
 _IS_SHUTTING_DOWN = False
 
 @ToolExecutor.register("delegate_to_agent")
