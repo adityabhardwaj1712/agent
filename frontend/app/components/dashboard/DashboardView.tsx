@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 import { usePolling } from '../../lib/usePolling';
 import ThoughtStream from '../chat/ThoughtStream';
+import { NetworkThroughputChart, SystemLoadDonut, ErrorRateChart } from './AnimatedCharts';
 
 /* ═══════════════════════════════════════════════════
    DASHBOARD VIEW — Network + KPIs + Activity Log
@@ -380,6 +381,45 @@ export default function DashboardView() {
           <div className="kpi-delta up">Within SLA threshold</div>
           <canvas className="kpi-spark" ref={sparkLat} />
         </div>
+      </div>
+
+      {/* 3D Animated Charts Row */}
+      <div className="grid-main" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 24, gap: 24 }}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-title">Network Throughput</div>
+          <div className="pg-sub" style={{ marginBottom: 12 }}>Live TCP/UDP Traffic</div>
+          <NetworkThroughputChart />
+        </div>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-title">System Load Core</div>
+          <div className="pg-sub" style={{ marginBottom: 12 }}>Compute distribution & pressure</div>
+          <SystemLoadDonut />
+        </div>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-title">Error / Anomaly Rate</div>
+          <div className="pg-sub" style={{ marginBottom: 12 }}>Detected signal decay</div>
+          <ErrorRateChart />
+        </div>
+      </div>
+
+      {/* Model Usage Bars */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-title">Model Usage Distribution</div>
+        <div className="pg-sub" style={{ marginBottom: 16 }}>Token consumption by provider</div>
+        {[
+          { label: 'claude-sonnet', pct: 72, color: 'var(--purple)' },
+          { label: 'gpt-4o', pct: 45, color: 'var(--green)' },
+          { label: 'claude-haiku', pct: 28, color: 'var(--cyan)' },
+          { label: 'gemma-3', pct: 15, color: 'var(--orange)' },
+        ].map((m, i) => (
+          <div key={m.label} className="model-bar-wrap">
+            <div className="model-bar-label">{m.label}</div>
+            <div className="model-bar-track">
+              <div className={`model-bar-fill delay-${i + 1}`} style={{ width: `${m.pct}%`, background: m.color, color: m.color }} />
+            </div>
+            <div className="model-bar-val">{m.pct}%</div>
+          </div>
+        ))}
       </div>
 
       {/* Main Grid: Network + Activity */}

@@ -1,8 +1,53 @@
 import sys
 import os
 import io
+import asyncio
 from pathlib import Path
 from loguru import logger
+
+class DatabaseSink:
+    """
+    Loguru sink that writes logs to the PostgreSQL database.
+    """
+    def __init__(self):
+        # Deferred imports to avoid circular dependencies
+        from ..db.database import AsyncSessionLocal
+        from ..models.system_log import SystemLog
+        self.AsyncSessionLocal = AsyncSessionLocal
+        self.SystemLog = SystemLog
+
+    def __call__(self, message):
+        record = message.record
+        
+        # Prepare log entry
+        log_entry = {
+            "level": record["level"].name,
+            "name": record["name"],
+            "function": record["function"],
+            "line": record["line"],
+            "message": record["message"],
+            "exception": record["exception"].traceback if record["exception"] else None,
+            "extra": record["extra"],
+            "timestamp": record["time"].datetime.replace(tzinfo=None)
+        }
+
+        # Run async insertion
+        try:
+            asyncio.run(self._insert_log(log_entry))
+        except Exception as e:
+            # Fallback to stderr if DB logging fails to avoid losing logs
+            sys.stderr.write(f"CRITICAL: Failed to write log to database: {e}\n")
+            sys.stderr.write(f"Original message: {record['message']}\n")
+
+    async def _insert_log(self, log_entry):
+        async with self.AsyncSessionLocal() as session:
+            try:
+                new_log = self.SystemLog(**log_entry)
+                session.add(new_log)
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
 
 def setup_logging(log_level: str = "INFO"):
     """
@@ -20,10 +65,6 @@ def setup_logging(log_level: str = "INFO"):
     if not has_stderr:
         sys.stderr = io.StringIO()
 
-    # Create logs directory
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    
     # Determine if we're in production
     deployment_mode = os.getenv("DEPLOYMENT_MODE", "local")
     is_production = deployment_mode in ["cloud", "byoc", "onprem"]
@@ -51,29 +92,16 @@ def setup_logging(log_level: str = "INFO"):
                 serialize=True,
             )
     
-    # File handler for all logs
-    logger.add(
-        log_dir / "app.log",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-        level="DEBUG",
-        rotation="50 MB",
-        retention="7 days",
-        compression="zip",
-        enqueue=True,
-    )
-    
-    # Separate file for errors
-    logger.add(
-        log_dir / "errors.log",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}",
-        level="ERROR",
-        rotation="10 MB",
-        retention="30 days",
-        compression="zip",
-        backtrace=True,
-        diagnose=True,
-        enqueue=True,
-    )
+    # Database sink (Replacement for file logging)
+    try:
+        logger.add(
+            DatabaseSink(),
+            level="INFO",
+            enqueue=True, # Runs in a separate thread, safe for asyncio.run()
+        )
+        logger.info("Database logging sink enabled [Enterprise Migration OK]")
+    except Exception as e:
+        logger.error(f"Failed to initialize DatabaseSink: {e}")
     
     logger.info(f"Logging configured with level: {log_level}")
     return logger

@@ -49,6 +49,22 @@ async def lifespan(app: FastAPI):
                 logger.info("pgvector extension: AVAILABLE")
             except Exception as vec_error:
                 logger.warning(f"pgvector extension not available: {vec_error}")
+
+            try:
+                await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS protocol_messages (
+                    message_id VARCHAR PRIMARY KEY,
+                    from_agent_id VARCHAR NOT NULL,
+                    to_agent_id VARCHAR NOT NULL,
+                    message_type VARCHAR NOT NULL,
+                    payload TEXT NOT NULL,
+                    correlation_id VARCHAR,
+                    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    org_id VARCHAR DEFAULT 'default' NOT NULL
+                );
+                """))
+            except Exception as e:
+                logger.warning(f"Error creating protocol_messages table: {e}")
             
             import app.models  # noqa
             await conn.run_sync(Base.metadata.create_all)
@@ -59,7 +75,8 @@ async def lifespan(app: FastAPI):
                 "users", "agents", "tasks", "goals", "traces", "approval_requests", 
                 "audit_logs", "events", "tools", "memories", "notifications",
                 "dlq_events", "circuit_breaker_logs", "agent_templates", 
-                "template_purchases", "template_reviews", "subscriptions", "usage_records"
+                "template_purchases", "template_reviews", "subscriptions", "usage_records",
+                "system_logs"
             ]
             for table in tables:
                 try:

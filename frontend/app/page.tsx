@@ -124,6 +124,8 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showApprovalBanner, setShowApprovalBanner] = useState(true);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const { showToast, ToastContainer } = useToastSystem();
 
   const handleAdded = () => {
@@ -156,6 +158,15 @@ export default function Home() {
     (window as any).openAddAgent = () => setIsAgentModalOpen(true);
     (window as any).openAddTask = () => setIsTaskModalOpen(true);
     document.documentElement.setAttribute('data-theme', 'dark');
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   usePolling(fetchGlobalStats, 15000, true);
@@ -233,6 +244,18 @@ export default function Home() {
           </div>
         </header>
 
+        {showApprovalBanner && (
+          <div style={{ background: 'rgba(245, 158, 11, 0.15)', borderBottom: '1px solid var(--orange)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 13, color: 'var(--orange)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              ⚠️ <span style={{ fontFamily: 'var(--mono)' }}>MANUAL_OVERRIDE_REQUIRED:</span> High-risk task detected in queue.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-sm" style={{ background: 'var(--orange)', color: '#000', fontWeight: 800 }} onClick={() => setShowApprovalBanner(false)}>AUTHORIZE</button>
+              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text)' }} onClick={() => setShowApprovalBanner(false)}>ABORT</button>
+            </div>
+          </div>
+        )}
+
         <div className="content" key={refreshKey} style={{ background: 'var(--bg0)' }}>
           {activeView === 'dashboard' && <DashboardView />}
           {activeView === 'autonomous' && <AutonomousView />}
@@ -252,6 +275,34 @@ export default function Home() {
 
       <AddAgentModal isOpen={isAgentModalOpen} onClose={() => setIsAgentModalOpen(false)} onAdded={handleAdded} />
       <AddTaskModal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} onAdded={handleAdded} />
+
+      {showCommandPalette && (
+        <div className="modal-overlay open" onClick={() => setShowCommandPalette(false)} style={{ zIndex: 10000 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ padding: 0, overflow: 'hidden' }}>
+             <div style={{ padding: 16, borderBottom: '1px solid var(--border)' }}>
+                <input 
+                  autoFocus 
+                  type="text" 
+                  placeholder="Terminal command or search... (e.g. /deploy node)" 
+                  style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 16, outline: 'none', fontFamily: 'var(--mono)' }} 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                       showToast(`COMMAND ISSUED: ${(e.target as any).value}`, 'info');
+                       setShowCommandPalette(false);
+                    }
+                  }}
+                />
+             </div>
+             <div style={{ padding: 16, maxHeight: 300, overflowY: 'auto' }}>
+                <div style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 700, marginBottom: 8 }}>SUGGESTIONS</div>
+                <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--mono)', color: 'var(--cyan)' }} onClick={() => { setActiveView('tasks'); setShowCommandPalette(false); }}>/goto tasks</div>
+                <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--mono)', color: 'var(--cyan)' }} onClick={() => { setIsAgentModalOpen(true); setShowCommandPalette(false); }}>/deploy agent</div>
+                <div style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--mono)', color: 'var(--cyan)' }} onClick={() => { setShowCommandPalette(false); fetchGlobalStats(); }}>/rescan network</div>
+             </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </div>
   );

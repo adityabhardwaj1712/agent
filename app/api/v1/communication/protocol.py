@@ -12,11 +12,11 @@ router = APIRouter()
 
 @router.post("/send", response_model=dict)
 async def send_message(
-    data: ProtocolSendRequest,
+    request: ProtocolSendRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    message_id = await protocol_service.send_protocol_message(db, data)
+    message_id = await protocol_service.send_protocol_message(db, request)
     
     # Emit real-time signal
     await signal_service.emit_signal(
@@ -24,10 +24,10 @@ async def send_message(
         signal_type="PROTOCOL_MESSAGE",
         payload={
             "message_id": message_id,
-            "from_agent_id": data.from_agent_id,
-            "to_agent_id": data.to_agent_id,
-            "message_type": data.type,
-            "payload": data.payload,
+            "from_agent_id": request.from_agent_id,
+            "to_agent_id": request.to_agent_id,
+            "message_type": request.type,
+            "payload": request.payload,
             "created_at": str(datetime.now())
         }
     )

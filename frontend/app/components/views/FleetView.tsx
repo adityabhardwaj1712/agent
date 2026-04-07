@@ -20,20 +20,7 @@ interface Agent {
 }
 
 function seedAgents(): Agent[] {
-  const roles = ['Worker', 'Core', 'Storage', 'Analytics'];
-  const statuses = ['Online', 'Online', 'Online', 'Online', 'Degraded', 'Offline'];
-  const models = ['claude-sonnet-4-6', 'claude-opus-4-6', 'gpt-4o', 'claude-haiku-4-5'];
-  return Array.from({ length: 16 }, (_, i) => ({
-    id: `AGT-${String(i + 1).padStart(3, '0')}`,
-    name: i < 3 ? `Core-${String.fromCharCode(65 + i)}` : i < 12 ? `Worker-${i - 2}` : i < 14 ? `Storage-${i - 11}` : `Analytics-${i - 13}`,
-    role: i < 3 ? 'Core' : i < 12 ? 'Worker' : i < 14 ? 'Storage' : 'Analytics',
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    cpu: Math.floor(Math.random() * 85) + 10,
-    mem: Math.floor(Math.random() * 80) + 15,
-    tasks: Math.floor(Math.random() * 20),
-    model: models[i % models.length],
-    uptime: (Math.random() * 99 + 0.5).toFixed(2),
-  }));
+  return []; // We don't use seed data anymore, we show an empty state instead.
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
@@ -110,9 +97,10 @@ export default function FleetView() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try to fetch real agents, fallback to seed data
+    // Try to fetch real agents
     const load = async () => {
       try {
         const data = await apiFetch<any[]>('/agents/');
@@ -122,17 +110,19 @@ export default function FleetView() {
             name: a.name || 'Agent',
             role: a.role || 'Worker',
             status: a.status === 'active' ? 'Online' : a.status === 'degraded' ? 'Degraded' : 'Offline',
-            cpu: Math.floor(Math.random() * 85) + 10,
-            mem: Math.floor(Math.random() * 80) + 15,
-            tasks: a.tasks_processed || Math.floor(Math.random() * 20),
+            cpu: Math.min(99, Math.max(5, (a.tasks_processed || 0) * 8 + (a.name?.length || 10) * 2)), 
+            mem: Math.min(99, Math.max(15, (a.tasks_processed || 0) * 4 + 25)),
+            tasks: a.tasks_processed || 0,
             model: a.model || 'claude-sonnet-4-6',
             uptime: '99.9',
           })));
         } else {
-          setAgents(seedAgents());
+          setAgents([]);
         }
-      } catch {
-        setAgents(seedAgents());
+      } catch (err) {
+        setAgents([]);
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -175,9 +165,25 @@ export default function FleetView() {
           </button>
         </div>
       </div>
-      <div className="agent-grid">
-        {filtered.map(a => <AgentCard key={a.id} agent={a} />)}
-      </div>
+      
+      {loading ? (
+        <div style={{ padding: 40, textAlign: 'center' }}><div className="ms-loader-ring" /></div>
+      ) : agents.length === 0 ? (
+        <div className="empty-state">
+           <div className="empty-state-icon">🤖</div>
+           <div className="empty-state-title">No agents deployed</div>
+           <div className="empty-state-desc">Your fleet is currently empty. Deploy your first agent to run tasks.</div>
+           <button className="btn btn-primary" onClick={() => (window as any).openAddAgent?.()}>Deploy Agent</button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state">
+           <div className="empty-state-title">No agents match your filters</div>
+        </div>
+      ) : (
+        <div className="agent-grid">
+          {filtered.map(a => <AgentCard key={a.id} agent={a} />)}
+        </div>
+      )}
     </div>
   );
 }

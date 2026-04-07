@@ -34,9 +34,9 @@ def main() -> None:
     print("✓ Basic health check passed")
 
     # 1.5) Health (Ready/Deep)
-    code, data = request_json("GET", "/health/ready")
+    code, data = request_json("GET", "/health_check")
     if code != 200 or data.get("status") != "ready":
-        _fail(f"GET /health/ready failed: {code} {data}")
+        _fail(f"GET /health_check failed: {code} {data}")
     print("✓ Infrastructure readiness check passed (DB + Redis)")
 
     # Metrics

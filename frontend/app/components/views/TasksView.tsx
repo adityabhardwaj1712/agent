@@ -17,25 +17,14 @@ interface Task {
   priority: 'high' | 'medium' | 'low';
 }
 
-function seedTasks(): Task[] {
-  const names = ['Data Ingestion Pipeline', 'Model Training Batch #4', 'Log Aggregation Sweep', 'Cache Invalidation', 'Shard Rebalancing', 'Index Rebuild (Shard 4)', 'Health Check Broadcast', 'Anomaly Detection Scan', 'Backup Snapshot', 'Certificate Rotation', 'Vector Embedding Update', 'Policy Sync'];
-  const agents = ['Worker-12', 'Worker-05', 'Worker-31', 'Worker-08', 'Worker-22', 'Worker-19', 'Core-A', 'Worker-44', 'Data-Lake', 'Core-B', 'Worker-17', 'Worker-03'];
-  const statuses: Task['status'][] = ['running', 'running', 'completed', 'completed', 'failed', 'queued', 'running', 'queued', 'completed', 'running', 'queued', 'completed'];
-  const priorities: Task['priority'][] = ['high', 'high', 'medium', 'low', 'high', 'medium', 'low', 'medium', 'high', 'medium', 'low', 'medium'];
-  return names.map((n, i) => ({
-    id: `T-${String(i + 1).padStart(3, '0')}`,
-    name: n,
-    agent: agents[i],
-    status: statuses[i],
-    progress: statuses[i] === 'completed' ? 100 : statuses[i] === 'failed' ? Math.floor(Math.random() * 90) + 5 : statuses[i] === 'running' ? Math.floor(Math.random() * 90) + 5 : 0,
-    duration: statuses[i] === 'queued' ? '--' : Math.floor(Math.random() * 600) + 's',
-    priority: priorities[i],
-  }));
-}
+import TaskDrawer from './TaskDrawer';
 
 export default function TasksView() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const cancelTask = async (id: string, e: any) => {
     e.stopPropagation();
@@ -59,11 +48,11 @@ export default function TasksView() {
             duration: t.duration || '--',
             priority: t.priority || 'medium',
           })));
-        } else {
-          setTasks(seedTasks());
         }
-      } catch {
-        setTasks(seedTasks());
+      } catch (err) {
+        // Handle error implicitly
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -72,7 +61,11 @@ export default function TasksView() {
   const counts = { running: 0, completed: 0, failed: 0, queued: 0 };
   tasks.forEach(t => { counts[t.status]++; });
 
-  const filtered = filter === 'All' ? tasks : tasks.filter(t => t.status === filter.toLowerCase());
+  const filtered = tasks.filter(t => {
+    const matchStatus = filter === 'All' || t.status === filter.toLowerCase();
+    const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.id.toLowerCase().includes(search.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   const pillCls = (s: string) => s === 'completed' ? 'pill-green' : s === 'running' ? 'pill-blue' : s === 'failed' ? 'pill-red' : 'pill-orange';
   const progressColor = (s: string) => s === 'completed' ? 'var(--green)' : s === 'failed' ? 'var(--red)' : s === 'running' ? 'var(--blue)' : 'var(--t3)';
@@ -107,48 +100,80 @@ export default function TasksView() {
 
       {/* Task Table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-          {['All', 'Running', 'Completed', 'Failed', 'Queued'].map(f => (
-            <button key={f}
-              className={`btn ${filter === f ? 'btn-primary' : 'btn-ghost'} btn-sm`}
-              onClick={() => setFilter(f)}>
-              {f}
-            </button>
-          ))}
-        </div>
-        <table className="tbl">
-          <thead>
-            <tr>
-              <th>Task ID</th><th>Name</th><th>Agent</th><th>Status</th>
-              <th>Progress</th><th>Duration</th><th>Priority</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(t => (
-              <tr key={t.id}>
-                <td><span className="task-id">{t.id}</span></td>
-                <td><span className="task-name">{t.name}</span></td>
-                <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--t2)' }}>{t.agent}</td>
-                <td><span className={`pill ${pillCls(t.status)}`}>{t.status}</span></td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div className="progress-bar">
-                      <div className="progress-fill" style={{ width: `${t.progress}%`, background: progressColor(t.status) }} />
-                    </div>
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--t3)' }}>{t.progress}%</span>
-                  </div>
-                </td>
-                <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{t.duration}</td>
-                <td><span className={prioCls(t.priority)}>{t.priority.toUpperCase()}</span></td>
-                <td>
-                  {(t.status === 'running' || t.status === 'queued') && <button className="btn btn-ghost btn-sm btn-icon" title="Cancel Task" onClick={(e) => cancelTask(t.id, e)}>⏹</button>}
-                  {t.status === 'failed' && <button className="btn btn-ghost btn-sm btn-icon" title="Retry">↻</button>}
-                </td>
-              </tr>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['All', 'Running', 'Completed', 'Failed', 'Queued'].map(f => (
+              <button key={f}
+                className={`btn ${filter === f ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+                onClick={() => setFilter(f)}>
+                {f}
+              </button>
             ))}
-          </tbody>
-        </table>
+          </div>
+          <input
+            type="text"
+            placeholder="Search tasks... (Ctrl+K)"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 7,
+              padding: '7px 12px', color: 'var(--text)', fontFamily: 'var(--sans)',
+              fontSize: 12, outline: 'none', width: 200,
+            }}
+          />
+        </div>
+        
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center' }}><div className="ms-loader-ring" /></div>
+        ) : tasks.length === 0 ? (
+           <div className="empty-state">
+              <div className="empty-state-icon">📝</div>
+              <div className="empty-state-title">No tasks found</div>
+              <div className="empty-state-desc">You have no tasks in the execution queue.</div>
+              <button className="btn btn-primary" onClick={() => (window as any).openAddTask?.()}>Create Task</button>
+           </div>
+        ) : filtered.length === 0 ? (
+             <div className="empty-state" style={{ minHeight: 200 }}>
+                <div className="empty-state-title">No tasks match your filters</div>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setFilter('All'); setSearch(''); }}>Clear filters</button>
+             </div>
+        ) : (
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Task ID</th><th>Name</th><th>Agent</th><th>Status</th>
+                <th>Progress</th><th>Duration</th><th>Priority</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(t => (
+                <tr key={t.id} onClick={() => setSelectedTask(t)} style={{ cursor: 'pointer' }}>
+                  <td><span className="task-id">{t.id}</span></td>
+                  <td><span className="task-name">{t.name}</span></td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--t2)' }}>{t.agent}</td>
+                  <td><span className={`pill ${pillCls(t.status)}`}>{t.status}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${t.progress}%`, background: progressColor(t.status) }} />
+                      </div>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--t3)' }}>{t.progress}%</span>
+                    </div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{t.duration}</td>
+                  <td><span className={prioCls(t.priority)}>{t.priority.toUpperCase()}</span></td>
+                  <td>
+                    {(t.status === 'running' || t.status === 'queued') && <button className="btn btn-ghost btn-sm btn-icon" title="Cancel Task" onClick={(e) => cancelTask(t.id, e)}>⏹</button>}
+                    {t.status === 'failed' && <button className="btn btn-ghost btn-sm btn-icon" onClick={(e) => { e.stopPropagation(); }} title="Retry">↻</button>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
     </div>
   );
 }

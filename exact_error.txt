@@ -1,0 +1,4 @@
+Internal Error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column protocol_messages.org_id does not exist
+[SQL: INSERT INTO protocol_messages (message_id, from_agent_id, to_agent_id, message_type, payload, correlation_id, created_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE) RETURNING protocol_messages.org_id]
+[parameters: ('1a3f8b8d-2d5b-4465-bc17-997b53918ed6', 'a', 'b', 'c', '{}', None, datetime.datetime(2026, 4, 6, 12, 3, 6, 63266))]
+(Background on this error at: https://sqlalche.me/e/20/f405)
