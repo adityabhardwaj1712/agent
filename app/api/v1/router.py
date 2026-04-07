@@ -29,6 +29,7 @@ from .execution.tasks import router as tasks_router
 from .execution.workflows import router as workflows_router
 from .execution.approvals import router as approvals_router
 from .execution.playground import router as playground_router
+from .execution.notebook import router as notebook_router
 
 # Resources
 from .resources.files import router as files_router
@@ -66,6 +67,7 @@ router.include_router(tasks_router, prefix="/tasks", tags=["execution"])
 router.include_router(workflows_router, prefix="/workflows", tags=["execution"])
 router.include_router(approvals_router, prefix="/approvals", tags=["execution"])
 router.include_router(playground_router, prefix="/playground", tags=["execution"])
+router.include_router(notebook_router, prefix="/notebook", tags=["execution"])
 
 router.include_router(files_router, prefix="/files", tags=["resources"])
 

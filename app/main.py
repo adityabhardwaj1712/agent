@@ -7,6 +7,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import sys
 import io
+import time
 
 # Ensure sys.stdout and sys.stderr are not None to prevent uvicorn/logging crashes
 if sys.stdout is None:
@@ -39,192 +40,29 @@ def get_columns_sync(conn, table_name):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # -- STARTUP --
-    # 0. Ensure tables exist (Migration logic)
-    try:
-        from sqlalchemy import text
-        async with engine.begin() as conn:
-            try:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-                logger.info("pgvector extension: AVAILABLE")
-            except Exception as vec_error:
-                logger.warning(f"pgvector extension not available: {vec_error}")
-
-            try:
-                await conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS protocol_messages (
-                    message_id VARCHAR PRIMARY KEY,
-                    from_agent_id VARCHAR NOT NULL,
-                    to_agent_id VARCHAR NOT NULL,
-                    message_type VARCHAR NOT NULL,
-                    payload TEXT NOT NULL,
-                    correlation_id VARCHAR,
-                    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    org_id VARCHAR DEFAULT 'default' NOT NULL
-                );
-                """))
-            except Exception as e:
-                logger.warning(f"Error creating protocol_messages table: {e}")
-            
-            import app.models  # noqa
-            await conn.run_sync(Base.metadata.create_all)
-            
-        # 1. Granular Self-Healing Migrations (Inspector-Based)
-        async with engine.connect() as conn:
-            tables = [
-                "users", "agents", "tasks", "goals", "traces", "approval_requests", 
-                "audit_logs", "events", "tools", "memories", "notifications",
-                "dlq_events", "circuit_breaker_logs", "agent_templates", 
-                "template_purchases", "template_reviews", "subscriptions", "usage_records",
-                "system_logs"
-            ]
-            for table in tables:
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_cols = await conn_begin.run_sync(get_columns_sync, table)
-                        if "org_id" not in existing_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "org_id" VARCHAR DEFAULT \'default\' NOT NULL;'))
-                            await conn_begin.execute(text(f'CREATE INDEX IF NOT EXISTS "ix_{table}_org_id" ON "{table}" ("org_id");'))
-                            logger.info(f"Added org_id to {table}")
-                except Exception as e:
-                    logger.debug(f"Skipping org_id for {table}: {e}")
-            
-            user_cols = {
-                "role": "VARCHAR DEFAULT 'ADMIN'", 
-                "stripe_customer_id": "VARCHAR", 
-                "is_active": "BOOLEAN DEFAULT TRUE", 
-                "is_superuser": "BOOLEAN DEFAULT FALSE"
-            }
-            for col, spec in user_cols.items():
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_user_cols = await conn_begin.run_sync(get_columns_sync, "users")
-                        if col not in existing_user_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "users" ADD COLUMN "{col}" {spec};'))
-                            logger.info(f"Added column users.{col}")
-                except Exception as e:
-                    logger.warning(f"Failed to add users.{col}: {e}")
-
-            agent_cols = {
-                "reputation_score": "DOUBLE PRECISION DEFAULT 50.0", 
-                "total_tasks": "INTEGER DEFAULT 0", 
-                "successful_tasks": "INTEGER DEFAULT 0", 
-                "failed_tasks": "INTEGER DEFAULT 0", 
-                "personality_config": "TEXT", 
-                "model_name": "VARCHAR DEFAULT 'gpt-4o'", 
-                "base_cost": "DOUBLE PRECISION DEFAULT 0.01", 
-                "role": "VARCHAR", 
-                "description": "TEXT", 
-                "owner_id": "VARCHAR", 
-                "status": "VARCHAR DEFAULT 'idle'", 
-                "scopes": "TEXT DEFAULT 'READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL'"
-            }
-            for col, spec in agent_cols.items():
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_agent_cols = await conn_begin.run_sync(get_columns_sync, "agents")
-                        if col not in existing_agent_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "agents" ADD COLUMN "{col}" {spec};'))
-                            logger.info(f"Added column agents.{col}")
-                except Exception as e:
-                    logger.warning(f"Failed to add agents.{col}: {e}")
-
-            task_cols = {
-                "retry_count": "INTEGER DEFAULT 0", 
-                "max_retries": "INTEGER DEFAULT 3", 
-                "task_hash": "VARCHAR", 
-                "priority_level": "INTEGER DEFAULT 5", 
-                "is_cached_result": "BOOLEAN DEFAULT FALSE", 
-                "execution_time_ms": "INTEGER", 
-                "model_used": "VARCHAR", 
-                "node_id": "VARCHAR", 
-                "thought_process": "TEXT", 
-                "input_data": "TEXT", 
-                "output_data": "TEXT", 
-                "cost": "DOUBLE PRECISION DEFAULT 0.0", 
-                "parent_task_id": "VARCHAR",
-                "org_id": "VARCHAR DEFAULT 'default' NOT NULL"
-            }
-            for col, spec in task_cols.items():
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_task_cols = await conn_begin.run_sync(get_columns_sync, "tasks")
-                        if col not in existing_task_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "tasks" ADD COLUMN "{col}" {spec};'))
-                            logger.info(f"Added column tasks.{col}")
-                except Exception as e:
-                    logger.warning(f"Failed to add tasks.{col}: {e}")
-
-            goal_cols = {
-                "workflow_type": "VARCHAR DEFAULT 'linear'", 
-                "workflow_json": "TEXT", 
-                "workflow_state": "JSONB", 
-                "target_outcome": "TEXT"
-            }
-            for col, spec in goal_cols.items():
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_goal_cols = await conn_begin.run_sync(get_columns_sync, "goals")
-                        if col not in existing_goal_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "goals" ADD COLUMN "{col}" {spec};'))
-                            logger.info(f"Added column goals.{col}")
-                except Exception as e:
-                    logger.warning(f"Failed to add goals.{col}: {e}")
-
-            trace_cols = {
-                "tokens_prompt": "INTEGER DEFAULT 0", 
-                "tokens_completion": "INTEGER DEFAULT 0", 
-                "total_cost": "DOUBLE PRECISION DEFAULT 0.0"
-            }
-            for col, spec in trace_cols.items():
-                try:
-                    async with engine.begin() as conn_begin:
-                        existing_trace_cols = await conn_begin.run_sync(get_columns_sync, "traces")
-                        if col not in existing_trace_cols:
-                            await conn_begin.execute(text(f'ALTER TABLE "traces" ADD COLUMN "{col}" {spec};'))
-                            logger.info(f"Added column traces.{col}")
-                except Exception as e:
-                    logger.warning(f"Failed to add traces.{col}: {e}")
-            
-        logger.info("[SHIELD] System Schema Hardening: ENABLED")
-    except Exception as e:
-        logger.error(f"CRITICAL: Schema Sync Failed: {e}")
-
+    """
+    Main application lifecycle manager.
+    Coordinates database hardening, registry provisioning, and service initialization.
+    """
+    from .db.migrations import SyncManager
     from .services.automation_service import automation_service
     from .services.auto_mode_service import auto_mode_service
     from .services.supervisor import supervisor_service
-    from .db.database import AsyncSessionLocal
-    from .models.agent import Agent
-    from .models.user import User
-    import uuid
-    from sqlalchemy import select
     
+    # 1. Database & Registry Sync
     try:
-        from .services.agent_service import seed_system_agents
-        async with AsyncSessionLocal() as session:
-            user_res = await session.execute(select(User).filter(User.user_id == "system_default"))
-            user = user_res.scalar_one_or_none()
-            if not user:
-                user = User(
-                    user_id="system_default",
-                    email="system@agentcloud.com",
-                    name="System Default",
-                    role="ADMIN",
-                    hashed_password="dummy_system_hash"
-                )
-                session.add(user)
-                await session.commit()
-            
-            await seed_system_agents(session, "system_default")
-            logger.info("AgentCloud Registry Sync: OK")
+        await SyncManager.run_initial_migrations()
+        await SyncManager.harden_schema()
+        await SyncManager.seed_data()
     except Exception as e:
-        logger.error(f"Registry Sync Failed: {e}")
+        logger.critical(f"AgentCloud Boot Sequence Failure: {e}")
 
+    # 2. Service Orchestration
     await automation_service.start()
     await auto_mode_service.start()
     await supervisor_service.start()
     
-    logger.info("AgentCloud Services Initialized Successfully [ARQ DISPATCH MODE]")
+    logger.info("AgentCloud Mission Control: ONLINE [ARQ DISPATCH READY]")
     
     yield  # -- APP RUNS HERE --
     
@@ -322,8 +160,6 @@ async def add_process_time_header(request: Request, call_next):
     
     return response
 
-app.include_router(api_router)
-
 
 async def check_pgvector():
     from .db.database import AsyncSessionLocal
@@ -335,6 +171,7 @@ async def check_pgvector():
     except Exception:
         return False
 
+@app.get("/health/ready")
 @app.get("/health_check")
 @limiter.limit("60/minute")
 async def readiness_check(request: Request):
@@ -352,7 +189,7 @@ async def readiness_check(request: Request):
             await conn.execute(text("SELECT 1"))
             checks["database"] = True
     except Exception as e:
-        logger.error(f"Readiness check failed (DB): {e}")
+        logger.error(f"Health DB Failure: {e}")
 
     # 2. Check Redis
     try:
@@ -361,36 +198,37 @@ async def readiness_check(request: Request):
         await redis.ping()
         checks["redis"] = True
     except Exception as e:
-        logger.error(f"Readiness check failed (Redis): {e}")
+        logger.error(f"Health Redis Failure: {e}")
 
-    # 3. Check pgvector
+    # 3. Check Vector
     checks["pgvector"] = await check_pgvector()
 
     is_ready = all([checks["database"], checks["redis"]])
-    status_code = 200 if is_ready else 503
     
     return JSONResponse(
-        status_code=status_code,
+        status_code=200 if is_ready else 503,
         content={
             "status": "ready" if is_ready else "not_ready",
-            "infrastructure": checks,
-            "version": settings.VERSION if hasattr(settings, 'VERSION') else "6.0.0"
+            "timestamp": time.time(),
+            "infrastructure": checks
         }
     )
 
 @app.get("/")
 @limiter.limit("100/minute")
-async def health(request: Request):
+async def root_health(request: Request):
     pgvector_ok = await check_pgvector()
     return {
-        "status": "online", 
+        "status": "online",
         "version": "6.0.0-enterprise",
         "infrastructure": {
             "pgvector": "available" if pgvector_ok else "missing"
-        }
+        },
+        "timestamp": time.time()
     }
-
 
 @app.get("/metrics")
 def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+app.include_router(api_router)

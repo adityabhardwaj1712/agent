@@ -18,10 +18,12 @@ from app.models.circuit_breaker_log import CircuitBreakerLog
 from app.models.dlq_event import DLQEvent
 from app.models.notification import Notification
 from app.models.system_log import SystemLog
+from app.models.notebook import Notebook, NotebookEntry
 
 __all__ = [
     "Base", "User", "Agent", "Task", "Goal", "ApprovalRequest", "AuditLog", 
     "Event", "Trace", "Tool", "Memory", "ProtocolMessage", "AgentTemplate",
     "TemplatePurchase", "TemplateReview", "Subscription", "UsageRecord",
-    "APIKey", "WorkflowRun", "WorkflowNodeResult", "WorkflowDefinition", "CircuitBreakerLog", "DLQEvent", "Notification", "SystemLog"
+    "APIKey", "WorkflowRun", "WorkflowNodeResult", "WorkflowDefinition", 
+    "CircuitBreakerLog", "DLQEvent", "Notification", "SystemLog", "Notebook", "NotebookEntry"
 ]

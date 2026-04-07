@@ -25,6 +25,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+# Localhost fallback for Docker database host (MUST BE BEFORE APP IMPORTS)
+_db_url = os.getenv("DATABASE_URL", "")
+if "@db:5432" in _db_url:
+    os.environ["DATABASE_URL"] = _db_url.replace("@db:", "@localhost:")
+
 # ---------------------------------------------------------------------------
 # Ensure project root is on sys.path
 # ---------------------------------------------------------------------------

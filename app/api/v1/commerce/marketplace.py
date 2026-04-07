@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from app.db.database import get_db
@@ -7,6 +7,29 @@ from app.api.deps import get_current_user
 from app.models.user import User
 
 router = APIRouter()
+
+@router.get("/templates")
+async def list_templates(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    sort: str = "popular",
+    free_only: bool = False,
+    skip: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Lists specialized agent templates from the global tactical marketplace.
+    """
+    return await marketplace_service.list_templates(
+        db, 
+        category=category, 
+        search=search, 
+        sort=sort, 
+        free_only=free_only, 
+        skip=skip, 
+        limit=limit
+    )
 
 @router.post("/purchase/{template_id}")
 async def purchase_template(

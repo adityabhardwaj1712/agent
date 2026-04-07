@@ -377,15 +377,60 @@ async def run_python(code: str) -> dict:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
-        
-        try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
-            return {"output": stdout.decode(), "error": stderr.decode()}
-        except asyncio.TimeoutError:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+        return {"output": stdout.decode(), "error": stderr.decode()}
+    except asyncio.TimeoutError:
+        if 'proc' in locals():
             proc.kill()
             await proc.communicate()
-            return {"error": "Execution timed out after 10 seconds. Script killed.", "code": code}
-            
+        return {"error": "Execution timed out after 10 seconds. Script killed.", "code": code}
     except Exception as e:
         return {"error": str(e), "code": code}
+
+# --- 10. AI Notebook Integration --------------------------------------------
+
+@ToolExecutor.register("write_to_notebook")
+async def write_to_notebook(notebook_id: str, content: str, title: str = "Assistant Report") -> dict:
+    """
+    Appends content to a collaborative AI notebook. 
+    If notebook_id is 'new', a new notebook will be created with the provided title.
+    """
+    from app.db.database import AsyncSessionLocal
+    from app.models.notebook import Notebook, NotebookEntry
+    from sqlalchemy.future import select
+
+    async with AsyncSessionLocal() as db:
+        if notebook_id == "new":
+            # In a real app, we'd need the current user_id from context.
+            # For this MVP, we'll use a default 'system-agent' user.
+            notebook = Notebook(title=title, user_id="system-agent-user")
+            db.add(notebook)
+            await db.flush()
+            notebook_id = notebook.notebook_id
+        else:
+            result = await db.execute(select(Notebook).filter(Notebook.notebook_id == notebook_id))
+            notebook = result.scalars().first()
+            if not notebook:
+                return {"error": f"Notebook {notebook_id} not found."}
+
+        entry = NotebookEntry(
+            notebook_id=notebook_id,
+            content_delta=content,
+            entry_type="agent_contribution"
+        )
+        db.add(entry)
+        
+        # Update master content
+        notebook.content = (notebook.content or "") + f"\n\n--- AGENT CONTRIBUTION ---\n{content}"
+        
+        try:
+            await db.commit()
+            return {
+                "status": "success",
+                "notebook_id": notebook_id,
+                "message": "Content successfully persisted to the AI Lab."
+            }
+        except Exception as e:
+            await db.rollback()
+            return {"error": str(e)}
 

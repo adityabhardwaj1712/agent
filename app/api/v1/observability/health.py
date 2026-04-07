@@ -54,3 +54,10 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         "version": "6.0.0-enterprise",
         "timestamp": time.time()
     }
+
+@router.get("/readiness")
+async def readiness_check(db: AsyncSession = Depends(get_db)):
+    """
+    Standard Readiness Probe for tactical deployment monitoring.
+    """
+    return await health_check(db)
