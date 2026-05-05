@@ -1,5 +1,7 @@
 from typing import List, Optional, Dict, Any, Union
 import uuid
+import yaml
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from loguru import logger
@@ -14,78 +16,19 @@ from ..core.roster import AGENT_ROSTER
 # ------------------------------------------------------------------
 # BUILT-IN FREE AGENTS
 # ------------------------------------------------------------------
-BUILTIN_AGENTS: List[Dict[str, Any]] = [
-    {
-        "name": "WebResearcher",
-        "role": "Research Analyst",
-        "description": "Searches the web, summarises findings, and returns structured reports. Uses google_search + web_fetch tools.",
-        "personality_config": '{"tone":"professional","style":"concise","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "CodeHelper",
-        "role": "Software Engineer",
-        "description": "Writes, reviews, and debugs code. Supports Python, TypeScript, and Bash. Uses python_interpreter + shell_execute.",
-        "personality_config": '{"tone":"technical","style":"detailed","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "DataAnalyst",
-        "role": "Data Scientist",
-        "description": "Analyses datasets, generates insights, and creates summary statistics. Uses python_interpreter + calculate tools.",
-        "personality_config": '{"tone":"analytical","style":"structured","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "ContentWriter",
-        "role": "Content Strategist",
-        "description": "Writes blog posts, social copy, and documentation. Optimises for clarity and engagement.",
-        "personality_config": '{"tone":"friendly","style":"engaging","emoji":true}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "TaskOrchestrator",
-        "role": "Project Manager",
-        "description": "Breaks complex goals into sub-tasks, delegates to specialist agents, and aggregates results.",
-        "personality_config": '{"tone":"authoritative","style":"structured","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "SecurityGuardian",
-        "role": "Security Auditor",
-        "description": "Monitors fleet communications for security violations and unsafe payloads. Prevents unauthorized execution.",
-        "personality_config": '{"tone":"strict","style":"formal","emoji":false}',
-        "scopes": "READ_MEMORY,SEND_PROTOCOL",
-    },
-    {
-        "name": "FleetSummarizer",
-        "role": "Data Scientist",
-        "description": "Synthesizes long task histories into executive summaries and actionable insights. Ideal for fleet-wide reporting.",
-        "personality_config": '{"tone":"analytical","style":"concise","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY",
-    },
-    {
-        "name": "CustomerSupportBot",
-        "role": "Support Agent",
-        "description": "Handles common customer inquiries, generates polite and helpful responses, and escalates complex issues.",
-        "personality_config": '{"tone":"empathetic","style":"friendly","emoji":true}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,SEND_PROTOCOL",
-    },
-    {
-        "name": "CodeReviewer",
-        "role": "Quality Assurance",
-        "description": "Reviews pull requests, highlights potential bugs, and enforces coding standards and secure practices.",
-        "personality_config": '{"tone":"technical","style":"objective","emoji":false}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL",
-    },
-    {
-        "name": "SocialMediaManager",
-        "role": "Marketing",
-        "description": "Drafts engaging social media posts, suggests trending hashtags, and schedules content campaigns.",
-        "personality_config": '{"tone":"enthusiastic","style":"creative","emoji":true}',
-        "scopes": "READ_MEMORY,WRITE_MEMORY,RUN_TASKS",
-    },
-]
+def load_agent_templates() -> List[Dict[str, Any]]:
+    """
+    Loads agent templates from the static YAML catalog.
+    """
+    template_path = os.path.join(os.path.dirname(__file__), "..", "data", "agent_templates.yaml")
+    try:
+        with open(template_path, "r") as f:
+            return yaml.safe_load(f) or []
+    except Exception as e:
+        logger.error(f"Failed to load agent templates: {e}")
+        return []
+
+BUILTIN_AGENTS = load_agent_templates()
 
 async def seed_system_agents(db: AsyncSession, owner_id: str) -> None:
     """
@@ -307,4 +250,19 @@ async def get_leaderboard(db: AsyncSession, limit: int = 10) -> List[Dict[str, A
             "tasks_completed": a.total_tasks
         } for a in agents
     ]
+
+async def suggest_agent_improvements(agent_id: str, history: List[Dict[str, Any]]) -> str:
+    """
+    Enterprise Replacement for Auto-Optimizer.
+    Instead of auto-mutating, it returns a suggested prompt for human review.
+    """
+    from app.services.model_router import select_model, call_provider
+    import json
+    
+    prompt = f"Review the performance of agent {agent_id} based on these recent tasks: {json.dumps(history)}\nSuggest a more effective prompt that would improve success rates and clarity."
+    system = "You are an expert Prompt Engineer. Provide a single, improved prompt text without any preamble or markdown."
+    
+    choice = select_model("optimization")
+    content, _, _ = await call_provider(choice=choice, prompt=prompt, context=system)
+    return content.strip()
 

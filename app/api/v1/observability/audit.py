@@ -1,3 +1,4 @@
+from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -10,14 +11,23 @@ router = APIRouter()
 
 @router.get("/logs")
 async def get_audit_logs(
+    action: Optional[str] = None,
+    agent_id: Optional[str] = None,
+    task_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    query = select(AuditLog).where(AuditLog.user_id == current_user.user_id)
+    
+    if action:
+        query = query.where(AuditLog.action_type.ilike(f"%{action}%"))
+    if agent_id:
+        query = query.where(AuditLog.agent_id == agent_id)
+    if task_id:
+        query = query.where(AuditLog.task_id == task_id)
+        
     result = await db.execute(
-        select(AuditLog)
-        .where(AuditLog.user_id == current_user.user_id)
-        .order_by(AuditLog.timestamp.desc())
-        .limit(100)
+        query.order_by(AuditLog.timestamp.desc()).limit(100)
     )
     logs = result.scalars().all()
     return [

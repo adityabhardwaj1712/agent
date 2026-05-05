@@ -42,7 +42,7 @@ class SignalService:
             "type": "SIGNAL",
             "signal_type": signal_type,
             "payload": payload,
-            "timestamp": asyncio.get_event_loop().time()
+            "timestamp": asyncio.get_running_loop().time()
         })
 
         dead_connections = set()

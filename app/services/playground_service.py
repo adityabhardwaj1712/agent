@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
-from .axon_service import AxonService
+from .model_router import select_model, call_provider
 
 class TestCase(BaseModel):
     input: str
@@ -50,8 +50,10 @@ class PlaygroundService:
             i += 1
             
             try:
-                output, tool_calls, meta, usage = await AxonService.advanced_reasoning(
-                    task_payload=test_case.input,
+                choice = select_model(test_case.input)
+                output, tool_calls, usage = await call_provider(
+                    choice=choice,
+                    prompt=test_case.input,
                     messages=messages,
                     task_id=test_task_id
                 )

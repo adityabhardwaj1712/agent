@@ -55,7 +55,7 @@ async def get_system_health(
     try:
         from sqlalchemy import text
         await db.execute(text("SELECT 1"))
-    except:
+    except Exception:
         db_status = "critical"
 
     redis_status = "nominal"
@@ -63,7 +63,7 @@ async def get_system_health(
         from app.db.redis_client import get_async_redis_client
         redis = await get_async_redis_client()
         await redis.ping()
-    except:
+    except Exception:
         redis_status = "critical"
     
     return {

@@ -29,7 +29,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         ext_check = await db.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
         if ext_check.scalar():
             vector_status = "active"
-    except:
+    except Exception:
         pass
 
     # 3. Check Redis

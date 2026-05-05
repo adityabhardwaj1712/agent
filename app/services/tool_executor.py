@@ -223,7 +223,7 @@ async def python_interpreter(code: str, timeout: int = 30) -> dict:
         return {"error": "e2b-code-interpreter not installed. Run: pip install e2b-code-interpreter"}
 
     import asyncio, functools
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     def _run():
         with CodeInterpreter(api_key=api_key, timeout=timeout) as sb:
@@ -268,7 +268,7 @@ async def shell_execute(command: str, timeout: int = 30) -> dict:
                 "exit_code": result.exit_code,
             }
 
-    return await asyncio.get_event_loop().run_in_executor(None, _run)
+    return await asyncio.get_running_loop().run_in_executor(None, _run)
 
 
 # --- 5. GitHub ? create issue ------------------------------------------------

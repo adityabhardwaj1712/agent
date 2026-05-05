@@ -8,6 +8,7 @@ from slowapi.errors import RateLimitExceeded
 import sys
 import io
 import time
+import os
 
 # Ensure sys.stdout and sys.stderr are not None to prevent uvicorn/logging crashes
 if sys.stdout is None:
@@ -46,7 +47,6 @@ async def lifespan(app: FastAPI):
     """
     from .db.migrations import SyncManager
     from .services.automation_service import automation_service
-    from .services.auto_mode_service import auto_mode_service
     from .services.supervisor import supervisor_service
     
     # 1. Database & Registry Sync
@@ -57,9 +57,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.critical(f"AgentCloud Boot Sequence Failure: {e}")
 
-    # 2. Service Orchestration
+    # 2. Shared Resource Initialization (ARQ Pool)
+    from .db.redis_client import get_shared_arq_pool, close_shared_arq_pool
+    try:
+        app.state.arq_pool = await get_shared_arq_pool()
+        logger.info("AgentCloud Shared ARQ Pool: ONLINE")
+    except Exception as e:
+        logger.error(f"Failed to initialize shared ARQ pool: {e}")
+        app.state.arq_pool = None
+
+    # 3. Service Orchestration
     await automation_service.start()
-    await auto_mode_service.start()
     await supervisor_service.start()
     
     logger.info("AgentCloud Mission Control: ONLINE [ARQ DISPATCH READY]")
@@ -67,6 +75,10 @@ async def lifespan(app: FastAPI):
     yield  # -- APP RUNS HERE --
     
     # -- SHUTDOWN --
+    if getattr(app.state, "arq_pool", None):
+        await close_shared_arq_pool()
+        logger.info("AgentCloud Shared ARQ Pool: OFFLINE")
+        
     logger.info("AgentCloud shutting down...")
 
 limiter = Limiter(key_func=get_remote_address)

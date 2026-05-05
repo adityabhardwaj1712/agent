@@ -115,15 +115,20 @@ class LLMService:
         logger.debug(f"LLM call ? model={model} msgs={len(messages)}")
 
         if model.startswith("claude-"):
-            return await self._call_anthropic(messages, model, tools, temperature, task_id)
+            res = await self._call_anthropic(messages, model, tools, temperature, task_id)
         elif model.startswith("gemini-"):
-            return await self._call_gemini(messages, model, tools, temperature)
+            res = await self._call_gemini(messages, model, tools, temperature)
         elif model.startswith("groq-") or model.startswith("llama3-") or model.startswith("mixtral-"):
-            return await self._call_groq(messages, model, tools, temperature, task_id)
+            res = await self._call_groq(messages, model, tools, temperature, task_id)
         elif model.startswith("ollama/") or model.startswith("gemma"):
-            return await self._call_ollama(messages, model, tools, temperature, task_id)
+            res = await self._call_ollama(messages, model, tools, temperature, task_id)
         else:
-            return await self._call_openai(messages, model, tools, temperature, task_id)
+            res = await self._call_openai(messages, model, tools, temperature, task_id)
+
+        content, tool_calls, usage = res
+        if usage:
+            usage.cost_usd = self.calculate_cost(model, usage)
+        return content, tool_calls, usage
 
     async def get_ensemble_completion(
         self,
@@ -479,7 +484,7 @@ class LLMService:
             history.append({"role": "user", "parts": [last_user_content]})
 
         # Use executor so we don't block the event loop (Gemini SDK is sync)
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         chat = gemini_model.start_chat(history=history[:-1])
         response = await loop.run_in_executor(
             None,
@@ -578,7 +583,8 @@ class LLMService:
         return {
             "content": content,
             "tool_calls": tool_calls,
-            "tokens_used": usage.total_tokens if usage else 0
+            "tokens_used": usage.total_tokens if usage else 0,
+            "cost_usd": usage.cost_usd if usage else 0.0
         }
 
 
@@ -613,6 +619,7 @@ class _Usage:
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+    cost_usd: float = 0.0
 
 
 llm_service = LLMService()

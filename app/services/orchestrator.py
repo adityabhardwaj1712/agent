@@ -73,8 +73,7 @@ class Orchestrator:
         db.add(task)
         await db.commit()
 
-        from arq import create_pool
-        from arq.connections import RedisSettings
+
         
         # 2. Prepare task payload
         task_data = {
@@ -93,8 +92,8 @@ class Orchestrator:
 
         # 3. Enqueue to ARQ
         try:
-            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-            arq_pool = await create_pool(RedisSettings.from_dsn(redis_url))
+            from ..db.redis_client import get_shared_arq_pool
+            arq_pool = await get_shared_arq_pool()
             await arq_pool.enqueue_job('run_agent_task', task_data, _job_id=task_id)
             logger.info(f"Enqueued ARQ job {task_id} with priority {priority.name}")
         except Exception as e:

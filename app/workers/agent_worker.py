@@ -28,7 +28,6 @@ from loguru import logger
 from app.db.database import AsyncSessionLocal
 from app.services.memory_service import search_memory, write_memory
 from app.services.model_router import select_model, call_provider
-from app.services.axon_service import AxonService
 from app.services.event_store import log_event
 from app.services.quality import score_output
 from app.services.reputation import update_reputation
@@ -105,7 +104,7 @@ async def _mark_processing(task_id: str) -> None:
     except Exception as e:
         logger.error(f"Failed to mark processing: {e}")
 
-async def _mark_completed(task_id: str, output: str) -> None:
+async def _mark_completed(task_id: str, output: str, cost_usd: float = 0.0) -> None:
     if not task_id: return
     try:
         async with AsyncSessionLocal() as db:
@@ -114,6 +113,7 @@ async def _mark_completed(task_id: str, output: str) -> None:
             if task:
                 task.status = "completed"
                 task.result = output
+                task.cost_usd = (task.cost_usd or 0.0) + cost_usd
                 await db.commit()
     except Exception as e:
         logger.error(f"Failed to mark completed: {e}")
@@ -213,6 +213,7 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
             llm_res = await llm_service.complete(messages=messages, model=model, agent_id=agent_id, task_id=task_id)
             output = llm_res.get("content", "")
             tokens = llm_res.get("tokens_used", 0)
+            cost_usd = llm_res.get("cost_usd", 0.0)
 
             if _IS_SHUTTING_DOWN: raise asyncio.CancelledError()
 
@@ -225,11 +226,12 @@ async def process_one_task(redis_client, task_dict: dict) -> None:
                 followup = await llm_service.complete(messages=messages, model=model, agent_id=agent_id, task_id=task_id)
                 output = followup.get("content", output)
                 tokens += followup.get("tokens_used", 0)
+                cost_usd += followup.get("cost_usd", 0.0)
 
             # 4. Finalize
             await billing_service.charge(user_id=user_id, agent_id=agent_id, tokens=tokens, model=model)
             if output: await _safe_memory_write(agent_id, output)
-            await _mark_completed(task_id, output)
+            await _mark_completed(task_id, output, cost_usd)
             success = True
             
         except asyncio.CancelledError:

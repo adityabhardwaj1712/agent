@@ -47,7 +47,7 @@ async def _check_dedup(db: AsyncSession, task_hash: str) -> Optional[Task]:
     try:
         result = await db.execute(
             select(Task)
-            .where(Task.task_hash == task_hash, Task.status == "completed")
+            .where(Task.task_hash == task_hash, Task.status.in_(["completed", "queued", "running"]))
             .order_by(Task.created_at.desc())
             .limit(1)
         )
@@ -157,7 +157,7 @@ async def send_task(db: AsyncSession, data: TaskCreate, user_id: str) -> Optiona
 
     # 2. Database Deduplication
     existing = await _check_dedup(db, task_hash)
-    if existing and existing.result:
+    if existing:
         return existing
 
     # 3. High-Speed Result Caching

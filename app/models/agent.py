@@ -18,6 +18,7 @@ class Agent(Base):
     
     # Relationships
     owner = relationship("User", back_populates="agents")
+    teams = relationship("Team", secondary="agent_team_association", back_populates="agents")
     scopes = Column(Text, default="READ_MEMORY,WRITE_MEMORY,RUN_TASKS,SEND_PROTOCOL")
     reputation_score = Column(sa.Float, default=50.0)
     total_tasks = Column(sa.Integer, default=0)

@@ -41,7 +41,7 @@ class RedisEventBus:
             "type": event_type,
             "data": data,
             "source": source,
-            "timestamp": asyncio.get_event_loop().time()
+            "timestamp": asyncio.get_running_loop().time()
         }
         
         try:

@@ -3,7 +3,8 @@ import time
 from sqlalchemy import text, select, inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
-from .database import engine, Base, AsyncSessionLocal
+from .database import engine, AsyncSessionLocal
+from .base import Base
 from ..models.user import User
 from ..models.agent import Agent
 from ..services.agent_service import seed_system_agents
@@ -125,13 +126,14 @@ class SyncManager:
             async with AsyncSessionLocal() as session:
                 user_res = await session.execute(select(User).filter(User.user_id == "system_default"))
                 user = user_res.scalar_one_or_none()
+                from ..core.security import get_password_hash
                 if not user:
                     user = User(
                         user_id="system_default",
                         email="system@agentcloud.com",
                         name="System Default",
                         role="ADMIN",
-                        hashed_password="dummy_system_hash"
+                        hashed_password=get_password_hash("SystemAdminStrong123!")
                     )
                     session.add(user)
                     await session.commit()

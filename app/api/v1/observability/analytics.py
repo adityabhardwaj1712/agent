@@ -222,40 +222,93 @@ async def get_metrics(
         "system_health": "stable"
     }
 
-@router.get("/fleet-health")
-async def get_fleet_health(
+@router.get("/agent-health")
+async def get_agent_health_metrics(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Returns agent state distribution for fleet health donut chart.
+    Returns success rate, avg duration, and failure trends per agent.
     """
-    total = await db.scalar(select(func.count(Agent.agent_id)).filter(Agent.owner_id == current_user.user_id)) or 0
+    # Get all agents for this user
+    agents_res = await db.execute(select(Agent).filter(Agent.owner_id == current_user.user_id))
+    agents = agents_res.scalars().all()
     
-    # Count agents by status
-    running = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "running", Agent.owner_id == current_user.user_id)
-    ) or 0
-    idle = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "idle", Agent.owner_id == current_user.user_id)
-    ) or 0
-    cooldown = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "cooldown", Agent.owner_id == current_user.user_id)
-    ) or 0
-    offline = await db.scalar(
-        select(func.count(Agent.agent_id)).filter(Agent.status == "offline", Agent.owner_id == current_user.user_id)
-    ) or 0
+    health_data = []
+    for agent in agents:
+        success_rate = (agent.successful_tasks / agent.total_tasks * 100) if agent.total_tasks > 0 else 0
+        
+        # Avg duration for this specific agent
+        avg_dur = await db.scalar(
+            select(func.avg(Task.execution_time_ms))
+            .filter(Task.agent_id == agent.agent_id, Task.status == "completed")
+        ) or 0
+        
+        # Recent failure trend (last 10 tasks)
+        recent_tasks = await db.execute(
+            select(Task.status)
+            .filter(Task.agent_id == agent.agent_id)
+            .order_by(Task.created_at.desc())
+            .limit(10)
+        )
+        trends = [t[0] for t in recent_tasks.all()]
+        failure_count = trends.count("failed")
+        
+        health_data.append({
+            "agent_id": agent.agent_id,
+            "name": agent.name,
+            "success_rate": round(success_rate, 2),
+            "avg_duration_ms": round(float(avg_dur), 1),
+            "recent_failures": failure_count,
+            "status": agent.status
+        })
+        
+    return health_data
+
+@router.get("/export")
+async def export_data(
+    format: str = "json", # json or csv
+    type: str = "tasks", # tasks, traces, or audit
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Export tasks, traces, or audit logs as CSV or JSON.
+    """
+    import io
+    import csv
+    import json
+    from fastapi.responses import StreamingResponse, Response
+
+    data = []
+    filename = f"export_{type}_{datetime.datetime.now().strftime('%Y%m%d')}"
+
+    if type == "tasks":
+        res = await db.execute(select(Task).filter(Task.user_id == current_user.user_id))
+        rows = res.scalars().all()
+        data = [{"task_id": r.task_id, "status": r.status, "agent_id": r.agent_id, "created_at": r.created_at.isoformat()} for r in rows]
+    elif type == "audit":
+        from app.models.audit_log import AuditLog
+        res = await db.execute(select(AuditLog).filter(AuditLog.user_id == current_user.user_id))
+        rows = res.scalars().all()
+        data = [{"log_id": r.log_id, "action": r.action_type, "timestamp": r.timestamp.isoformat()} for r in rows]
     
-    # Agents with other/unknown statuses count as idle
-    other = total - running - idle - cooldown - offline
-    idle += other
-    
-    return {
-        "running": running,
-        "idle": idle,
-        "cooldown": cooldown,
-        "offline": offline,
-        "total": total
-    }
+    if format == "csv":
+        output = io.StringIO()
+        if data:
+            writer = csv.DictWriter(output, fieldnames=data[0].keys())
+            writer.writeheader()
+            writer.writerows(data)
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}.csv"}
+        )
+    else:
+        return Response(
+            content=json.dumps(data, indent=2),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}.json"}
+        )
 
 

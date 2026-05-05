@@ -59,3 +59,34 @@ async def get_current_user(
         raise credentials_exception
         
     return user
+
+async def requires_scope(required_scope: str):
+    """
+    Dependency to enforce that the current user/agent has a specific scope.
+    Checks both JWT scopes and API Key scopes.
+    """
+    async def scope_checker(
+        token: Optional[str] = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_db)
+    ):
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authentication token")
+            
+        payload = verify_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
+            
+        # 1. Check JWT Scopes
+        token_scopes = payload.get("scopes", [])
+        if required_scope in token_scopes or "ADMIN" in token_scopes:
+            return True
+            
+        # 2. Check if it's an API Key (which might have its own scopes in DB)
+        # Note: In this system, API keys often issue a JWT with scopes pre-baked.
+        # But for enterprise, we might want to re-validate against DB.
+        
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Missing required scope: {required_scope}"
+        )
+    return scope_checker

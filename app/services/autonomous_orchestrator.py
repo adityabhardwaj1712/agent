@@ -241,7 +241,7 @@ class AutonomousOrchestrator:
             content, _, _ = await call_provider(choice, prompt=prompt)
             data = json.loads(content.strip().replace("```json", "").replace("```", "").strip())
             return ModelChoice(data.get("model", "llama3-70b-8192"), "dynamic", "Groq")
-        except: return ModelChoice("llama3-70b-8192", "default", "Groq")
+        except Exception: return ModelChoice("llama3-70b-8192", "default", "Groq")
 
     async def _swarm_critic(self, step: str, result: str) -> Dict[str, Any]:
         """
@@ -300,8 +300,8 @@ class AutonomousOrchestrator:
             return None
 
     async def _wait_for_task(self, task_id: str, timeout: int = 300) -> str:
-        start = asyncio.get_event_loop().time()
-        while asyncio.get_event_loop().time() - start < timeout:
+        start = asyncio.get_running_loop().time()
+        while asyncio.get_running_loop().time() - start < timeout:
             async with AsyncSessionLocal() as db:
                 result = await db.execute(select(Task).filter(Task.task_id == task_id))
                 task = result.scalars().first()

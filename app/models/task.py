@@ -18,7 +18,7 @@ class Task(Base):
     thought_process = Column(Text, nullable=True)
     input_data = Column(Text, nullable=True)
     output_data = Column(Text, nullable=True)
-    cost = Column(sa.Float, default=0.0)
+    cost_usd = Column(sa.Float, default=0.0)
     model_used = Column(String, nullable=True)
     org_id = Column(sa.String, server_default='default', index=True, nullable=False)
 

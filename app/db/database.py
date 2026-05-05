@@ -6,7 +6,7 @@ from ..config import settings
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,
-    pool_size=5,               # Optimized for concurrency vs RAM overhead
+    pool_size=20,               # Optimized for concurrency vs RAM overhead
     max_overflow=10,           # Allow burst capacity during high-load missions
     pool_pre_ping=True,        # Tactical heartbeat check before checkout
     pool_recycle=1800,         # Recycle every 30m for connection freshness

@@ -4,8 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.db.database import get_db
 from app.services import agent_service
-from app.services.nl_agent_builder import nl_agent_builder
-from app.services.auto_optimizer import auto_optimizer
 from app.schemas.agent_schema import AgentCreate, AgentResponse
 
 from app.api.deps import get_current_user
@@ -14,9 +12,6 @@ from app.models.task import Task
 from app.core.rbac import requires_role, Role, admin_only, orchestrator_plus
 from app.services.guardrail_service import guardrail_service
 from sqlalchemy.future import select
-
-class NLBuilderRequest(BaseModel):
-    prompt: str
 
 router = APIRouter()
 
@@ -48,21 +43,6 @@ async def register_agent(
 ):
     agent.owner_id = current_user.user_id
     return await agent_service.register_agent(db, agent)
-
-@router.post("/create-from-prompt", response_model=AgentResponse, dependencies=[Depends(orchestrator_plus())])
-async def create_agent_from_prompt(
-    req: NLBuilderRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Build and register a new agent using a natural language prompt.
-    """
-    agent_config = await nl_agent_builder.build_from_prompt(req.prompt, current_user.user_id)
-    if not agent_config:
-        raise HTTPException(status_code=400, detail="Failed to parse agent configuration from prompt.")
-    
-    return await agent_service.register_agent(db, agent_config)
 
 @router.get("/my", response_model=List[AgentResponse])
 async def get_my_agents(
@@ -107,36 +87,21 @@ async def import_agent(
     agent.owner_id = current_user.user_id
     return await agent_service.register_agent(db, agent)
 
-@router.get("/{agent_id}/optimization-history")
-async def get_agent_optimization_history(
-    agent_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Fetch the history of prompt optimizations for an agent.
-    """
-    return await auto_optimizer.get_optimization_history(agent_id)
-
-@router.post("/{agent_id}/optimize", dependencies=[Depends(orchestrator_plus())])
-async def trigger_agent_optimization(
+@router.post("/{agent_id}/suggest-improvements", dependencies=[Depends(orchestrator_plus())])
+async def suggest_agent_improvements(
     agent_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
-    Manually trigger an AI optimization for an agent's prompt.
+    Manually request AI-powered prompt improvement suggestions for review.
     """
-    # Fetch recent history
     from app.services import task_service
     history = await task_service.list_tasks(db, user_id=current_user.user_id, limit=20)
-    # Filter for this agent if needed, or pass agent_id to list_tasks if supported
     history_dicts = [{"payload": h.payload, "status": h.status} for h in history if h.agent_id == agent_id]
     
-    new_prompt = await auto_optimizer.optimize_agent(agent_id, history_dicts)
-    if not new_prompt:
-        raise HTTPException(status_code=400, detail="Optimization failed or no improvements found.")
-        
-    return {"new_prompt": new_prompt}
+    suggestion = await agent_service.suggest_agent_improvements(agent_id, history_dicts)
+    return {"suggested_prompt": suggestion}
 
 @router.get("/leaderboard")
 async def get_leaderboard(db: AsyncSession = Depends(get_db)):

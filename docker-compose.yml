@@ -15,7 +15,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/agentcloud
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
-      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000,http://localhost:8000
+      - CORS_ORIGINS=http://localhost:8000
       - RUN_MIGRATIONS=true
       - DEPLOYMENT_MODE=local
       - DEPLOYMENT_REGION=us-east-1
@@ -82,18 +82,6 @@ services:
       timeout: 5s
       retries: 10
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-      - API_BASE_URL=http://api:8000
-    depends_on:
-      api:
-        condition: service_healthy
 
   smoke:
     build:

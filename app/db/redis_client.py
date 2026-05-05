@@ -26,3 +26,21 @@ async def get_async_redis_client() -> SafeAsyncRedis:
         raw_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         _async_redis_client = SafeAsyncRedis(raw_client)
     return _async_redis_client
+
+_shared_arq_pool = None
+
+async def get_shared_arq_pool():
+    global _shared_arq_pool
+    if _shared_arq_pool is None:
+        from arq import create_pool
+        from arq.connections import RedisSettings
+        import os
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        _shared_arq_pool = await create_pool(RedisSettings.from_dsn(redis_url))
+    return _shared_arq_pool
+
+async def close_shared_arq_pool():
+    global _shared_arq_pool
+    if _shared_arq_pool is not None:
+        await _shared_arq_pool.close()
+        _shared_arq_pool = None

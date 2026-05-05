@@ -2,7 +2,8 @@ import json
 import logging
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from .axon_service import AxonService
+from .model_router import select_model, call_provider
+from sqlalchemy import select
 from ..models.goal import Goal
 from ..models.task import Task
 from ..schemas.task_schema import TaskCreate
@@ -41,9 +42,11 @@ REPLY ONLY WITH A JSON OBJECT in this format:
 
         try:
             # High-reasoning call
-            raw_dag, _, _, _ = await AxonService.advanced_reasoning(
-                task_payload="Decomposition",
-                context="Generating DAG for autonomous mission.",
+            choice = select_model("Decomposition")
+            raw_dag, _, _ = await call_provider(
+                choice=choice,
+                prompt=user_prompt,
+                context=system_prompt,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

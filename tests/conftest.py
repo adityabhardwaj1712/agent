@@ -3,7 +3,8 @@ from typing import AsyncGenerator
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
-from app.db.database import Base, get_db
+from app.db.base import Base
+from app.db.database import get_db
 from app.main import app
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -39,15 +40,19 @@ def event_loop():
     loop.close()
 
 @pytest.fixture(scope="session", autouse=True)
-async def setup_db():
-    # Setup test DB
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+def setup_db(event_loop):
+    async def init_db():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+            
+    async def teardown_db():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            
+    event_loop.run_until_complete(init_db())
     yield
-    # Teardown test DB
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    event_loop.run_until_complete(teardown_db())
     if os.path.exists("./test_agentcloud.db"):
         os.remove("./test_agentcloud.db")
 
